@@ -1,0 +1,116 @@
+
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-cream: var(--cream);
+  --color-beige: var(--beige);
+  --color-sand: var(--sand);
+  --color-clay: var(--clay);
+  --color-cocoa: var(--cocoa);
+  --color-ink: var(--ink);
+}
+
+:root {
+  --radius: 0rem; /* SKIMS-sharp corners everywhere */
+
+  /*
+   * Neutral system — the entire UI stays monochrome.
+   * Warmth comes from photography only.
+   * Legacy token names kept so every existing component reskins automatically:
+   *   cream → white, beige → light grey, sand → border grey,
+   *   clay → muted text, cocoa → secondary text, ink → primary text.
+   */
+  --cream: #ffffff;
+  --beige: #f5f5f5;
+  --sand: #ebebeb;
+  --clay: #888888;
+  --cocoa: #555555;
+  --ink: #0a0a0a;
+
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: var(--cream);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--cream);
+  --secondary: var(--beige);
+  --secondary-foreground: var(--ink);
+  --muted: var(--beige);
+  --muted-foreground: var(--clay);
+  --accent: var(--beige);
+  --accent-foreground: var(--ink);
+  --destructive: #b00020;
+  --destructive-foreground: var(--cream);
+  --border: #ebebeb;
+  --input: #ebebeb;
+  --ring: var(--ink);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-weight: 400;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+  }
+}
+
+@utility container-px {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  @media (min-width: 768px) { padding-left: 2.5rem; padding-right: 2.5rem; }
+  @media (min-width: 1280px) { padding-left: 4rem; padding-right: 4rem; }
+}
+
+/* Scroll reveal — fades + lifts elements into view as you scroll */
+@media (prefers-reduced-motion: reduce) {
+}
+
+/* Hide horizontal scrollbars on tile/card rails (used by category tiles + homepage rails) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
