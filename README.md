@@ -1,0 +1,3 @@
+# auvella-store
+
+Initializing.
