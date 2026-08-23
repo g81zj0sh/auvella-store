@@ -83,30 +83,28 @@ function OwnView() {
     <div className="min-h-screen bg-white">
       <Header />
       <main className="container-px mx-auto max-w-7xl pb-24 pt-32 md:pt-40">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-serif text-4xl font-light tracking-[0.08em] text-[#0a0a0a] md:text-5xl">
-              FAVOURITES
-            </h1>
-            <p className="mt-3 text-[12px] uppercase tracking-[0.14em] text-[#888888]">
-              {handles.length} {handles.length === 1 ? "Item" : "Items"}
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-serif text-[30px] font-semibold tracking-[0.04em] text-[#0a0a0a] md:text-5xl">
+            FAVOURITES
+          </h1>
           {handles.length > 0 && (
             <button
               onClick={onShare}
               disabled={sharing}
-              className="mt-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-[#0a0a0a] transition-opacity hover:opacity-60"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0a0a0a] transition-opacity hover:opacity-60 md:text-[11px]"
             >
               {sharing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Share2 className="h-4 w-4" strokeWidth={1.5} />
+                <Share2 className="h-4 w-4" strokeWidth={1.6} />
               )}
               Share Favourites
             </button>
           )}
         </div>
+        <p className="mt-2.5 text-[12px] uppercase tracking-[0.14em] text-[#888888]">
+          {handles.length} {handles.length === 1 ? "Item" : "Items"}
+        </p>
 
         {handles.length === 0 ? (
           <div className="mt-20 flex flex-col items-center text-center">
@@ -171,19 +169,17 @@ function SharedView({ sharedParam }: { sharedParam: string }) {
     <div className="min-h-screen bg-white">
       <Header />
       <main className="container-px mx-auto max-w-7xl pb-24 pt-32 md:pt-40">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="font-serif text-4xl font-light tracking-[0.08em] text-[#0a0a0a] md:text-5xl">
-              SHARED FAVOURITES
-            </h1>
-            <p className="mt-3 text-[12px] uppercase tracking-[0.14em] text-[#888888]">
-              A friend sent you their Auvella picks — {handles.length}{" "}
-              {handles.length === 1 ? "Item" : "Items"}
-            </p>
-          </div>
+        <div>
+          <h1 className="font-serif text-[30px] font-semibold tracking-[0.05em] text-[#0a0a0a] md:text-5xl">
+            SHARED FAVOURITES
+          </h1>
+          <p className="mt-2.5 text-[12px] uppercase tracking-[0.14em] text-[#888888]">
+            A friend sent you their Auvella picks — {handles.length}{" "}
+            {handles.length === 1 ? "Item" : "Items"}
+          </p>
           <button
             onClick={saveAll}
-            className="mt-2 inline-flex h-10 items-center border border-[#0a0a0a] px-6 text-[11px] uppercase tracking-[0.16em] text-[#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-white"
+            className="mt-5 inline-flex h-10 items-center whitespace-nowrap border border-[#0a0a0a] px-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-white"
           >
             Save All To My Favourites
           </button>
