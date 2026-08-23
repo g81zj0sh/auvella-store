@@ -16,6 +16,7 @@ import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as AccountCallbackRouteImport } from './routes/account.callback'
 import { Route as CollectionsHandleRouteImport } from './routes/collections.$handle'
 import { Route as PagesSlugRouteImport } from './routes/pages.$slug'
+import { Route as PoliciesSlugRouteImport } from './routes/policies.$slug'
 import { Route as ProductHandleRouteImport } from './routes/product.$handle'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const PagesSlugRoute = PagesSlugRouteImport.update({
   path: '/pages/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PoliciesSlugRoute = PoliciesSlugRouteImport.update({
+  id: '/policies/$slug',
+  path: '/policies/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductHandleRoute = ProductHandleRouteImport.update({
   id: '/product/$handle',
   path: '/product/$handle',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
+  '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$handle': typeof ProductHandleRoute
   '/account/': typeof AccountIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
+  '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$handle': typeof ProductHandleRoute
   '/account': typeof AccountIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
+  '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$handle': typeof ProductHandleRoute
   '/account/': typeof AccountIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
+    | '/policies/$slug'
     | '/product/$handle'
     | '/account/'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
+    | '/policies/$slug'
     | '/product/$handle'
     | '/account'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
+    | '/policies/$slug'
     | '/product/$handle'
     | '/account/'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   AccountCallbackRoute: typeof AccountCallbackRoute
   CollectionsHandleRoute: typeof CollectionsHandleRoute
   PagesSlugRoute: typeof PagesSlugRoute
+  PoliciesSlugRoute: typeof PoliciesSlugRoute
   ProductHandleRoute: typeof ProductHandleRoute
   AccountIndexRoute: typeof AccountIndexRoute
 }
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PagesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/policies/$slug': {
+      id: '/policies/$slug'
+      path: '/policies/$slug'
+      fullPath: '/policies/$slug'
+      preLoaderRoute: typeof PoliciesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$handle': {
       id: '/product/$handle'
       path: '/product/$handle'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountCallbackRoute: AccountCallbackRoute,
   CollectionsHandleRoute: CollectionsHandleRoute,
   PagesSlugRoute: PagesSlugRoute,
+  PoliciesSlugRoute: PoliciesSlugRoute,
   ProductHandleRoute: ProductHandleRoute,
   AccountIndexRoute: AccountIndexRoute,
 }
