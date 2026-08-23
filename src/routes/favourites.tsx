@@ -57,10 +57,9 @@ function OwnView() {
   const onShare = async () => {
     if (handles.length === 0) return;
     if (ACCOUNTS_READY && !isLoggedIn()) {
-      toast("Sign in to share your favourites", {
-        position: "top-center",
-        action: { label: "Sign In", onClick: () => startLogin() },
-      });
+      // Straight to the hosted sign-in (SKIMS behaviour) — and come back
+      // here afterwards rather than landing on the account page.
+      startLogin("/favourites");
       return;
     }
     setSharing(true);
