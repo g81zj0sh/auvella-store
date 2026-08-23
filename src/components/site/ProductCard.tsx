@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { useQuickAdd } from "@/stores/quickAddStore";
+import { useFavorites } from "@/stores/favoritesStore";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { useDisplayPrice } from "@/lib/preferences";
 import { colorToHex } from "@/lib/colorMap";
@@ -37,6 +38,15 @@ export function ProductCard({ product, badge }: Props) {
   const colorOption = node.options.find((o) => /colou?r/i.test(o.name));
   const colors = colorOption?.values ?? [];
 
+  const favHandles = useFavorites((s) => s.handles);
+  const toggleFav = useFavorites((s) => s.toggle);
+  const liked = favHandles.includes(node.handle);
+  const onFav = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFav(node.handle);
+  };
+
   const openQuickAdd = useQuickAdd((s) => s.openFor);
   const onQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -54,6 +64,13 @@ export function ProductCard({ product, badge }: Props) {
         {image && (
           <EditorialImage src={image.url} alt={image.altText ?? node.title} />
         )}
+        <button
+          aria-label={liked ? "Remove from favourites" : "Add to favourites"}
+          onClick={onFav}
+          className="absolute right-2.5 top-2.5 z-10 grid h-8 w-8 place-items-center text-[#0a0a0a] transition-opacity hover:opacity-60"
+        >
+          <Heart className={`h-[16px] w-[16px] ${liked ? "fill-[#0a0a0a]" : ""}`} strokeWidth={1.4} />
+        </button>
         {badge && (
           <span className="absolute left-3 top-3 bg-white px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-[#0a0a0a]">
             {badge}

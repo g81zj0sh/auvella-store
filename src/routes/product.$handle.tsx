@@ -16,6 +16,7 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+import { useFavorites } from "@/stores/favoritesStore";
 import { Loader2, Star, Heart, ChevronLeft, ChevronRight, ScanSearch } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -186,7 +187,9 @@ function ProductPage() {
   const [imageIdx, setImageIdx] = useState(0);
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [barVisible, setBarVisible] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const favHandles = useFavorites((s) => s.handles);
+  const toggleFav = useFavorites((s) => s.toggle);
+  const liked = favHandles.includes(handle);
   const [visualOpen, setVisualOpen] = useState(false);
   const [tab, setTab] = useState<"details" | "fit" | "shipping">("details");
   const [sizePulse, setSizePulse] = useState(false);
@@ -543,8 +546,8 @@ function ProductPage() {
             </div>
             <div className="absolute right-5 top-5 flex flex-col items-center gap-3">
               <button
-                aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
-                onClick={() => setLiked((v) => !v)}
+                aria-label={liked ? "Remove from favourites" : "Add to favourites"}
+                onClick={() => toggleFav(handle)}
                 className="text-[#0a0a0a] transition-opacity hover:opacity-60"
               >
                 <Heart className={`h-[18px] w-[18px] ${liked ? "fill-[#0a0a0a]" : ""}`} strokeWidth={1.2} />
@@ -584,8 +587,8 @@ function ProductPage() {
           {/* Mobile: swipeable snap gallery */}
           <div className="pointer-events-none absolute right-4 top-4 z-10 flex flex-col items-center gap-3 lg:hidden">
             <button
-              aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
-              onClick={() => setLiked((v) => !v)}
+              aria-label={liked ? "Remove from favourites" : "Add to favourites"}
+              onClick={() => toggleFav(handle)}
               className="pointer-events-auto text-[#0a0a0a] transition-opacity hover:opacity-60"
             >
               <Heart className={`h-[18px] w-[18px] ${liked ? "fill-[#0a0a0a]" : ""}`} strokeWidth={1.2} />
@@ -958,7 +961,9 @@ function ProductPage() {
 
 function RailCard({ p }: { p: ShopifyProduct }) {
   const display = useDisplayPrice();
-  const [liked, setLiked] = useState(false);
+  const favHandles = useFavorites((s) => s.handles);
+  const toggleFav = useFavorites((s) => s.toggle);
+  const liked = favHandles.includes(p.node.handle);
   const img = p.node.images.edges[0]?.node;
   const price = p.node.priceRange.minVariantPrice;
   const label = inferCollection(p.node.title).label;
@@ -989,8 +994,8 @@ function RailCard({ p }: { p: ShopifyProduct }) {
           </p>
         </Link>
         <button
-          aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
-          onClick={() => setLiked((v) => !v)}
+          aria-label={liked ? "Remove from favourites" : "Add to favourites"}
+          onClick={() => toggleFav(p.node.handle)}
           className="mt-0.5 shrink-0 text-[#0a0a0a] transition-opacity hover:opacity-60"
         >
           <Heart className={`h-4 w-4 ${liked ? "fill-[#0a0a0a]" : ""}`} strokeWidth={1.5} />

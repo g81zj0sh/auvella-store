@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { User, Menu, X, Globe, Check, ChevronDown } from "lucide-react";
+import { User, Menu, X, Globe, Check, ChevronDown, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { CartDrawer } from "@/components/site/CartDrawer";
+import { FavouritesButton } from "@/components/site/FavouritesButton";
 import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
 import { SearchDrawer } from "@/components/site/SearchDrawer";
 import auvellaWordmarkImg from "@/assets/auvella-wordmark.png";
@@ -691,6 +692,7 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
               <GlobePicker light={light} />
             </div>
             <SearchDrawer light={light} />
+            <FavouritesButton />
             <button aria-label="Account" className="hidden sm:block transition-opacity hover:opacity-60">
               <User className="h-[18px] w-[18px]" strokeWidth={1.5} />
             </button>

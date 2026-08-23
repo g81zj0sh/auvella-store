@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FavouritesRouteImport } from './routes/favourites'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as CollectionsHandleRouteImport } from './routes/collections.$handle'
 import { Route as PagesSlugRouteImport } from './routes/pages.$slug'
@@ -18,6 +19,11 @@ import { Route as ProductHandleRouteImport } from './routes/product.$handle'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavouritesRoute = FavouritesRouteImport.update({
+  id: '/favourites',
+  path: '/favourites',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -43,6 +49,7 @@ const ProductHandleRoute = ProductHandleRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -67,6 +76,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/favourites'
     | '/sitemap.xml'
     | '/collections/$handle'
     | '/pages/$slug'
@@ -74,6 +84,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/favourites'
     | '/sitemap.xml'
     | '/collections/$handle'
     | '/pages/$slug'
@@ -81,6 +92,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/favourites'
     | '/sitemap.xml'
     | '/collections/$handle'
     | '/pages/$slug'
@@ -89,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FavouritesRoute: typeof FavouritesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CollectionsHandleRoute: typeof CollectionsHandleRoute
   PagesSlugRoute: typeof PagesSlugRoute
@@ -102,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favourites': {
+      id: '/favourites'
+      path: '/favourites'
+      fullPath: '/favourites'
+      preLoaderRoute: typeof FavouritesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -137,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FavouritesRoute: FavouritesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CollectionsHandleRoute: CollectionsHandleRoute,
   PagesSlugRoute: PagesSlugRoute,
