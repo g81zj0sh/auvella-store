@@ -904,8 +904,9 @@ function CollectionPage() {
         )}
       </div>
 
-      {/* Product grid — 4 col / 2 col, 12px / 8px gaps, no chrome */}
-      <section className="container-px py-10 md:py-14">
+      {/* Product grid — 4 col / 2 col, 12px / 8px gaps, no chrome.
+          Mobile: grid starts right under the filter bar (SKIMS layout). */}
+      <section className="container-px pb-10 pt-4 md:py-14">
         {visible.length === 0 ? (
           <div className="py-24 text-center">
             <h2 className="font-serif text-2xl font-light text-[#0a0a0a]">
@@ -917,18 +918,20 @@ function CollectionPage() {
           </div>
         ) : (
           <>
-            {/* Mobile: item count lives here, out of the way of the filter row */}
-            <p className="mb-5 text-[11px] uppercase tracking-[0.14em] text-[#888888] md:hidden">
-              {filtered.length} {filtered.length === 1 ? "Item" : "Items"}
-            </p>
             <div className="grid grid-cols-2 gap-x-2 gap-y-8 md:grid-cols-4 md:gap-x-3 md:gap-y-12">
               {visible.map((p) => (
                 <ProductCard key={p.node.id} product={p} />
               ))}
             </div>
 
+            {/* End-of-collection count (SKIMS pattern) */}
+            <p className="mt-14 text-center text-[11px] uppercase tracking-[0.14em] text-[#888888]">
+              You've viewed {visible.length} of {filtered.length}{" "}
+              {filtered.length === 1 ? "item" : "items"}
+            </p>
+
             {hasMore && (
-              <div className="mt-14 flex justify-center">
+              <div className="mt-6 flex justify-center">
                 <button
                   onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
                   className="inline-flex h-12 w-[200px] items-center justify-center border border-[#0a0a0a] bg-transparent text-[11px] uppercase tracking-[0.16em] text-[#0a0a0a] transition-colors duration-[250ms] hover:bg-[#0a0a0a] hover:text-white"
