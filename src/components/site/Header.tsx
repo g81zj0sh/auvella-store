@@ -693,9 +693,9 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
             </div>
             <SearchDrawer light={light} />
             <FavouritesButton />
-            <button aria-label="Account" className="hidden sm:block transition-opacity hover:opacity-60">
+            <Link to="/account" aria-label="Account" className="hidden sm:block transition-opacity hover:opacity-60">
               <User className="h-[18px] w-[18px]" strokeWidth={1.5} />
-            </button>
+            </Link>
             <CartDrawer />
           </div>
         </div>

@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FavouritesRouteImport } from './routes/favourites'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AccountIndexRouteImport } from './routes/account.index'
+import { Route as AccountCallbackRouteImport } from './routes/account.callback'
 import { Route as CollectionsHandleRouteImport } from './routes/collections.$handle'
 import { Route as PagesSlugRouteImport } from './routes/pages.$slug'
 import { Route as ProductHandleRouteImport } from './routes/product.$handle'
@@ -29,6 +31,16 @@ const FavouritesRoute = FavouritesRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountCallbackRoute = AccountCallbackRouteImport.update({
+  id: '/account/callback',
+  path: '/account/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionsHandleRoute = CollectionsHandleRouteImport.update({
@@ -51,26 +63,32 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/product/$handle': typeof ProductHandleRoute
+  '/account/': typeof AccountIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/product/$handle': typeof ProductHandleRoute
+  '/account': typeof AccountIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/product/$handle': typeof ProductHandleRoute
+  '/account/': typeof AccountIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -78,34 +96,42 @@ export interface FileRouteTypes {
     | '/'
     | '/favourites'
     | '/sitemap.xml'
+    | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
     | '/product/$handle'
+    | '/account/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/favourites'
     | '/sitemap.xml'
+    | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
     | '/product/$handle'
+    | '/account'
   id:
     | '__root__'
     | '/'
     | '/favourites'
     | '/sitemap.xml'
+    | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
     | '/product/$handle'
+    | '/account/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FavouritesRoute: typeof FavouritesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  AccountCallbackRoute: typeof AccountCallbackRoute
   CollectionsHandleRoute: typeof CollectionsHandleRoute
   PagesSlugRoute: typeof PagesSlugRoute
   ProductHandleRoute: typeof ProductHandleRoute
+  AccountIndexRoute: typeof AccountIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -129,6 +155,20 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/callback': {
+      id: '/account/callback'
+      path: '/account/callback'
+      fullPath: '/account/callback'
+      preLoaderRoute: typeof AccountCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections/$handle': {
@@ -159,9 +199,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FavouritesRoute: FavouritesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  AccountCallbackRoute: AccountCallbackRoute,
   CollectionsHandleRoute: CollectionsHandleRoute,
   PagesSlugRoute: PagesSlugRoute,
   ProductHandleRoute: ProductHandleRoute,
+  AccountIndexRoute: AccountIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
