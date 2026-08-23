@@ -16,6 +16,9 @@ import {
 } from "@/lib/customerAuth";
 import { subscribeToNewsletter } from "@/lib/klaviyo";
 import { useDisplayPrice } from "@/lib/preferences";
+import { ProductCard } from "@/components/site/ProductCard";
+import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
+import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 
 /*
  * /account — SKIMS-style account area in Auvella's language.
@@ -324,6 +327,42 @@ function OrderHistory() {
           ))}
         </div>
       )}
+
+      <RecentlyViewed />
     </div>
+  );
+}
+
+/*
+ * Recently Viewed — pieces the customer has opened (PDP or Quick Add),
+ * newest first, straight from the persisted recently-viewed store.
+ * Renders nothing until there's something to show.
+ */
+function RecentlyViewed() {
+  const handles = useRecentlyViewed((s) => s.handles);
+  const { data: products } = useQuery({
+    queryKey: ["recently-viewed-products", handles],
+    queryFn: async () => {
+      const results = await Promise.all(handles.map((h) => fetchProductByHandle(h)));
+      // Keep store order (newest first); drop anything unpublished/deleted.
+      return results.filter((p): p is ShopifyProduct => p !== null);
+    },
+    enabled: handles.length > 0,
+    staleTime: 60 * 1000,
+  });
+
+  if (!products || products.length === 0) return null;
+
+  return (
+    <section className="mt-16">
+      <h2 className="font-serif text-xl font-light tracking-[0.06em] text-[#0a0a0a]">
+        RECENTLY VIEWED
+      </h2>
+      <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3">
+        {products.map((p) => (
+          <ProductCard key={p.node.handle} product={p} />
+        ))}
+      </div>
+    </section>
   );
 }

@@ -17,6 +17,7 @@ import {
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { useFavorites } from "@/stores/favoritesStore";
+import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { Loader2, Star, Heart, ChevronLeft, ChevronRight, ScanSearch } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -197,6 +198,12 @@ function ProductPage() {
   const sizesRef = useRef<HTMLDivElement>(null);
   const addItem = useCartStore((s) => s.addItem);
   const adding = useCartStore((s) => s.isLoading);
+
+  // Record this visit for the Recently Viewed rail (account page etc.).
+  const recordViewed = useRecentlyViewed((s) => s.record);
+  useEffect(() => {
+    if (handle) recordViewed(handle);
+  }, [handle, recordViewed]);
 
   // Initialize non-size options from the first variant; size stays an explicit choice.
   const initialSelected = useMemo(() => {
