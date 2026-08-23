@@ -529,7 +529,7 @@ function FilterButton({
     <div className="relative h-14 shrink-0">
       <button
         onClick={onToggle}
-        className={`flex h-14 cursor-pointer items-center whitespace-nowrap text-[11px] uppercase tracking-[0.14em] text-[#0a0a0a] transition-opacity hover:opacity-60 ${
+        className={`flex h-14 cursor-pointer items-center whitespace-nowrap text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a] transition-opacity hover:opacity-60 ${
           active ? "underline underline-offset-[6px]" : ""
         }`}
       >
@@ -890,7 +890,7 @@ function CollectionPage() {
             )}
           </div>
 
-          <span className="shrink-0 text-[11px] uppercase tracking-[0.14em] text-[#888888]">
+          <span className="hidden shrink-0 text-[11px] uppercase tracking-[0.14em] text-[#888888] md:inline">
             {filtered.length} {filtered.length === 1 ? "Item" : "Items"}
           </span>
         </div>
@@ -917,6 +917,10 @@ function CollectionPage() {
           </div>
         ) : (
           <>
+            {/* Mobile: item count lives here, out of the way of the filter row */}
+            <p className="mb-5 text-[11px] uppercase tracking-[0.14em] text-[#888888] md:hidden">
+              {filtered.length} {filtered.length === 1 ? "Item" : "Items"}
+            </p>
             <div className="grid grid-cols-2 gap-x-2 gap-y-8 md:grid-cols-4 md:gap-x-3 md:gap-y-12">
               {visible.map((p) => (
                 <ProductCard key={p.node.id} product={p} />
