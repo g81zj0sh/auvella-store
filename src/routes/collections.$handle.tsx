@@ -529,7 +529,7 @@ function FilterButton({
     <div className="relative h-14 shrink-0">
       <button
         onClick={onToggle}
-        className={`flex h-14 cursor-pointer items-center whitespace-nowrap text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a] transition-opacity hover:opacity-60 ${
+        className={`flex h-14 cursor-pointer items-center whitespace-nowrap text-[12px] font-medium uppercase tracking-[0.06em] text-[#0a0a0a] transition-opacity hover:opacity-60 ${
           active ? "underline underline-offset-[6px]" : ""
         }`}
       >
