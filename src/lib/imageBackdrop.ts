@@ -97,3 +97,47 @@ export function sampleBackdrop(url: string): Promise<string> {
   job.then(() => pending.delete(url));
   return job;
 }
+
+/*
+ * Garment-only ("ghost") shot detection.
+ *
+ * Model shots sit on the grey studio backdrop (~#D5D3D5–#DCDAE0); garment-only
+ * shots sit on near-white (~#FEFEFE). That gap is wide and consistent — it held
+ * on every image of the reference set — so the backdrop alone tells the two
+ * apart without relying on filenames or a fixed shot count.
+ *
+ * Sampling uses a 64px CDN thumbnail, so classifying a whole grid costs about a
+ * kilobyte per image rather than a full download.
+ */
+
+export function isGhostBackdrop(hex: string): boolean {
+  const n = parseInt(hex.slice(1), 16);
+  if (Number.isNaN(n)) return false;
+  const r = (n >> 16) & 255,
+    g = (n >> 8) & 255,
+    b = n & 255;
+  const spread = Math.max(r, g, b) - Math.min(r, g, b);
+  return r >= 246 && g >= 246 && b >= 246 && spread <= 6;
+}
+
+/** Cheap CDN thumbnail of an image, for sampling only. */
+export function thumbUrl(url: string, width = 64): string {
+  if (!url) return url;
+  return url + (url.includes("?") ? "&" : "?") + `width=${width}`;
+}
+
+/**
+ * First garment-only shot in an ordered colour run, or null if there isn't one.
+ * Resolves from cache instantly on repeat calls.
+ */
+export async function findGhost(urls: string[]): Promise<string | null> {
+  for (const url of urls) {
+    try {
+      const c = await sampleBackdrop(thumbUrl(url));
+      if (isGhostBackdrop(c)) return url;
+    } catch {
+      /* keep looking */
+    }
+  }
+  return null;
+}

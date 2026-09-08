@@ -7,6 +7,9 @@ import type { ShopifyProduct } from "@/lib/shopify";
 import { useDisplayPrice } from "@/lib/preferences";
 import { colorToHex } from "@/lib/colorMap";
 import { EditorialImage } from "@/components/site/EditorialImage";
+import { useMemo, useState, useEffect } from "react";
+import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
+import { findGhost } from "@/lib/imageBackdrop";
 
 /*
  * Product card — SKIMS spec:
@@ -54,15 +57,70 @@ export function ProductCard({ product, badge }: Props) {
     openQuickAdd(product);
   };
 
+  /* Colour runs, so a swatch can switch the tile to that colour's shots and a
+     hover can reveal the garment on its own — the SKIMS pattern. */
+  const colorMap = useMemo(() => buildColorImageMap(node), [node]);
+  const optName = colorOptionName(node);
+  const [activeColor, setActiveColor] = useState<string | null>(colors[0] ?? null);
+  const [hovering, setHovering] = useState(false);
+  const [ghost, setGhost] = useState<string | null>(null);
+
+  const run = (activeColor && colorMap.get(activeColor)) || [];
+  const primary = run[0]?.node ?? image;
+
+  // Resolve the garment-only shot for the active colour, lazily and from tiny
+  // thumbnails, so an unhovered grid costs nothing.
+  useEffect(() => {
+    setGhost(null);
+    if (!hovering || run.length < 2) return;
+    let live = true;
+    findGhost(run.map((r) => r.node.url)).then((g) => {
+      if (live) setGhost(g);
+    });
+    return () => {
+      live = false;
+    };
+  }, [hovering, activeColor, node.handle]);
+
+  // Price follows the selected colour.
+  const colorVariant = activeColor && optName
+    ? node.variants.edges.find((v) =>
+        v.node.selectedOptions.some((o) => o.name === optName && o.value === activeColor),
+      )?.node
+    : undefined;
+  const shownPrice = colorVariant?.price ?? price;
+  const shownCompare = colorVariant ? colorVariant.compareAtPrice : compareAt;
+  const shownOnSale =
+    !!shownCompare && parseFloat(shownCompare.amount) > parseFloat(shownPrice.amount);
+
+  const onSwatch = (e: React.MouseEvent, c: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveColor(c);
+  };
+
   return (
     <Link
       to="/product/$handle"
       params={{ handle: node.handle }}
       className="group block"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
-        {image && (
-          <EditorialImage src={image.url} alt={image.altText ?? node.title} />
+        {primary && (
+          <EditorialImage src={primary.url} alt={primary.altText ?? node.title} />
+        )}
+        {/* Garment-only shot, crossfaded in over the model shot on hover. */}
+        {ghost && (
+          <img
+            src={ghost}
+            alt=""
+            aria-hidden="true"
+            className={`absolute inset-0 h-full w-full object-cover object-[center_top] transition-opacity duration-300 ease-out ${
+              hovering ? "opacity-100" : "opacity-0"
+            }`}
+          />
         )}
         <button
           aria-label={liked ? "Remove from favourites" : "Add to favourites"}
@@ -100,24 +158,34 @@ export function ProductCard({ product, badge }: Props) {
           {node.title}
         </h3>
         <div className="mt-1 flex items-baseline gap-2 text-[13px]">
-          {onSale && compareAt && (
+          {shownOnSale && shownCompare && (
             <span className="text-[#888888] line-through">
-              {display(compareAt.amount, compareAt.currencyCode)}
+              {display(shownCompare.amount, shownCompare.currencyCode)}
             </span>
           )}
           <span className="text-[#0a0a0a]">
-            {display(price.amount, price.currencyCode)}
+            {display(shownPrice.amount, shownPrice.currencyCode)}
           </span>
         </div>
         {colors.length > 1 && (
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
             {colors.slice(0, 6).map((c) => (
-              <span
+              <button
                 key={c}
                 title={c}
-                className="h-2.5 w-2.5 rounded-full border border-[#0a0a0a]/15"
-                style={{ background: colorToHex(c) ?? "#cccccc" }}
-              />
+                aria-label={c}
+                aria-pressed={c === activeColor}
+                onClick={(e) => onSwatch(e, c)}
+                onMouseEnter={() => setActiveColor(c)}
+                className={`grid h-4 w-4 place-items-center rounded-full transition-shadow ${
+                  c === activeColor ? "ring-1 ring-[#0a0a0a] ring-offset-1" : ""
+                }`}
+              >
+                <span
+                  className="h-2.5 w-2.5 rounded-full border border-[#0a0a0a]/15"
+                  style={{ background: colorToHex(c) ?? "#cccccc" }}
+                />
+              </button>
             ))}
             {colors.length > 6 && (
               <span className="text-[10px] text-[#888888]">+{colors.length - 6}</span>
