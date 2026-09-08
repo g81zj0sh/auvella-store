@@ -654,12 +654,11 @@ function ProductPage() {
             }}
           >
             {activeImages.map((im, i) => (
-              <img
+              <MobileSlide
                 key={im.node.url + i}
-                src={im.node.url}
+                url={im.node.url}
                 alt={im.node.altText ?? node.title}
-                className="aspect-[3/4] w-full shrink-0 snap-center object-cover object-[center_top]"
-                loading={i === 0 ? "eager" : "lazy"}
+                eager={i === 0}
               />
             ))}
           </div>
@@ -1206,6 +1205,44 @@ function VisualSearchResults({
           </Link>
         );
       })}
+    </div>
+  );
+}
+
+/*
+ * Mobile gallery slide.
+ *
+ * The catalogue mixes 2:3, 3:4 and square shots — sometimes within one product.
+ * Cropping them to a fixed 3:4 frame cut ~12% off the bottom of every 2:3 shot
+ * (feet on a full-length model) and ~25% off the sides of square ones, so the
+ * slide contains the image instead and fills the leftover space with that
+ * image's own backdrop. Nothing is cropped and no seam shows.
+ */
+function MobileSlide({ url, alt, eager }: { url: string; alt: string; eager: boolean }) {
+  const [backdrop, setBackdrop] = useState<string>(
+    () => cachedBackdrop(url) ?? DEFAULT_BACKDROP,
+  );
+  useEffect(() => {
+    let live = true;
+    sampleBackdrop(url).then((c) => {
+      if (live) setBackdrop(c);
+    });
+    return () => {
+      live = false;
+    };
+  }, [url]);
+
+  return (
+    <div
+      className="aspect-[3/4] w-full shrink-0 snap-center transition-colors duration-500 ease-out"
+      style={{ backgroundColor: backdrop }}
+    >
+      <img
+        src={url}
+        alt={alt}
+        className="h-full w-full object-contain object-center"
+        loading={eager ? "eager" : "lazy"}
+      />
     </div>
   );
 }
