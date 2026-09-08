@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
 import paymentMethodsAssetImg from "@/assets/payment-methods.png";
 const paymentMethodsAsset = { url: paymentMethodsAssetImg };
 
@@ -24,6 +24,28 @@ const more: { label: string; slug?: string; href?: string }[] = [
 /* Social row — icons only, centred beneath the newsletter, the way SKIMS does
    it. Dead until real account URLs are supplied. */
 const socials = ["Instagram", "Facebook", "YouTube", "X", "TikTok"] as const;
+
+/* Back-to-top — appears once the page has scrolled, bottom right, SKIMS-style. */
+function BackToTop() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 600);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <button
+      aria-label="Back to top"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      className={`fixed bottom-5 right-5 z-40 grid h-11 w-11 place-items-center bg-[#0a0a0a] text-white transition-opacity duration-300 ${
+        show ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
+      <ChevronUp className="h-4 w-4" strokeWidth={1.6} />
+    </button>
+  );
+}
 
 const socialPath: Record<(typeof socials)[number], React.ReactNode> = {
   Instagram: (
@@ -199,6 +221,7 @@ export function Footer() {
           />
         </div>
       </div>
+      <BackToTop />
     </footer>
   );
 }

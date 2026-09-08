@@ -23,9 +23,17 @@ import {
  * SIZE_GUIDES per product type. guideType "none" renders nothing.
  */
 /** Strip internal supplier-verification annotations from display copy —
-    the data file keeps them; customers never see them. */
+    the data file keeps them; customers never see the annotation itself. */
 function displayText(v: string): string {
   return v.replace(/\s*\[CHECK[^\]]*\]/g, "").trim();
+}
+
+/** A [CHECK: …] marker means the printed value failed a sanity check against
+    the supplier's own chart. Showing the stripped number would present an
+    unverified measurement as fact — someone reading it would order the wrong
+    size — so the cell is withheld until the supplier confirms. */
+function isUnverified(v: string): boolean {
+  return /\[CHECK/.test(v);
 }
 
 export function SizeGuide({
@@ -71,6 +79,13 @@ export function SizeGuide({
       place — letter sizes gain their regional number ("S (8–10)"), bra
       band/cup tokens convert per region. Measurement cells never change. */
   const renderCell = (cell: string, colIdx: number) => {
+    if (isUnverified(cell) && colIdx !== 0) {
+      return (
+        <span className="text-[#888888]" title="Being confirmed with our supplier">
+          &mdash;<sup className="ml-0.5 text-[9px]">*</sup>
+        </span>
+      );
+    }
     const txt = displayText(cell);
     const isSizeCol = colIdx === 0;
     if (isSizeCol && support.letters.length > 0) {
@@ -171,6 +186,18 @@ export function SizeGuide({
                 </tbody>
               </table>
             </div>
+
+            {guide.rows.some((r) => r.some((c, i) => i !== 0 && isUnverified(c))) && (
+              <p className="mt-3 text-[12px] leading-relaxed text-[#888888]">
+                <sup>*</sup> This measurement is printed unclearly on our supplier's chart
+                and we're confirming it. We'd rather leave it blank than show you a number
+                we can't stand behind &mdash;{" "}
+                <a href="/pages/contact" className="underline underline-offset-2">
+                  contact us
+                </a>{" "}
+                and we'll help you size.
+              </p>
+            )}
 
             {/* Bra-only cup helper */}
             {guide.cupHelper && (

@@ -37,105 +37,59 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
     body: (
       <>
         <p>
-          Every Auvella piece is designed to sit close to the body. Measurements below are
-          body measurements, not garment measurements — measure yourself and match to the
-          nearest band. If you fall between two, size up for coverage and comfort, or size
-          down for a firmer, more sculpted hold.
+          Every Auvella piece carries its own size chart, taken from the maker's own
+          measurements for that exact garment &mdash; so you'll find the real numbers on the
+          product's own page, under <strong>Size Guide</strong> beside the size selector. We
+          don't publish one universal table here, because a single set of numbers can't be
+          true for a bralette, a shaping short and a maxi dress at once.
         </p>
 
         <h2>How to measure</h2>
         <ul>
-          <li><strong>Bust</strong> — around the fullest part, tape level and not pulled tight.</li>
-          <li><strong>Underbust</strong> — directly beneath the bust, where a band would sit.</li>
-          <li><strong>Waist</strong> — the narrowest part of the torso, usually just above the navel.</li>
-          <li><strong>Hip</strong> — around the fullest part, roughly 20cm below the waist.</li>
+          <li><strong>Bust</strong> &mdash; around the fullest part, tape level and not pulled tight.</li>
+          <li><strong>Underbust</strong> &mdash; directly beneath the bust, where a band would sit.</li>
+          <li><strong>Waist</strong> &mdash; the narrowest part of the torso, usually just above the navel.</li>
+          <li><strong>Hip</strong> &mdash; around the fullest part, roughly 20cm below the waist.</li>
         </ul>
         <p>
           Keep the tape snug and parallel to the floor, and measure over bare skin or thin
-          underwear rather than clothing.
+          underwear rather than over clothing.
         </p>
 
-        <h2>Apparel, shapewear &amp; bodysuits</h2>
-        <div className="not-prose my-6 overflow-x-auto">
-          <table className="w-full min-w-[520px] border-collapse text-[13px]">
-            <thead>
-              <tr className="border-b border-[#0a0a0a]">
-                <th className="py-2.5 pr-4 text-left font-medium uppercase tracking-[0.1em] text-[11px]">Size</th>
-                <th className="py-2.5 pr-4 text-left font-medium uppercase tracking-[0.1em] text-[11px]">UK</th>
-                <th className="py-2.5 pr-4 text-left font-medium uppercase tracking-[0.1em] text-[11px]">Bust (cm)</th>
-                <th className="py-2.5 pr-4 text-left font-medium uppercase tracking-[0.1em] text-[11px]">Waist (cm)</th>
-                <th className="py-2.5 text-left font-medium uppercase tracking-[0.1em] text-[11px]">Hip (cm)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["XS", "4-6", "76-81", "58-63", "84-89"],
-                ["S", "8-10", "81-86", "63-68", "89-94"],
-                ["M", "10-12", "86-91", "68-73", "94-99"],
-                ["L", "12-14", "91-97", "73-79", "99-104"],
-                ["XL", "16-18", "97-104", "79-86", "104-112"],
-                ["XXL", "18-20", "104-112", "86-94", "112-119"],
-                ["XXXL", "20-22", "112-119", "94-101", "119-127"],
-              ].map((r) => (
-                <tr key={r[0]} className="border-b border-[#EBEBEB]">
-                  {r.map((c, i) => (
-                    <td key={i} className={`py-2.5 ${i < 4 ? "pr-4" : ""} ${i === 0 ? "font-medium" : "text-[#555555]"}`}>
-                      {c}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <h2>Bras &amp; bralettes</h2>
+        <h2>Reading the chart</h2>
         <p>
-          Our bralettes are sized to the band, with the cup shaped to stretch across roughly
-          two cup sizes. Match your underbust to the band column.
+          Charts differ by garment, so check what the column is actually measuring before
+          comparing it to yourself:
         </p>
-        <div className="not-prose my-6 overflow-x-auto">
-          <table className="w-full min-w-[420px] border-collapse text-[13px]">
-            <thead>
-              <tr className="border-b border-[#0a0a0a]">
-                <th className="py-2.5 pr-4 text-left font-medium uppercase tracking-[0.1em] text-[11px]">Size</th>
-                <th className="py-2.5 pr-4 text-left font-medium uppercase tracking-[0.1em] text-[11px]">Underbust (cm)</th>
-                <th className="py-2.5 text-left font-medium uppercase tracking-[0.1em] text-[11px]">Fits cup</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["XS", "63-68", "A-B"],
-                ["S", "68-73", "A-C"],
-                ["M", "73-79", "B-C"],
-                ["L", "79-86", "C-D"],
-                ["XL", "86-94", "D-DD"],
-                ["XXL", "94-101", "DD-E"],
-              ].map((r) => (
-                <tr key={r[0]} className="border-b border-[#EBEBEB]">
-                  {r.map((c, i) => (
-                    <td key={i} className={`py-2.5 ${i < 2 ? "pr-4" : ""} ${i === 0 ? "font-medium" : "text-[#555555]"}`}>
-                      {c}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul>
+          <li>
+            <strong>Body measurements</strong> are measured on you &mdash; compare them to
+            your own tape measurements directly.
+          </li>
+          <li>
+            <strong>Laid flat</strong> or <strong>half</strong> figures are taken across the
+            garment lying flat, not around the body. A half measurement is roughly half your
+            body measurement, so a flat bust of 34cm is not a 34cm bust.
+          </li>
+          <li>
+            <strong>Stretched</strong> figures show how far the fabric will go, not how it
+            sits at rest.
+          </li>
+        </ul>
 
         <h2>Choosing your fit</h2>
         <ul>
-          <li><strong>Shapewear</strong> — true to size gives firm, smoothing support. Sizing down does not increase shaping, it only reduces comfort.</li>
-          <li><strong>Bodysuits &amp; dresses</strong> — true to size for a close fit; size up for a softer drape.</li>
-          <li><strong>Swim</strong> — size up for more coverage through the leg and bust.</li>
-          <li><strong>Loungewear</strong> — cut relaxed, so most people stay with their usual size.</li>
+          <li><strong>Shapewear</strong> &mdash; true to size gives firm, smoothing support. Sizing down doesn't increase shaping, it only costs you comfort.</li>
+          <li><strong>Bodysuits &amp; dresses</strong> &mdash; true to size for a close fit; size up for a softer drape.</li>
+          <li><strong>Swim</strong> &mdash; size up for more coverage through the leg and bust.</li>
+          <li><strong>Loungewear</strong> &mdash; cut relaxed, so most people stay with their usual size.</li>
         </ul>
 
         <p>
-          Still unsure? <Link to="/pages/$slug" params={{ slug: "contact" }} className="underline underline-offset-2">Contact us</Link>{" "}
-          with your measurements and we will recommend a size. Exchanges are free within
-          30 days — see{" "}
+          Between two sizes, or the chart doesn't cover what you need?{" "}
+          <Link to="/pages/$slug" params={{ slug: "contact" }} className="underline underline-offset-2">Contact us</Link>{" "}
+          with your measurements and we'll recommend a size. Exchanges are free within 30
+          days &mdash; see{" "}
           <Link to="/pages/$slug" params={{ slug: "returns" }} className="underline underline-offset-2">Returns &amp; Exchanges</Link>.
         </p>
       </>
