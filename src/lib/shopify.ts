@@ -73,7 +73,7 @@ const PRODUCTS_QUERY = `
           id title description handle
           priceRange { minVariantPrice { amount currencyCode } }
           images(first: 40) { edges { node { url altText } } }
-          variants(first: 20) {
+          variants(first: 100) {
             edges {
               node {
                 id title
@@ -103,8 +103,8 @@ const PRODUCT_BY_HANDLE_QUERY = `
     product(handle: $handle) {
       id title description handle
       priceRange { minVariantPrice { amount currencyCode } }
-      images(first: 30) { edges { node { url altText } } }
-      variants(first: 50) {
+      images(first: 120) { edges { node { url altText } } }
+      variants(first: 250) {
         edges {
           node {
             id title
@@ -148,7 +148,7 @@ const COLLECTION_BY_HANDLE_QUERY = `
             id title description handle
             priceRange { minVariantPrice { amount currencyCode } }
             images(first: 40) { edges { node { url altText } } }
-            variants(first: 20) {
+            variants(first: 100) {
               edges {
                 node {
                   id title
@@ -196,7 +196,7 @@ const PRODUCT_RECOMMENDATIONS_QUERY = `
       id title description handle
       priceRange { minVariantPrice { amount currencyCode } }
       images(first: 40) { edges { node { url altText } } }
-      variants(first: 20) {
+      variants(first: 100) {
         edges {
           node {
             id title

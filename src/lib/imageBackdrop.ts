@@ -141,3 +141,93 @@ export async function findGhost(urls: string[]): Promise<string | null> {
   }
   return null;
 }
+
+/** Median colour of the middle of the frame — the garment itself, ignoring the
+    backdrop around it. Used to check a shot really is the colour we think. */
+export async function sampleGarment(url: string): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const N = 64;
+        const canvas = document.createElement("canvas");
+        canvas.width = N;
+        canvas.height = N;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return resolve(null);
+        ctx.drawImage(img, 0, 0, N, N);
+        const { data } = ctx.getImageData(0, 0, N, N);
+        const rs: number[] = [], gs: number[] = [], bs: number[] = [];
+        for (let y = 18; y < 50; y++) {
+          for (let x = 20; x < 44; x++) {
+            const i = (y * N + x) * 4;
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            // Skip backdrop pixels so a small garment can't be washed out by it.
+            if (r > 240 && g > 240 && b > 240) continue;
+            rs.push(r); gs.push(g); bs.push(b);
+          }
+        }
+        if (rs.length < 40) return resolve(null);
+        const mid = (xs: number[]) => { xs.sort((a, b) => a - b); return xs[Math.floor(xs.length / 2)]; };
+        const hex = (n: number) => n.toString(16).padStart(2, "0");
+        resolve(`#${hex(mid(rs))}${hex(mid(gs))}${hex(mid(bs))}`);
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = thumbUrl(url);
+  });
+}
+
+function dist(a: string, b: string): number {
+  const p = (h: string) => {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const [r1, g1, b1] = p(a), [r2, g2, b2] = p(b);
+  return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+}
+
+/**
+ * Garment-only shot for a specific colour.
+ *
+ * Galleries aren't always cleanly grouped — some products had their later
+ * colours uploaded interleaved by time rather than in colour blocks, so a
+ * positional slice can hand back another colour's garment. This checks the
+ * candidate actually looks like the colour on the swatch, and takes the closest
+ * match rather than the first one found. Returns null rather than guessing, so
+ * a hover shows nothing instead of the wrong colour.
+ */
+export async function findGhostForColor(
+  urls: string[],
+  expectedHex: string | null,
+): Promise<string | null> {
+  const ghosts: string[] = [];
+  for (const url of urls) {
+    try {
+      if (isGhostBackdrop(await sampleBackdrop(thumbUrl(url)))) ghosts.push(url);
+    } catch {
+      /* skip */
+    }
+  }
+  if (ghosts.length === 0) return null;
+  if (!expectedHex) return ghosts[0];
+
+  let best: string | null = null;
+  let bestD = Infinity;
+  for (const g of ghosts) {
+    const c = await sampleGarment(g);
+    if (!c) continue;
+    const d = dist(c, expectedHex);
+    if (d < bestD) {
+      bestD = d;
+      best = g;
+    }
+  }
+  // Generous threshold: swatch hexes are nominal, real fabric shifts under
+  // studio light. Beyond this it's a different colourway, not a lighting shift.
+  return bestD <= 110 ? best : null;
+}

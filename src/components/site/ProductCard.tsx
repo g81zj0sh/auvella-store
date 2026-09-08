@@ -9,7 +9,7 @@ import { colorToHex } from "@/lib/colorMap";
 import { EditorialImage } from "@/components/site/EditorialImage";
 import { useMemo, useState, useEffect } from "react";
 import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
-import { findGhost } from "@/lib/imageBackdrop";
+import { findGhostForColor } from "@/lib/imageBackdrop";
 
 /*
  * Product card — SKIMS spec:
@@ -72,11 +72,20 @@ export function ProductCard({ product, badge }: Props) {
   // thumbnails, so an unhovered grid costs nothing.
   useEffect(() => {
     setGhost(null);
-    if (!hovering || run.length < 2) return;
+    if (!hovering) return;
     let live = true;
-    findGhost(run.map((r) => r.node.url)).then((g) => {
+    const want = activeColor ? colorToHex(activeColor) ?? null : null;
+    const inRun = run.map((r) => r.node.url);
+    (async () => {
+      let g = inRun.length > 1 ? await findGhostForColor(inRun, want) : null;
+      if (!g) {
+        // Some galleries aren't grouped by colour, so the run can miss the
+        // right garment. Widen to the whole gallery and match on colour.
+        const all = node.images.edges.map((e) => e.node.url).slice(0, 40);
+        g = await findGhostForColor(all, want);
+      }
       if (live) setGhost(g);
-    });
+    })();
     return () => {
       live = false;
     };
@@ -168,7 +177,7 @@ export function ProductCard({ product, badge }: Props) {
           </span>
         </div>
         {colors.length > 1 && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {colors.slice(0, 6).map((c) => (
               <button
                 key={c}
@@ -176,13 +185,12 @@ export function ProductCard({ product, badge }: Props) {
                 aria-label={c}
                 aria-pressed={c === activeColor}
                 onClick={(e) => onSwatch(e, c)}
-                onMouseEnter={() => setActiveColor(c)}
-                className={`grid h-4 w-4 place-items-center rounded-full transition-shadow ${
-                  c === activeColor ? "ring-1 ring-[#0a0a0a] ring-offset-1" : ""
+                className={`grid h-6 w-6 place-items-center rounded-full transition-shadow ${
+                  c === activeColor ? "ring-1 ring-[#0a0a0a] ring-offset-2" : ""
                 }`}
               >
                 <span
-                  className="h-2.5 w-2.5 rounded-full border border-[#0a0a0a]/15"
+                  className="h-4 w-4 rounded-full border border-[#0a0a0a]/15"
                   style={{ background: colorToHex(c) ?? "#cccccc" }}
                 />
               </button>
