@@ -18,6 +18,7 @@ import {
 import { useCartStore } from "@/stores/cartStore";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
+import { sampleBackdrop, cachedBackdrop, DEFAULT_BACKDROP } from "@/lib/imageBackdrop";
 import { Loader2, Star, Heart, ChevronLeft, ChevronRight, ScanSearch } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -462,6 +463,38 @@ function ProductPage() {
   const nextImg = () => setImageIdx((i) => (Math.min(i, galleryLen - 1) + 1) % galleryLen);
   const mainImg = activeImages[safeIdx]?.node;
 
+  /* Paint the gallery frame with the active shot's own backdrop, so the photo
+     reads edge-to-edge instead of floating on the site's cream. Model shots and
+     ghost shots resolve to different greys, hence per-image rather than fixed. */
+  const [backdrop, setBackdrop] = useState<string>(
+    () => cachedBackdrop(activeImages[0]?.node.url) ?? DEFAULT_BACKDROP,
+  );
+  useEffect(() => {
+    const url = mainImg?.url;
+    if (!url) return;
+    const known = cachedBackdrop(url);
+    if (known) {
+      setBackdrop(known);
+      return;
+    }
+    let live = true;
+    sampleBackdrop(url).then((c) => {
+      if (live) setBackdrop(c);
+    });
+    return () => {
+      live = false;
+    };
+  }, [mainImg?.url]);
+
+  // Warm the next/previous shots so swiping doesn't flash the old colour.
+  useEffect(() => {
+    if (galleryLen < 2) return;
+    [safeIdx + 1, safeIdx - 1].forEach((i) => {
+      const url = activeImages[(i + galleryLen) % galleryLen]?.node.url;
+      if (url && !cachedBackdrop(url)) void sampleBackdrop(url);
+    });
+  }, [safeIdx, galleryLen, activeImages]);
+
   // Desktop drag handlers — premium feel: track follows the pointer, then settles.
   const onPointerDown = (e: ReactPointerEvent) => {
     dragRef.current = { active: true, startX: e.clientX, moved: false };
@@ -523,7 +556,10 @@ function ProductPage() {
         </div>
 
         {/* ============ GALLERY — dominant, editorial ============ */}
-        <section className="relative bg-[#F6F3EF]">
+        <section
+          className="relative transition-colors duration-500 ease-out"
+          style={{ backgroundColor: backdrop }}
+        >
           {/* Desktop: single immersive frame with subtle controls */}
           <div className="relative hidden overflow-hidden lg:sticky lg:top-[88px] lg:block lg:h-[calc(100vh-88px)]">
             <div
