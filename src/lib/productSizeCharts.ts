@@ -325,8 +325,8 @@ export const PRODUCT_SIZE_CHARTS = {
       ["S", "82 cm (32\")", "64 cm (25\")", "83 cm (32.5\")", "66 cm (26\")", "120 cm (47\")"],
       ["M", "86 cm (34\")", "68 cm (27\")", "87 cm (34\")", "67 cm (26.5\")", "121 cm (47.5\")"],
       ["L", "92 cm (36\")", "74 cm (29\")", "93 cm (36.5\")", "68 cm (27\")", "122 cm (48\")"],
-      ["XL", "98 cm (38.5\")", "80 cm (31.5\")", "99 cm (39\")", "69 cm (27\")", "123 cm (48.5\")"],
-      ["XXL", "104 cm (41\")", "86 cm (34\")", "105 cm (41.5\")", "70 cm (27.5\")", "124 cm (49\")"],
+      ["XL", "98 cm (38.5\") [CHECK: extrapolated, not on supplier chart]", "80 cm (31.5\") [CHECK: extrapolated]", "99 cm (39\") [CHECK: extrapolated]", "69 cm (27\") [CHECK: extrapolated]", "123 cm (48.5\") [CHECK: extrapolated]"],
+      ["XXL", "104 cm (41\") [CHECK: extrapolated, not on supplier chart]", "86 cm (34\") [CHECK: extrapolated]", "105 cm (41.5\") [CHECK: extrapolated]", "70 cm (27.5\") [CHECK: extrapolated]", "124 cm (49\") [CHECK: extrapolated]"],
     ],
     fitNote:
       "Garment measurements. Slim fit with mid-waist shaping and stretch (spandex blend) — if you're between sizes, size up for a relaxed fit or stay true for a sculpted fit. Skirt is one-step maxi length.",
