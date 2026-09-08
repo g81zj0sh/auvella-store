@@ -24,6 +24,29 @@ interface Props {
   badge?: string; // kept for API compatibility; rendered as minimal text label
 }
 
+/*
+ * True only on devices with a real hovering pointer.
+ *
+ * Touch browsers synthesise mouseenter on tap, so gating the garment swap on
+ * hover alone would flip the image the moment a finger lands on the tile. The
+ * swap is a desktop affordance — on a phone the garment shots belong to the
+ * product page, reached by tapping through.
+ *
+ * Starts false so server and first client render agree, then resolves.
+ */
+function useHoverCapable(): boolean {
+  const [can, setCan] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const apply = () => setCan(mq.matches);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []);
+  return can;
+}
+
 export function ProductCard({ product, badge }: Props) {
   const node = product.node;
   const image = node.images.edges[0]?.node;
@@ -63,6 +86,7 @@ export function ProductCard({ product, badge }: Props) {
   const optName = colorOptionName(node);
   const [activeColor, setActiveColor] = useState<string | null>(colors[0] ?? null);
   const [hovering, setHovering] = useState(false);
+  const hoverCapable = useHoverCapable();
   const [ghost, setGhost] = useState<string | null>(null);
 
   const run = (activeColor && colorMap.get(activeColor)) || [];
@@ -72,7 +96,7 @@ export function ProductCard({ product, badge }: Props) {
   // thumbnails, so an unhovered grid costs nothing.
   useEffect(() => {
     setGhost(null);
-    if (!hovering) return;
+    if (!hoverCapable || !hovering) return;
     let live = true;
     const want = activeColor ? colorToHex(activeColor) ?? null : null;
     const inRun = run.map((r) => r.node.url);
@@ -89,7 +113,7 @@ export function ProductCard({ product, badge }: Props) {
     return () => {
       live = false;
     };
-  }, [hovering, activeColor, node.handle]);
+  }, [hoverCapable, hovering, activeColor, node.handle]);
 
   // Price follows the selected colour.
   const colorVariant = activeColor && optName
@@ -113,15 +137,15 @@ export function ProductCard({ product, badge }: Props) {
       to="/product/$handle"
       params={{ handle: node.handle }}
       className="group block"
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
+      onMouseEnter={hoverCapable ? () => setHovering(true) : undefined}
+      onMouseLeave={hoverCapable ? () => setHovering(false) : undefined}
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
         {primary && (
           <EditorialImage src={primary.url} alt={primary.altText ?? node.title} />
         )}
         {/* Garment-only shot, crossfaded in over the model shot on hover. */}
-        {ghost && (
+        {hoverCapable && ghost && (
           <img
             src={ghost}
             alt=""
