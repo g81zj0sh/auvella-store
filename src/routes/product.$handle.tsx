@@ -16,6 +16,7 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { sampleBackdrop, cachedBackdrop, DEFAULT_BACKDROP } from "@/lib/imageBackdrop";
