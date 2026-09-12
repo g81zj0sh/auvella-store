@@ -207,6 +207,26 @@ function ProductPage() {
     if (handle) recordViewed(handle);
   }, [handle, recordViewed]);
 
+    // Meta ViewContent — one event per product, once its data has resolved.
+  // Keyed on the product id rather than the handle so a re-render or a
+  // colour change doesn't re-report the same view.
+  const metaViewedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!node || metaViewedRef.current === node.id) return;
+    metaViewedRef.current = node.id;
+    const price = node.priceRange.minVariantPrice;
+    const amount = Number(price.amount) || 0;
+    const contentId = metaContentId(node.variants.edges[0]?.node.id);
+    trackMetaEvent("ViewContent", {
+      value: amount,
+      currency: price.currencyCode,
+      content_type: "product",
+      content_name: node.title,
+      content_ids: [contentId],
+      contents: [{ id: contentId, quantity: 1, item_price: amount }],
+    });
+  }, [node]);
+
   // Initialize non-size options from the first variant; size stays an explicit choice.
   const initialSelected = useMemo(() => {
     if (!node) return {};
