@@ -9,6 +9,7 @@ import {
   storefrontApiRequest,
   updateShopifyCartLine,
 } from "@/lib/shopify";
+import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 
 export interface CartItem {
   lineId: string | null;
@@ -47,6 +48,9 @@ export const useCartStore = create<CartStore>()(
         const { items, cartId, clearCart } = get();
         const existing = items.find((i) => i.variantId === item.variantId);
         set({ isLoading: true });
+        // Only report AddToCart to Meta once Shopify has actually accepted the
+        // line — a failed or recovered-from-error add is not a cart addition.
+        let added = false;
         try {
           if (!cartId) {
             const result = await createShopifyCart({ variantId: item.variantId, quantity: item.quantity });
@@ -56,6 +60,7 @@ export const useCartStore = create<CartStore>()(
                 checkoutUrl: result.checkoutUrl,
                 items: [{ ...item, lineId: result.lineId }],
               });
+              added = true;
             }
           } else if (existing) {
             const newQty = existing.quantity + item.quantity;
@@ -68,6 +73,7 @@ export const useCartStore = create<CartStore>()(
                   i.variantId === item.variantId ? { ...i, quantity: newQty } : i,
                 ),
               });
+              added = true;
             } else if (result.cartNotFound) {
               clearCart();
             }
@@ -79,6 +85,7 @@ export const useCartStore = create<CartStore>()(
             if (result.success) {
               const current = get().items;
               set({ items: [...current, { ...item, lineId: result.lineId ?? null }] });
+              added = true;
             } else if (result.cartNotFound) {
               clearCart();
             }
@@ -87,6 +94,21 @@ export const useCartStore = create<CartStore>()(
           console.error("Failed to add item:", e);
         } finally {
           set({ isLoading: false });
+        }
+
+        if (added) {
+          const unitPrice = Number(item.price.amount) || 0;
+          const contentId = metaContentId(item.variantId);
+          trackMetaEvent("AddToCart", {
+            value: unitPrice * item.quantity,
+            currency: item.price.currencyCode,
+            content_type: "product",
+            content_name: item.product?.title,
+            content_ids: [contentId],
+            contents: [
+              { id: contentId, quantity: item.quantity, item_price: unitPrice },
+            ],
+          });
         }
       },
 
