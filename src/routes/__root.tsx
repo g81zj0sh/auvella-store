@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { initMetaPixel, trackMetaPageView } from "../lib/metaPixel";
 import { Toaster } from "sonner";
 import { QuickAddSheet } from "@/components/site/QuickAddSheet";
 import { useQuickAdd } from "@/stores/quickAddStore";
@@ -105,6 +106,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "preconnect", href: "https://connect.facebook.net" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" },
       { rel: "stylesheet", href: appCss },
     ],
@@ -131,6 +133,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
   useCartSync();
   useDomTranslation();
   useEffect(() => {
@@ -139,6 +142,15 @@ function RootComponent() {
     void import("@/lib/preferences").then((m) => m.usePreferences.persist?.rehydrate());
     void useCartStore.persist?.rehydrate();
   }, []);
+  useEffect(() => {
+    // Pixel loads client-side only; the router subscription covers SPA
+    // navigations, which would otherwise never register a PageView after
+    // the first document load.
+    initMetaPixel();
+    return router.subscribe("onResolved", () => {
+      trackMetaPageView();
+    });
+  }, [router]);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
