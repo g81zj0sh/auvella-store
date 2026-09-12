@@ -76,3 +76,14 @@ export function trackMetaPageView(): void {
   lastTrackedPath = path;
   trackMetaEvent("PageView");
 }
+
+/**
+ * Shopify hands out global IDs ("gid://shopify/ProductVariant/123") but the
+ * Merchant/catalogue feed keys on the bare numeric id. Meta can only match an
+ * event to a catalogue item when the two agree, so strip to the last segment.
+ */
+export function metaContentId(gid: string | null | undefined): string {
+  const raw = String(gid ?? "");
+  const parts = raw.split("/");
+  return parts[parts.length - 1] || raw;
+}
