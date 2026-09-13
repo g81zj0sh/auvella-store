@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { COUNTRIES, freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
 import { usePreferences } from "@/lib/preferences";
+import { landedOnHome } from "@/lib/landing";
 
 /*
  * ShippingPopup — SKIMS-style shipping-location modal.
@@ -9,10 +10,35 @@ import { usePreferences } from "@/lib/preferences";
  *  - Hemisphere-aware seasonal urgency bar with live countdown
  *  - Fades in on open, fades out on dismiss
  *  - Shows once per session (sessionStorage)
+ *  - Only for visitors whose session STARTED on the home page. Someone who
+ *    lands on a collection or product and later navigates home is mid-browse,
+ *    not arriving, so the modal stays out of their way.
+ *  - Suppressed for 10 minutes after a dismissal, so a back-button bounce onto
+ *    the home page can't resurrect it even in a fresh session.
  */
 
 const SESSION_KEY = "auvella_shipping_popup_v1";
+/* Dismissal timestamp. localStorage, not session: a back-navigation can start a
+   fresh session in some browsers, which is exactly the bounce we're damping. */
+const DISMISSED_AT_KEY = "auvella_shipping_popup_dismissed_at_v1";
+const COOLDOWN_MS = 10 * 60 * 1000;
 const FADE_MS = 300;
+
+/** True while the 10-minute post-dismissal window is still open. */
+function inCooldown(): boolean {
+  try {
+    const raw = localStorage.getItem(DISMISSED_AT_KEY);
+    if (!raw) return false;
+    const then = Number(raw);
+    if (!Number.isFinite(then)) return false;
+    const delta = Date.now() - then;
+    // A negative delta means the clock moved backwards; treat it as expired
+    // rather than locking the modal out until the clock catches up.
+    return delta >= 0 && delta < COOLDOWN_MS;
+  } catch {
+    return false;
+  }
+}
 
 
 /** Meteorological season + end DATE, hemisphere-aware (AU/NZ southern). */
@@ -69,6 +95,8 @@ export function ShippingPopup() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!landedOnHome()) return;
+    if (inCooldown()) return;
     try {
       if (sessionStorage.getItem(SESSION_KEY)) return;
     } catch {
@@ -106,6 +134,11 @@ export function ShippingPopup() {
     setVisible(false); // fade out…
     try {
       sessionStorage.setItem(SESSION_KEY, "1");
+    } catch {
+      /* noop */
+    }
+    try {
+      localStorage.setItem(DISMISSED_AT_KEY, String(Date.now()));
     } catch {
       /* noop */
     }

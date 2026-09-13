@@ -18,6 +18,8 @@ import { useQuickAdd } from "@/stores/quickAddStore";
 import { useCartSync } from "@/hooks/useCartSync";
 import { useDomTranslation } from "@/lib/preferences";
 import { useCartStore } from "@/stores/cartStore";
+// Side-effect import: captures the session's entry path before any route renders.
+import "@/lib/landing";
 
 function NotFoundComponent() {
   return (
