@@ -16,8 +16,22 @@ import { BACKDROPS } from "./imageBackdrops";
 
 export const DEFAULT_BACKDROP = "#F6F3EF";
 
-const cache = new Map<string, string>();
-const pending = new Map<string, Promise<string>>();
+/** Top and bottom colour of an image's backdrop. Equal values mean flat. */
+export type Backdrop = [string, string];
+
+const cache = new Map<string, Backdrop>();
+const pending = new Map<string, Promise<Backdrop>>();
+
+export const DEFAULT_BACKDROP_PAIR: Backdrop = [DEFAULT_BACKDROP, DEFAULT_BACKDROP];
+
+/** CSS paint for a backdrop pair: a flat fill when both stops match, a vertical
+    gradient when the shot was lit with a falloff. Painting the same ramp the
+    photo has is what makes the seam around an object-contain image vanish. */
+export function backdropCss(bd: Backdrop | undefined): string {
+  if (!bd) return DEFAULT_BACKDROP;
+  const [t, b] = bd;
+  return t === b ? t : `linear-gradient(to bottom, ${t} 0%, ${b} 100%)`;
+}
 
 function fileKey(url: string): string {
   const path = url.split("?")[0];
@@ -36,21 +50,21 @@ function sampleUrl(url: string): string {
 /** Colour known for this URL without any network — the build-time table first,
     then anything the runtime sampler has already resolved. Lets the first paint
     be correct and makes image swaps instant. */
-export function cachedBackdrop(url: string | undefined): string | undefined {
+export function cachedBackdrop(url: string | undefined): Backdrop | undefined {
   if (!url) return undefined;
   return BACKDROPS[fileKey(url)] ?? cache.get(url);
 }
 
-export function sampleBackdrop(url: string): Promise<string> {
+export function sampleBackdrop(url: string): Promise<Backdrop> {
   const hit = cachedBackdrop(url);
   if (hit) return Promise.resolve(hit);
 
   const inflight = pending.get(url);
   if (inflight) return inflight;
 
-  const job = new Promise<string>((resolve) => {
+  const job = new Promise<Backdrop>((resolve) => {
     if (typeof window === "undefined" || typeof document === "undefined") {
-      return resolve(DEFAULT_BACKDROP);
+      return resolve(DEFAULT_BACKDROP_PAIR);
     }
 
     const img = new window.Image();
@@ -66,30 +80,10 @@ export function sampleBackdrop(url: string): Promise<string> {
         canvas.width = N;
         canvas.height = N;
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) return resolve(DEFAULT_BACKDROP);
+        if (!ctx) return resolve(DEFAULT_BACKDROP_PAIR);
         ctx.drawImage(img, 0, 0, N, N);
 
         const { data } = ctx.getImageData(0, 0, N, N);
-
-        // Sample a ring just inside the edge — that band is backdrop in every
-        // shot, since the subject is always framed with margin around it.
-        const rs: number[] = [];
-        const gs: number[] = [];
-        const bs: number[] = [];
-        const take = (x: number, y: number) => {
-          const i = (y * N + x) * 4;
-          rs.push(data[i]);
-          gs.push(data[i + 1]);
-          bs.push(data[i + 2]);
-        };
-        for (let x = 2; x < N - 2; x++) {
-          take(x, 2);
-          take(x, N - 3);
-        }
-        for (let y = 2; y < N - 2; y++) {
-          take(2, y);
-          take(N - 3, y);
-        }
 
         // Median per channel, not mean: if hair, a shadow or a dark garment
         // clips the edge, the median ignores it where an average would be
@@ -99,16 +93,37 @@ export function sampleBackdrop(url: string): Promise<string> {
           return xs[Math.floor(xs.length / 2)];
         };
         const hex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, "0");
-        const colour = `#${hex(mid(rs))}${hex(mid(gs))}${hex(mid(bs))}`;
 
-        cache.set(url, colour);
-        resolve(colour);
+        // Read the top and bottom bands separately, and only at their outer
+        // corners — the subject is centred, so the corners stay backdrop even
+        // when a shoulder or a hem touches the frame edge.
+        const band = (ys: number[]) => {
+          const rs: number[] = [];
+          const gs: number[] = [];
+          const bs: number[] = [];
+          const edge = Math.max(2, Math.floor(N / 6));
+          for (const y of ys) {
+            for (let x = 2; x < N - 2; x++) {
+              if (x >= edge && x < N - edge) continue;
+              const i = (y * N + x) * 4;
+              rs.push(data[i]);
+              gs.push(data[i + 1]);
+              bs.push(data[i + 2]);
+            }
+          }
+          return `#${hex(mid(rs))}${hex(mid(gs))}${hex(mid(bs))}`;
+        };
+
+        const pair: Backdrop = [band([2, 3, 4]), band([N - 3, N - 4, N - 5])];
+
+        cache.set(url, pair);
+        resolve(pair);
       } catch {
-        resolve(DEFAULT_BACKDROP);
+        resolve(DEFAULT_BACKDROP_PAIR);
       }
     };
 
-    img.onerror = () => resolve(DEFAULT_BACKDROP);
+    img.onerror = () => resolve(DEFAULT_BACKDROP_PAIR);
     img.src = sampleUrl(url);
   });
 
@@ -153,7 +168,7 @@ export async function findGhost(urls: string[]): Promise<string | null> {
   for (const url of urls) {
     try {
       const c = await sampleBackdrop(thumbUrl(url));
-      if (isGhostBackdrop(c)) return url;
+      if (isGhostBackdrop(c[0])) return url;
     } catch {
       /* keep looking */
     }
@@ -227,7 +242,7 @@ export async function findGhostForColor(
   const ghosts: string[] = [];
   for (const url of urls) {
     try {
-      if (isGhostBackdrop(await sampleBackdrop(thumbUrl(url)))) ghosts.push(url);
+      if (isGhostBackdrop((await sampleBackdrop(thumbUrl(url)))[0])) ghosts.push(url);
     } catch {
       /* skip */
     }
