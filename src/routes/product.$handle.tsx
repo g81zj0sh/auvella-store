@@ -501,20 +501,17 @@ function ProductPage() {
   /* Paint the gallery frame with the active shot's own backdrop, so the photo
      reads edge-to-edge instead of floating on the site's cream. Model shots and
      ghost shots resolve to different greys, hence per-image rather than fixed. */
-  const [backdrop, setBackdrop] = useState<string>(
-    () => cachedBackdrop(activeImages[0]?.node.url) ?? DEFAULT_BACKDROP,
-  );
+  /* Indexed images resolve synchronously from the build-time table, so the
+     frame is painted the right colour in the same render that swaps the image —
+     no fetch, no fade. The async sampler only runs for images the table lacks. */
+  const [sampled, setSampled] = useState<string | undefined>(undefined);
+  const backdrop = cachedBackdrop(mainImg?.url) ?? sampled ?? DEFAULT_BACKDROP;
   useEffect(() => {
     const url = mainImg?.url;
-    if (!url) return;
-    const known = cachedBackdrop(url);
-    if (known) {
-      setBackdrop(known);
-      return;
-    }
+    if (!url || cachedBackdrop(url)) return;
     let live = true;
     sampleBackdrop(url).then((c) => {
-      if (live) setBackdrop(c);
+      if (live) setSampled(c);
     });
     return () => {
       live = false;
@@ -602,7 +599,7 @@ function ProductPage() {
 
         {/* ============ GALLERY — dominant, editorial ============ */}
         <section
-          className="relative transition-colors duration-500 ease-out"
+          className="relative"
           style={{ backgroundColor: backdrop }}
         >
           {/* Desktop: single immersive frame with subtle controls */}
@@ -1281,13 +1278,13 @@ function VisualSearchResults({
  * image's own backdrop. Nothing is cropped and no seam shows.
  */
 function MobileSlide({ url, alt, eager }: { url: string; alt: string; eager: boolean }) {
-  const [backdrop, setBackdrop] = useState<string>(
-    () => cachedBackdrop(url) ?? DEFAULT_BACKDROP,
-  );
+  const [sampled, setSampled] = useState<string | undefined>(undefined);
+  const backdrop = cachedBackdrop(url) ?? sampled ?? DEFAULT_BACKDROP;
   useEffect(() => {
+    if (cachedBackdrop(url)) return;
     let live = true;
     sampleBackdrop(url).then((c) => {
-      if (live) setBackdrop(c);
+      if (live) setSampled(c);
     });
     return () => {
       live = false;
@@ -1296,7 +1293,7 @@ function MobileSlide({ url, alt, eager }: { url: string; alt: string; eager: boo
 
   return (
     <div
-      className="aspect-[3/4] w-full shrink-0 snap-center transition-colors duration-500 ease-out"
+      className="aspect-[3/4] w-full shrink-0 snap-center"
       style={{ backgroundColor: backdrop }}
     >
       <img

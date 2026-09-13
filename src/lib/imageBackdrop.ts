@@ -12,18 +12,37 @@
  * `access-control-allow-origin: *`, so the canvas stays untainted.
  */
 
+import { BACKDROPS } from "./imageBackdrops";
+
 export const DEFAULT_BACKDROP = "#F6F3EF";
 
 const cache = new Map<string, string>();
 const pending = new Map<string, Promise<string>>();
 
-/** Colour already resolved for this URL, if any — lets the first paint be correct. */
+function fileKey(url: string): string {
+  const path = url.split("?")[0];
+  return path.slice(path.lastIndexOf("/") + 1);
+}
+
+/** Small CDN rendition for sampling — the colour is a 64px median, so pulling
+    the full-size asset into a canvas just to read its edges is pure waste. */
+function sampleUrl(url: string): string {
+  const [path, query] = url.split("?");
+  const params = new URLSearchParams(query ?? "");
+  params.set("width", "64");
+  return `${path}?${params.toString()}`;
+}
+
+/** Colour known for this URL without any network — the build-time table first,
+    then anything the runtime sampler has already resolved. Lets the first paint
+    be correct and makes image swaps instant. */
 export function cachedBackdrop(url: string | undefined): string | undefined {
-  return url ? cache.get(url) : undefined;
+  if (!url) return undefined;
+  return BACKDROPS[fileKey(url)] ?? cache.get(url);
 }
 
 export function sampleBackdrop(url: string): Promise<string> {
-  const hit = cache.get(url);
+  const hit = cachedBackdrop(url);
   if (hit) return Promise.resolve(hit);
 
   const inflight = pending.get(url);
@@ -90,7 +109,7 @@ export function sampleBackdrop(url: string): Promise<string> {
     };
 
     img.onerror = () => resolve(DEFAULT_BACKDROP);
-    img.src = url;
+    img.src = sampleUrl(url);
   });
 
   pending.set(url, job);
