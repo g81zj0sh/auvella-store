@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { galleryUrls, indexedHex } from "@/lib/galleryIndex";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -333,6 +334,14 @@ function ProductPage() {
         seen.add(key);
         set.push({ node: { url, altText } });
       };
+
+      // 0) Hand-verified index: exact shots for this colour, no guessing.
+      const indexed = galleryUrls(node.handle, value, images.map((im) => im.node));
+      if (indexed && indexed.length > 0) {
+        for (const n of indexed) push(n.url, n.altText);
+        map.set(value, set);
+        continue;
+      }
 
       // 1) Positional slice: this colour's gallery run
       if (positional && leadIdx.has(value)) {
@@ -781,7 +790,7 @@ function ProductPage() {
                 <div className="mt-3 flex flex-wrap gap-2">
                   {colorOption.values.map((v) => {
                     const active = currentSelected[colorOption.name] === v;
-                    const hex = swatchHex(v);
+                    const hex = indexedHex(node.handle, v) ?? swatchHex(v);
                     // No confident colour match (prints, novel names): the
                     // swatch becomes a crop of that variant's own photo.
                     const imgSwatch = !hex

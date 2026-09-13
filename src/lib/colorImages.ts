@@ -1,4 +1,5 @@
 import type { ShopifyProduct } from "@/lib/shopify";
+import { galleryUrls } from "@/lib/galleryIndex";
 
 /*
  * Colour → gallery-slice mapping.
@@ -65,6 +66,13 @@ export function buildColorImageMap(
   const sortedLeads = [...leadIdx.entries()].sort((a, b) => a[1] - b[1]);
 
   for (const value of values) {
+    // Hand-verified assignment wins over positional guessing wherever we
+    // have one — some galleries were uploaded interleaved, not in colour blocks.
+    const indexed = galleryUrls(node.handle, value, images.map((im) => im.node));
+    if (indexed && indexed.length > 0) {
+      map.set(value, indexed.map((n) => ({ node: n })));
+      continue;
+    }
     if (positional && leadIdx.has(value)) {
       const start = leadIdx.get(value)!;
       const pos = sortedLeads.findIndex(([v]) => v === value);

@@ -10,6 +10,7 @@ import { EditorialImage } from "@/components/site/EditorialImage";
 import { useMemo, useState, useEffect } from "react";
 import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
 import { findGhostForColor } from "@/lib/imageBackdrop";
+import { indexedEntry, indexedGhost, indexedHex } from "@/lib/galleryIndex";
 import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
 import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
 
@@ -94,33 +95,38 @@ export function ProductCard({ product, badge }: Props) {
   const [activeColor, setActiveColor] = useState<string | null>(colors[0] ?? null);
   const [hovering, setHovering] = useState(false);
   const hoverCapable = useHoverCapable();
-  const [ghost, setGhost] = useState<string | null>(null);
 
   const run = (activeColor && colorMap.get(activeColor)) || [];
   const primary = run[0]?.node ?? image;
 
-  // Resolve the garment-only shot for the active colour, lazily and from tiny
-  // thumbnails, so an unhovered grid costs nothing.
+  /* Garment-only shot for the active colour.
+     Indexed products resolve it synchronously and render it hidden from first
+     paint, so the browser has it ready before the cursor ever arrives; the
+     hover is then a pure opacity flip. Unindexed products fall back to the
+     sampler, run on mount rather than on hover so the cost is paid early. */
+  const isIndexed = !!indexedEntry(node.handle, activeColor);
+  const staticGhost = indexedGhost(node.handle, activeColor, node.images.edges.map((e) => e.node));
+  const [sampledGhost, setSampledGhost] = useState<string | null>(null);
+  const ghost = isIndexed ? staticGhost : sampledGhost;
+
   useEffect(() => {
-    setGhost(null);
-    if (!hoverCapable || !hovering) return;
+    setSampledGhost(null);
+    if (!hoverCapable || isIndexed) return;
     let live = true;
     const want = activeColor ? colorToHex(activeColor) ?? null : null;
     const inRun = run.map((r) => r.node.url);
     (async () => {
       let g = inRun.length > 1 ? await findGhostForColor(inRun, want) : null;
       if (!g) {
-        // Some galleries aren't grouped by colour, so the run can miss the
-        // right garment. Widen to the whole gallery and match on colour.
         const all = node.images.edges.map((e) => e.node.url).slice(0, 40);
         g = await findGhostForColor(all, want);
       }
-      if (live) setGhost(g);
+      if (live) setSampledGhost(g);
     })();
     return () => {
       live = false;
     };
-  }, [hoverCapable, hovering, activeColor, node.handle]);
+  }, [hoverCapable, isIndexed, activeColor, node.handle]);
 
   // Price follows the selected colour.
   const colorVariant = activeColor && optName
@@ -235,7 +241,7 @@ export function ProductCard({ product, badge }: Props) {
               >
                 <span
                   className="h-4 w-4 rounded-full border border-[#0a0a0a]/15"
-                  style={{ background: colorToHex(c) ?? "#cccccc" }}
+                  style={{ background: indexedHex(node.handle, c) ?? colorToHex(c) ?? "#cccccc" }}
                 />
               </button>
             ))}
