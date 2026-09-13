@@ -24,6 +24,7 @@ import { Loader2, Star, Heart, ChevronLeft, ChevronRight, ScanSearch } from "luc
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
+import { BUNDLE_DEAL, inBundleDeal } from "@/lib/bundleDeal";
 import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
 
 export const Route = createFileRoute("/product/$handle")({
@@ -433,6 +434,7 @@ function ProductPage() {
   const cur = (n: number) => display(n, currency);
   const compareAt = priceVariant?.compareAtPrice;
   const onSale = !!compareAt && parseFloat(compareAt.amount) > unitPrice;
+  const bundleDeal = inBundleDeal(node.handle);
   const crumb = inferCollection(node.title);
   const sizeGuide = resolveGuide(node.title);
   const sizeFitLabel = fitLabel(sizeGuide.guideType, sizeGuide.fitOverride);
@@ -574,6 +576,16 @@ function ProductPage() {
               </a>
             )}
           </div>
+          {bundleDeal && (
+            <div className="mt-2.5">
+              <span className="inline-block border border-[#0a0a0a] px-2 py-[3px] text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
+                {BUNDLE_DEAL.label}
+              </span>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-[#555555]">
+                {BUNDLE_DEAL.detail}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ============ GALLERY — dominant, editorial ============ */}
@@ -727,6 +739,17 @@ function ProductPage() {
                   {reviewCount} {reviewCount === 1 ? "Review" : "Reviews"}
                 </span>
               </a>
+            )}
+
+            {bundleDeal && (
+              <div className="mt-3">
+                <span className="inline-block border border-[#0a0a0a] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
+                  {BUNDLE_DEAL.label}
+                </span>
+                <p className="mt-2 text-[12px] leading-relaxed text-[#555555]">
+                  {BUNDLE_DEAL.detail}
+                </p>
+              </div>
             )}
             </div>
 

@@ -11,6 +11,7 @@ import {
 import { ShoppingBag, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { useDisplayPrice, useT } from "@/lib/preferences";
+import { freeShippingThreshold, useShippingCountry } from "@/lib/shipping";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
@@ -21,6 +22,21 @@ export function CartDrawer() {
   const display = useDisplayPrice();
   const t = useT();
   const baseCurrency = items[0]?.price.currencyCode ?? "GBP";
+
+  /*
+   * Free-shipping progress.
+   *
+   * The threshold comes from the same helper the announcement bar and PDP use,
+   * so the drawer can never advertise a different number from the rest of the
+   * site. Shopify's delivery profile is the real gate (75 GBP across all three
+   * zones); this is the shopper-facing mirror of it, converted into whatever
+   * currency they are browsing in.
+   */
+  const { country } = useShippingCountry();
+  const threshold = freeShippingThreshold(baseCurrency);
+  const remaining = Math.max(0, threshold - totalPrice);
+  const qualified = totalPrice >= threshold;
+  const progress = threshold > 0 ? Math.min(100, (totalPrice / threshold) * 100) : 0;
 
   useEffect(() => {
     if (open) syncCart();
@@ -114,6 +130,40 @@ export function CartDrawer() {
                 </div>
               </div>
               <div className="flex-shrink-0 space-y-4 pt-4 border-t border-border bg-cream">
+                <div>
+                  <p className="text-[11px] leading-relaxed text-cocoa">
+                    {qualified ? (
+                      <>
+                        <span className="font-medium text-ink">Free shipping unlocked</span>
+                        {" \u2014 your order is over "}
+                        {display(threshold, baseCurrency)}
+                        {country?.name ? ` to ${country.name}` : ""}.
+                      </>
+                    ) : (
+                      <>
+                        {"You're "}
+                        <span className="font-medium text-ink">
+                          {display(remaining, baseCurrency)}
+                        </span>
+                        {" away from free shipping"}
+                        {country?.name ? ` to ${country.name}` : ""}.
+                      </>
+                    )}
+                  </p>
+                  <div
+                    className="mt-2 h-[3px] w-full overflow-hidden bg-beige"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(progress)}
+                    aria-label="Progress towards free shipping"
+                  >
+                    <div
+                      className="h-full bg-ink transition-[width] duration-500 ease-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm uppercase tracking-[0.2em] text-cocoa">{t("Subtotal")}</span>
                   <span className="text-xl font-serif text-ink">
