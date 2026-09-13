@@ -88,7 +88,7 @@ export const BACKDROPS: Record<string, string> = {
   "hf_20260709_221644_846c78b5-c1c4-4ed6-a52d-7eec9af9d450.png": "#dde6e8",
   "hf_20260709_221652_a260da13-fe02-4041-9fff-fd785a42c85a.png": "#eaecee",
   "hf_20260709_221943_91d7d518-b2da-4f30-b217-6808b0b274f5.png": "#eaeaec",
-  "hf_20260709_222144_0900d893-11e0-4bd3-823e-f07542cd583a.png": "#ecece5",
+  "hf_20260709_222144_0900d893-11e0-4bd3-823e-f07542cd583a.webp": "#ebeff0",
   "hf_20260824_224119_bdb3b7b9-c3c3-438d-b78e-984df6ade512.png": "#ebebea",
   "hf_20260824_224126_4ee3cba2-1292-418b-8eeb-1de8f5951da4.png": "#ecebea",
   "hf_20260824_224132_212babb0-2a9d-488b-bcca-07adbb357c09.png": "#dddddc",

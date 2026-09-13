@@ -206,7 +206,7 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
     "Yellow": { m: ["hf_20260709_221548_f65031ce-85f5-4fb4-af15-9e06186aac11.png", "image_c05f13e8-ba36-43da-ae2b-c5029dcc68de.webp", "hf_20260709_221555_33bf5fb4-02ba-410a-8be4-c7fd9710aa1d.png"], g: [], hex: null },
     "Red": { m: ["hf_20260709_221607_8b28cb8d-0e3e-4402-b6dc-b1c8dbffc71d.png", "image_a302c9d4-807f-4458-9cd3-6c14ceb45bdb.webp", "hf_20260709_221601_1d9eb9ad-c22d-461f-9912-3a7a6297e852.png"], g: [], hex: null },
     "Black": { m: ["hf_20260709_221644_846c78b5-c1c4-4ed6-a52d-7eec9af9d450.png", "image_ab67b068-9b94-493a-8007-558cb37093f3.webp", "hf_20260709_221652_a260da13-fe02-4041-9fff-fd785a42c85a.png"], g: [], hex: null },
-    "Blue": { m: ["hf_20260709_222144_0900d893-11e0-4bd3-823e-f07542cd583a.png", "image_0f2c3088-0740-4dfe-b5a8-6951d6f49c54.webp", "hf_20260709_221943_91d7d518-b2da-4f30-b217-6808b0b274f5.png"], g: [], hex: null },
+    "Blue": { m: ["hf_20260709_222144_0900d893-11e0-4bd3-823e-f07542cd583a.webp", "image_0f2c3088-0740-4dfe-b5a8-6951d6f49c54.webp", "hf_20260709_221943_91d7d518-b2da-4f30-b217-6808b0b274f5.png"], g: [], hex: "#8ab9ce" },
   },
   "womens-high-waisted-ruched-bikini-bottoms": {
     "Black": { m: ["image_f6dcf8cc-94ea-44be-9580-72869e54b388.webp", "image_70620719-0dde-41c7-b325-495e3e0da264.webp", "image_5a6130a8-9873-42d8-8fd6-6f3688892c6c.webp"], g: ["image_5b3f4acb-aec3-498b-ab5b-c88c688461a3.webp", "image_ee8813d9-243f-4298-8eeb-9ad2d8ae3fb8.webp"], hex: "#1c1c1c" },
