@@ -163,7 +163,7 @@ export interface ShopifyCollection {
 const COLLECTION_BY_HANDLE_QUERY = `
   query GetCollection($handle: String!, $first: Int!) {
     collection(handle: $handle) {
-      id title description handle productType
+      id title description handle
       image { url altText }
       products(first: $first) {
         edges {
