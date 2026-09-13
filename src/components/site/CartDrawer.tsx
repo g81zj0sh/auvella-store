@@ -12,6 +12,7 @@ import { ShoppingBag, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-
 import { useCartStore } from "@/stores/cartStore";
 import { useDisplayPrice, useT } from "@/lib/preferences";
 import { freeShippingThreshold, useShippingCountry } from "@/lib/shipping";
+import { cartLineImage } from "@/lib/cartImage";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
@@ -82,13 +83,16 @@ export function CartDrawer() {
                   {items.map((item) => (
                     <div key={item.variantId} className="flex gap-4">
                       <div className="w-20 h-24 bg-beige overflow-hidden flex-shrink-0">
-                        {item.product.node.images?.edges?.[0]?.node && (
-                          <img
-                            src={item.product.node.images.edges[0].node.url}
-                            alt={item.product.node.title}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                        {(() => {
+                          const thumb = cartLineImage(item.product, item.variantId, item.selectedOptions);
+                          return thumb ? (
+                            <img
+                              src={thumb.url}
+                              alt={thumb.alt}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : null;
+                        })()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-serif text-ink truncate">{item.product.node.title}</h4>
