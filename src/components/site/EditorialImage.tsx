@@ -12,7 +12,11 @@
  *    follows `position`, so scaling zooms toward the crop anchor / subject.
  *  - hover zoom (+4% of base) lives on the image only; parent must be
  *    `group` with overflow-hidden
+ *  - srcset/sizes: the CDN serves a correctly-sized render of the untouched
+ *    master, so a multi-MB PNG no longer ships whole to a small tile. Widths
+ *    run to 2x the painted size, so retina screens lose nothing.
  */
+import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
 export function EditorialImage({
   src,
   alt = "",
@@ -21,6 +25,8 @@ export function EditorialImage({
   scale,
   hover = true,
   eager = false,
+  sizes = "(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 50vw",
+  maxWidth = 1200,
 }: {
   src: string;
   alt?: string;
@@ -30,14 +36,21 @@ export function EditorialImage({
   scale?: number;
   hover?: boolean;
   eager?: boolean;
+  /** CSS width this image paints at, so the browser picks the right source. */
+  sizes?: string;
+  /** Largest candidate offered; caps the srcset for small tiles. */
+  maxWidth?: number;
 }) {
   const base = scale ?? (zoom ? 1.12 : 1);
   void hover;
   return (
     <img
-      src={src}
+      src={shopifyImg(src, Math.min(maxWidth, 1200))}
+      srcSet={shopifySrcSet(src, maxWidth)}
+      sizes={sizes}
       alt={alt}
       loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : undefined}
       decoding="async"
       draggable={false}
       style={

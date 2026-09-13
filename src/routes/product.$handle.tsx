@@ -13,6 +13,7 @@ import {
   fetchProductRecommendations,
   fetchProducts,
   shopifyImg,
+  shopifySrcSet,
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
@@ -614,11 +615,15 @@ function ProductPage() {
               {activeImages.map((im, i) => (
                 <img
                   key={im.node.url + i}
-                  src={im.node.url}
+                  src={shopifyImg(im.node.url, 1200)}
+                  srcSet={shopifySrcSet(im.node.url, 2000)}
+                  sizes="(min-width: 1024px) 55vw, 100vw"
                   alt={im.node.altText ?? node.title}
                   draggable={false}
                   className="h-full w-full shrink-0 select-none object-contain object-center"
                   loading={i === 0 ? "eager" : "lazy"}
+                  fetchPriority={i === 0 ? "high" : undefined}
+                  decoding="async"
                 />
               ))}
             </div>
@@ -1004,8 +1009,10 @@ function ProductPage() {
           <div className="flex items-center gap-4 border-b border-[#EBEBEB] px-5 py-4">
             {mainImg && (
               <img
-                src={mainImg.url}
+                src={shopifyImg(mainImg.url, 160)}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="h-14 w-11 shrink-0 object-cover object-[center_top]"
               />
             )}
@@ -1284,10 +1291,14 @@ function MobileSlide({ url, alt, eager }: { url: string; alt: string; eager: boo
       style={{ backgroundColor: backdrop }}
     >
       <img
-        src={url}
+        src={shopifyImg(url, 1200)}
+        srcSet={shopifySrcSet(url, 2000)}
+        sizes="(min-width: 1024px) 55vw, 100vw"
         alt={alt}
         className="h-full w-full object-contain object-center"
         loading={eager ? "eager" : "lazy"}
+        fetchPriority={eager ? "high" : undefined}
+        decoding="async"
       />
     </div>
   );

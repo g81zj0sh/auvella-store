@@ -42,6 +42,27 @@ export function shopifyImg(url: string, width = 1600): string {
   }
 }
 
+/*
+ * Responsive srcset off the Shopify CDN.
+ *
+ * The CDN renders each width from the untouched master and caches it — the
+ * uploaded file is never modified, replaced or re-encoded, and gallery order is
+ * unaffected. This exists because several masters are 2.5–4 MB PNGs, and
+ * shipping those whole to a 300px card wastes megabytes per tile. A browser
+ * downscaling an oversized bitmap is also softer than the CDN's resample, so
+ * serving the right width looks equal or better — never worse.
+ *
+ * Candidates run to 2x the painted size, so retina screens lose nothing.
+ */
+const SRCSET_WIDTHS = [240, 360, 480, 640, 800, 1000, 1200, 1600, 2000];
+
+export function shopifySrcSet(url: string, maxWidth = 1600): string {
+  if (!url) return "";
+  return SRCSET_WIDTHS.filter((w) => w <= maxWidth)
+    .map((w) => `${shopifyImg(url, w)} ${w}w`)
+    .join(", ");
+}
+
 export async function storefrontApiRequest(query: string, variables: any = {}) {
   const response = await fetch(SHOPIFY_STOREFRONT_URL, {
     method: "POST",

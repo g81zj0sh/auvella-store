@@ -10,6 +10,7 @@ import { EditorialImage } from "@/components/site/EditorialImage";
 import { useMemo, useState, useEffect } from "react";
 import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
 import { findGhostForColor } from "@/lib/imageBackdrop";
+import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
 import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
 
 /*
@@ -148,14 +149,22 @@ export function ProductCard({ product, badge }: Props) {
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
         {primary && (
-          <EditorialImage src={primary.url} alt={primary.altText ?? node.title} />
+          <EditorialImage
+            src={primary.url}
+            alt={primary.altText ?? node.title}
+            maxWidth={1000}
+          />
         )}
         {/* Garment-only shot, crossfaded in over the model shot on hover. */}
         {hoverCapable && ghost && (
           <img
-            src={ghost}
+            src={shopifyImg(ghost, 800)}
+            srcSet={shopifySrcSet(ghost, 1000)}
+            sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 50vw"
             alt=""
             aria-hidden="true"
+            loading="lazy"
+            decoding="async"
             className={`absolute inset-0 h-full w-full object-cover object-[center_top] transition-opacity duration-300 ease-out ${
               hovering ? "opacity-100" : "opacity-0"
             }`}
