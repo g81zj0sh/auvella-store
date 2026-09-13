@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { galleryUrls, indexedHex } from "@/lib/galleryIndex";
+import { galleryUrls, indexedHex, indexedSwatch } from "@/lib/galleryIndex";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -787,10 +787,12 @@ function ProductPage() {
                 <div className="mt-3 flex flex-wrap gap-2">
                   {colorOption.values.map((v) => {
                     const active = currentSelected[colorOption.name] === v;
-                    const hex = indexedHex(node.handle, v) ?? swatchHex(v);
-                    // No confident colour match (prints, novel names): the
-                    // swatch becomes a crop of that variant's own photo.
-                    const imgSwatch = !hex
+                    // Prints get a zoomed crop of the fabric — a flat dot would
+                    // read as a solid colour and mislead. Everything else uses
+                    // its measured hex, then the name map.
+                    const crop = indexedSwatch(node.handle, v, images.map((i) => i.node));
+                    const hex = crop ? null : indexedHex(node.handle, v) ?? swatchHex(v);
+                    const imgSwatch = !hex && !crop
                       ? node.variants.edges.find(
                           (vv) =>
                             vv.node.selectedOptions.some(
@@ -810,14 +812,20 @@ function ProductPage() {
                             : "border-[#0a0a0a]/15 hover:border-[#0a0a0a]/50"
                         }`}
                         style={
-                          hex
-                            ? { backgroundColor: hex }
-                            : imgSwatch
-                              ? {
-                                  backgroundImage: `url(${shopifyImg(imgSwatch, 96)})`,
-                                  backgroundPosition: "center 30%",
-                                }
-                              : { backgroundColor: "#c9b9a3" }
+                          crop
+                            ? {
+                                backgroundImage: `url(${shopifyImg(crop.url, 400)})`,
+                                backgroundPosition: crop.position,
+                                backgroundSize: crop.size,
+                              }
+                            : hex
+                              ? { backgroundColor: hex }
+                              : imgSwatch
+                                ? {
+                                    backgroundImage: `url(${shopifyImg(imgSwatch, 96)})`,
+                                    backgroundPosition: "center 30%",
+                                  }
+                                : { backgroundColor: "#c9b9a3" }
                         }
                       />
                     );

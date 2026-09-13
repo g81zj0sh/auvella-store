@@ -6,7 +6,12 @@
  * colour measured off the garment shot; null means use the name map.
  * Regenerate rather than patch when the catalogue changes. */
 
-export type GalleryEntry = { m: string[]; g: string[]; hex: string | null };
+/** sw: for prints and patterns, where a flat dot would mislead — the swatch is
+    a zoomed crop of the fabric itself. f is the source image, x/y the CSS
+    background-position percentages and z the background-size percentage,
+    chosen offline as the most patterned square that sits entirely on cloth. */
+export type SwatchCrop = { f: string; x: number; y: number; z: number };
+export type GalleryEntry = { m: string[]; g: string[]; hex: string | null; sw?: SwatchCrop };
 
 export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
   "invisible-front-buckle-strapless-bra": {
@@ -93,13 +98,13 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
     "Blue": { m: ["image_8167ec95-2bcd-49bd-b9df-a58072ecdac8.webp", "image_9105f1c8-277d-4cc5-852b-5e5af9c2b90e.webp", "image_5b30b6bd-9562-48e1-88d2-2fd7728d36d7.webp"], g: ["image_164b686f-67de-49a3-b49a-4ad810392e9e.webp", "image_d4cd6313-5dd0-4a78-b6d4-f02ee5b340b2.webp"], hex: "#88a8c2" },
   },
   "long-sleeve-zip-one-piece-swimsuit": {
-    "printed color": { m: ["image_9cce3d1d-5bf1-462c-af51-3d21cf7da819.webp", "image_40b18b1d-ec2f-4a8e-b676-12e6dc95a6aa.webp", "image_9ff54c33-0809-446a-87e1-f4c2e771e49d.webp"], g: ["image_90d4c7b8-c6b7-4c90-af8f-ba6809edebec.webp", "image_f21c2eb8-7a8f-41e3-bcf5-25dddc821406.webp"], hex: null },
+    "printed color": { m: ["image_9cce3d1d-5bf1-462c-af51-3d21cf7da819.webp", "image_40b18b1d-ec2f-4a8e-b676-12e6dc95a6aa.webp", "image_9ff54c33-0809-446a-87e1-f4c2e771e49d.webp"], g: ["image_90d4c7b8-c6b7-4c90-af8f-ba6809edebec.webp", "image_f21c2eb8-7a8f-41e3-bcf5-25dddc821406.webp"], hex: null, sw: { f: "image_90d4c7b8-c6b7-4c90-af8f-ba6809edebec.webp", x: 22, y: 32, z: 985 } },
     "Black": { m: ["image_f5e8d7c0-a21b-41f2-af66-96f5bc1bb8f7.webp", "image_3ab87f72-33ac-4e87-9630-669563958121.webp", "image_faf48bb1-22f5-402c-bff4-2e44f476018a.webp"], g: ["image_0d3006dc-90bb-4a8a-af9e-9ff1fc6008cf.webp", "image_d18c0cc4-a74f-42d1-bfc9-d7a71d10f22d.webp"], hex: "#1a1b1e" },
     "Brown": { m: ["image_fbddfe4d-57f7-4fb9-b004-4ce318463f2e.webp", "image_a942f185-60eb-462f-aee4-52784a95a116.webp", "image_74bd75a1-b5e7-49d2-ad9e-db44e8b44d5d.webp"], g: ["image_ed01a133-586b-4003-92a2-87fbdeead899.webp", "image_2f704d3f-2e39-4b36-b1d5-a32146e04b8a.webp"], hex: "#453022" },
-    "Green": { m: ["image_8e0587e9-7b7f-4da3-8c1f-f8ad89eb3d21.webp", "image_d35593ad-2140-4217-8a80-06e3459bbbcd.webp", "image_5291dd20-7551-473c-ad42-6662718d4865.webp"], g: ["image_090e9f1b-8de7-43c5-a3ea-117f9c579042.webp", "image_6f92457b-b1ba-4ff7-8c93-e2c2fd34b70a.webp"], hex: null },
-    "Light blue": { m: ["image_cc0f1342-3980-4a26-97db-ce191d93fb72.webp", "image_a23a6a0c-7790-4e90-8b3d-c5ae4b720143.webp", "image_ab2bcaf5-2d71-483a-97d2-69fc5cfae8c1.webp"], g: ["image_88fcb5de-1837-4b31-8bfe-caa0e3850cce.webp", "image_3ccbbc0d-ea3b-4413-8fba-ff03694134a5.webp"], hex: null },
+    "Green": { m: ["image_8e0587e9-7b7f-4da3-8c1f-f8ad89eb3d21.webp", "image_d35593ad-2140-4217-8a80-06e3459bbbcd.webp", "image_5291dd20-7551-473c-ad42-6662718d4865.webp"], g: ["image_090e9f1b-8de7-43c5-a3ea-117f9c579042.webp", "image_6f92457b-b1ba-4ff7-8c93-e2c2fd34b70a.webp"], hex: null, sw: { f: "image_090e9f1b-8de7-43c5-a3ea-117f9c579042.webp", x: 38, y: 58, z: 719 } },
+    "Light blue": { m: ["image_cc0f1342-3980-4a26-97db-ce191d93fb72.webp", "image_a23a6a0c-7790-4e90-8b3d-c5ae4b720143.webp", "image_ab2bcaf5-2d71-483a-97d2-69fc5cfae8c1.webp"], g: ["image_88fcb5de-1837-4b31-8bfe-caa0e3850cce.webp", "image_3ccbbc0d-ea3b-4413-8fba-ff03694134a5.webp"], hex: null, sw: { f: "image_88fcb5de-1837-4b31-8bfe-caa0e3850cce.webp", x: 18, y: 27, z: 660 } },
     "Wine red": { m: ["image_fc4921d8-0958-42c1-96fd-bccf271965d2.webp", "image_f86ab3e3-7bfb-4a6c-9bfd-6707a06758fa.webp", "image_9a8c2a6a-8e4d-4f8e-a21a-3c64df2df85d.webp"], g: ["image_7ebaf64e-6b1a-4f35-8c05-fc9d3deee467.webp", "image_c142ae9e-8e08-4827-a843-6acf53df8713.webp"], hex: "#260c18" },
-    "Royal blue": { m: ["image_8e38e99f-77b5-4d5d-9fa8-3a921c01391e.webp", "image_0edf0a6b-f01c-45f0-a679-a44fc198c816.webp", "image_447138d0-a78d-4f07-9849-9d658c96e92d.webp"], g: ["image_6f1534cd-f609-4f61-b3fa-343a421d1bf2.webp", "image_21a05e8c-92cc-40c8-b130-22566d33b49a.webp"], hex: null },
+    "Royal blue": { m: ["image_8e38e99f-77b5-4d5d-9fa8-3a921c01391e.webp", "image_0edf0a6b-f01c-45f0-a679-a44fc198c816.webp", "image_447138d0-a78d-4f07-9849-9d658c96e92d.webp"], g: ["image_6f1534cd-f609-4f61-b3fa-343a421d1bf2.webp", "image_21a05e8c-92cc-40c8-b130-22566d33b49a.webp"], hex: null, sw: { f: "image_6f1534cd-f609-4f61-b3fa-343a421d1bf2.webp", x: 81, y: 30, z: 790 } },
   },
   "high-waist-body-shaping-shorts": {
     "Black": { m: ["image_d724b253-34f3-4b1d-9789-64d42ea2bd9d.webp", "image_9edd8ac5-9b4d-45c3-b054-cb99950d18cd.webp", "image_b0f0b372-6920-4ad3-93bd-9d5bcaf5b558.webp"], g: ["image_c58a6ebf-569c-4d77-a169-cf41bb879960.webp", "image_ad08ae12-fc36-4a16-a58b-2ed767cd9e2c.webp"], hex: "#141319" },
@@ -356,4 +361,21 @@ export function indexedGhost(handle: string, color: string | null | undefined, i
 /** Measured swatch colour, or null to fall back to the name map. */
 export function indexedHex(handle: string, color: string | null | undefined): string | null {
   return indexedEntry(handle, color)?.hex ?? null;
+}
+
+/** Swatch crop for a print colourway, resolved against the images actually
+    fetched. null when the colour has a measurable flat colour instead. */
+export function indexedSwatch(
+  handle: string,
+  color: string | null | undefined,
+  images: Img[],
+): { url: string; position: string; size: string } | null {
+  const sw = indexedEntry(handle, color)?.sw;
+  if (!sw) return null;
+  for (const im of images) {
+    if (fileOf(im.url) === sw.f) {
+      return { url: im.url, position: `${sw.x}% ${sw.y}%`, size: `${sw.z}%` };
+    }
+  }
+  return null;
 }

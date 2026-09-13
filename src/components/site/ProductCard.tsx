@@ -10,7 +10,7 @@ import { EditorialImage } from "@/components/site/EditorialImage";
 import { useMemo, useState, useEffect } from "react";
 import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
 import { findGhostForColor } from "@/lib/imageBackdrop";
-import { indexedEntry, indexedGhost, indexedHex } from "@/lib/galleryIndex";
+import { indexedEntry, indexedGhost, indexedHex, indexedSwatch } from "@/lib/galleryIndex";
 import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
 import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
 
@@ -241,7 +241,17 @@ export function ProductCard({ product, badge }: Props) {
               >
                 <span
                   className="h-4 w-4 rounded-full border border-[#0a0a0a]/15"
-                  style={{ background: indexedHex(node.handle, c) ?? colorToHex(c) ?? "#cccccc" }}
+                  style={((): React.CSSProperties => {
+                    // Prints show a crop of the fabric rather than a flat dot.
+                    const crop = indexedSwatch(node.handle, c, node.images.edges.map((e) => e.node));
+                    if (crop)
+                      return {
+                        backgroundImage: `url(${shopifyImg(crop.url, 200)})`,
+                        backgroundPosition: crop.position,
+                        backgroundSize: crop.size,
+                      };
+                    return { background: indexedHex(node.handle, c) ?? colorToHex(c) ?? "#cccccc" };
+                  })()}
                 />
               </button>
             ))}
