@@ -100,10 +100,12 @@ export function ProductCard({ product, badge }: Props) {
   const primary = run[0]?.node ?? image;
 
   /* Garment-only shot for the active colour.
-     Indexed products resolve it synchronously and render it hidden from first
-     paint, so the browser has it ready before the cursor ever arrives; the
-     hover is then a pure opacity flip. Unindexed products fall back to the
-     sampler, run on mount rather than on hover so the cost is paid early. */
+     The tile leads with the garment on its own and reveals the model on hover —
+     the reverse of the usual pattern, so the product itself is what's browsed.
+     Indexed products resolve the ghost synchronously and render both layers from
+     first paint, so the hover is a pure opacity flip. Unindexed products fall
+     back to the sampler, run on mount rather than on hover so the cost is paid
+     early; until it resolves the tile simply shows the model shot. */
   const isIndexed = !!indexedEntry(node.handle, activeColor);
   const staticGhost = indexedGhost(node.handle, activeColor, node.images.edges.map((e) => e.node));
   const [sampledGhost, setSampledGhost] = useState<string | null>(null);
@@ -111,7 +113,7 @@ export function ProductCard({ product, badge }: Props) {
 
   useEffect(() => {
     setSampledGhost(null);
-    if (!hoverCapable || isIndexed) return;
+    if (isIndexed) return;
     let live = true;
     const want = activeColor ? colorToHex(activeColor) ?? null : null;
     const inRun = run.map((r) => r.node.url);
@@ -126,7 +128,7 @@ export function ProductCard({ product, badge }: Props) {
     return () => {
       live = false;
     };
-  }, [hoverCapable, isIndexed, activeColor, node.handle]);
+  }, [isIndexed, activeColor, node.handle]);
 
   // Price follows the selected colour.
   const colorVariant = activeColor && optName
@@ -154,18 +156,19 @@ export function ProductCard({ product, badge }: Props) {
       onMouseLeave={hoverCapable ? () => setHovering(false) : undefined}
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
-        {primary && (
+        {/* Resting layer: the garment on its own where we have one, else the model. */}
+        {(ghost || primary) && (
           <EditorialImage
-            src={primary.url}
-            alt={primary.altText ?? node.title}
+            src={ghost ?? primary.url}
+            alt={primary?.altText ?? node.title}
             maxWidth={1000}
           />
         )}
-        {/* Garment-only shot, crossfaded in over the model shot on hover. */}
-        {hoverCapable && ghost && (
+        {/* Model shot, crossfaded in over the garment on hover. */}
+        {hoverCapable && ghost && primary && (
           <img
-            src={shopifyImg(ghost, 800)}
-            srcSet={shopifySrcSet(ghost, 1000)}
+            src={shopifyImg(primary.url, 800)}
+            srcSet={shopifySrcSet(primary.url, 1000)}
             sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 50vw"
             alt=""
             aria-hidden="true"
