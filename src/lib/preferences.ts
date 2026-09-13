@@ -145,6 +145,20 @@ export const usePreferences = create<PreferencesState>()(
       // mismatches if applied during initial client render. Rehydrate manually
       // after mount (see RootComponent).
       skipHydration: true,
+      // v1: earlier builds persisted `currency` independently of
+      // `shippingCountry`, so returning visitors could carry e.g. NZ + GBP —
+      // the shipping modal then announced their country while quoting British
+      // prices. Re-derive currency from the stored country once on rehydrate;
+      // choices made after this migration are left alone as before.
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = (persisted ?? {}) as Partial<PreferencesState>;
+        if (version < 1 && state.shippingCountry) {
+          const c = state.shippingCountry.currency;
+          state.currency = CURRENCIES.some((x) => x.code === c) ? c : "GBP";
+        }
+        return state as PreferencesState;
+      },
     },
   ),
 );
