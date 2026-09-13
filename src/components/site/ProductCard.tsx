@@ -100,12 +100,15 @@ export function ProductCard({ product, badge }: Props) {
   const primary = run[0]?.node ?? image;
 
   /* Garment-only shot for the active colour.
-     The tile leads with the garment on its own and reveals the model on hover —
-     the reverse of the usual pattern, so the product itself is what's browsed.
-     Indexed products resolve the ghost synchronously and render both layers from
-     first paint, so the hover is a pure opacity flip. Unindexed products fall
-     back to the sampler, run on mount rather than on hover so the cost is paid
-     early; until it resolves the tile simply shows the model shot. */
+     Bras lead with the garment on its own and reveal the model on hover; every
+     other category does the reverse. Indexed products resolve the ghost
+     synchronously and render both layers from first paint, so the hover is a
+     pure opacity flip. Unindexed products fall back to the sampler, run on
+     mount rather than on hover so the cost is paid early. */
+  /* Bras only: the garment reads better than the model at tile size, so the
+     layers swap. Driven by Shopify's product type, not the title, so a lounge
+     set with a built-in bra isn't caught by a name match. */
+  const ghostFirst = node.productType === "Bra";
   const isIndexed = !!indexedEntry(node.handle, activeColor);
   const staticGhost = indexedGhost(node.handle, activeColor, node.images.edges.map((e) => e.node));
   const [sampledGhost, setSampledGhost] = useState<string | null>(null);
@@ -113,7 +116,7 @@ export function ProductCard({ product, badge }: Props) {
 
   useEffect(() => {
     setSampledGhost(null);
-    if (isIndexed) return;
+    if (!hoverCapable || isIndexed) return;
     let live = true;
     const want = activeColor ? colorToHex(activeColor) ?? null : null;
     const inRun = run.map((r) => r.node.url);
@@ -128,7 +131,7 @@ export function ProductCard({ product, badge }: Props) {
     return () => {
       live = false;
     };
-  }, [isIndexed, activeColor, node.handle]);
+  }, [hoverCapable, isIndexed, activeColor, node.handle]);
 
   // Price follows the selected colour.
   const colorVariant = activeColor && optName
@@ -156,19 +159,19 @@ export function ProductCard({ product, badge }: Props) {
       onMouseLeave={hoverCapable ? () => setHovering(false) : undefined}
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
-        {/* Resting layer: the garment on its own where we have one, else the model. */}
-        {(ghost || primary) && (
+        {/* Resting layer: the garment alone for bras, the model everywhere else. */}
+        {(primary || ghost) && (
           <EditorialImage
-            src={ghost ?? primary.url}
+            src={ghostFirst && ghost ? ghost : primary.url}
             alt={primary?.altText ?? node.title}
             maxWidth={1000}
           />
         )}
-        {/* Model shot, crossfaded in over the garment on hover. */}
+        {/* Hover layer: whichever of the two isn't resting. */}
         {hoverCapable && ghost && primary && (
           <img
-            src={shopifyImg(primary.url, 800)}
-            srcSet={shopifySrcSet(primary.url, 1000)}
+            src={shopifyImg(ghostFirst ? primary.url : ghost, 800)}
+            srcSet={shopifySrcSet(ghostFirst ? primary.url : ghost, 1000)}
             sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 50vw"
             alt=""
             aria-hidden="true"

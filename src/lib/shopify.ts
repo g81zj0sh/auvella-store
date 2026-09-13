@@ -11,6 +11,8 @@ export interface ShopifyProduct {
     title: string;
     description: string;
     handle: string;
+    /** Shopify's product type, e.g. "Bra" — drives the bra-only hover flip. */
+    productType?: string;
     priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
     images: { edges: Array<{ node: { url: string; altText: string | null } }> };
     variants: {
@@ -91,7 +93,7 @@ const PRODUCTS_QUERY = `
     products(first: $first, query: $query) {
       edges {
         node {
-          id title description handle
+          id title description handle productType
           priceRange { minVariantPrice { amount currencyCode } }
           images(first: 40) { edges { node { url altText } } }
           variants(first: 100) {
@@ -122,7 +124,7 @@ export async function fetchProducts(first = 12, query?: string): Promise<Shopify
 const PRODUCT_BY_HANDLE_QUERY = `
   query GetProduct($handle: String!) {
     product(handle: $handle) {
-      id title description handle
+      id title description handle productType
       priceRange { minVariantPrice { amount currencyCode } }
       images(first: 120) { edges { node { url altText } } }
       variants(first: 250) {
@@ -161,12 +163,12 @@ export interface ShopifyCollection {
 const COLLECTION_BY_HANDLE_QUERY = `
   query GetCollection($handle: String!, $first: Int!) {
     collection(handle: $handle) {
-      id title description handle
+      id title description handle productType
       image { url altText }
       products(first: $first) {
         edges {
           node {
-            id title description handle
+            id title description handle productType
             priceRange { minVariantPrice { amount currencyCode } }
             images(first: 40) { edges { node { url altText } } }
             variants(first: 100) {
@@ -214,7 +216,7 @@ export async function fetchCollectionByHandle(
 const PRODUCT_RECOMMENDATIONS_QUERY = `
   query GetRecommendations($productId: ID!) {
     productRecommendations(productId: $productId) {
-      id title description handle
+      id title description handle productType
       priceRange { minVariantPrice { amount currencyCode } }
       images(first: 40) { edges { node { url altText } } }
       variants(first: 100) {
