@@ -24,7 +24,7 @@ import { Loader2, Star, Heart, ChevronLeft, ChevronRight, ScanSearch } from "luc
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
-import { BUNDLE_DEAL, inBundleDeal } from "@/lib/bundleDeal";
+import { BUNDLE_DEAL, inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
 import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
 
 export const Route = createFileRoute("/product/$handle")({
@@ -396,6 +396,8 @@ function ProductPage() {
   const { country: shipCountry } = useShippingCountry();
   const activeCurrency = usePreferences((s) => s.currency);
   const shipThreshold = freeShippingThresholdFmt(activeCurrency);
+  // Hook — must sit above the early returns below, not beside bundleDeal.
+  const bundleLabel = useBundleLabel();
   const shipDest = `${shipCountry.the ? "the " : ""}${shipCountry.name}`;
 
   if (isLoading) {
@@ -579,7 +581,7 @@ function ProductPage() {
           {bundleDeal && (
             <div className="mt-2.5">
               <span className="inline-block border border-[#0a0a0a] px-2 py-[3px] text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
-                {BUNDLE_DEAL.label}
+                {bundleLabel}
               </span>
               <p className="mt-1.5 text-[11px] leading-relaxed text-[#555555]">
                 {BUNDLE_DEAL.detail}
@@ -744,7 +746,7 @@ function ProductPage() {
             {bundleDeal && (
               <div className="mt-3">
                 <span className="inline-block border border-[#0a0a0a] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
-                  {BUNDLE_DEAL.label}
+                  {bundleLabel}
                 </span>
                 <p className="mt-2 text-[12px] leading-relaxed text-[#555555]">
                   {BUNDLE_DEAL.detail}

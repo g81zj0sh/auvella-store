@@ -10,6 +10,7 @@ import { EditorialImage } from "@/components/site/EditorialImage";
 import { useMemo, useState, useEffect } from "react";
 import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
 import { findGhostForColor } from "@/lib/imageBackdrop";
+import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
 
 /*
  * Product card — SKIMS spec:
@@ -60,6 +61,11 @@ export function ProductCard({ product, badge }: Props) {
 
   const isLoading = useCartStore((s) => s.isLoading);
   const display = useDisplayPrice();
+
+  /* The offer has to be legible from the grid, not only the PDP — a shopper
+     who never taps in never learns it exists. */
+  const bundleDeal = inBundleDeal(node.handle);
+  const bundleLabel = useBundleLabel();
 
   const colorOption = node.options.find((o) => /colou?r/i.test(o.name));
   const colors = colorOption?.values ?? [];
@@ -199,6 +205,11 @@ export function ProductCard({ product, badge }: Props) {
           <span className="text-[#0a0a0a]">
             {display(shownPrice.amount, shownPrice.currencyCode)}
           </span>
+          {bundleDeal && (
+            <span className="border border-[#0a0a0a] px-1.5 py-[1px] text-[10px] uppercase leading-none tracking-[0.08em] text-[#0a0a0a]">
+              {bundleLabel}
+            </span>
+          )}
         </div>
         {colors.length > 1 && (
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
