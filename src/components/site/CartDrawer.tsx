@@ -16,7 +16,7 @@ import { cartLineImage } from "@/lib/cartImage";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
-  const { items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, syncCart } =
+  const { items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, resolveCheckoutUrl, syncCart } =
     useCartStore();
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const totalPrice = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
@@ -43,11 +43,31 @@ export function CartDrawer() {
     if (open) syncCart();
   }, [open, syncCart]);
 
-  const handleCheckout = () => {
-    const url = getCheckoutUrl();
-    if (url) {
-      window.open(url, "_blank");
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const handleCheckout = async () => {
+    if (isCheckingOut) return;
+    setIsCheckingOut(true);
+    /*
+     * The tab has to be opened synchronously, inside the click gesture: mobile
+     * Safari blocks window.open once an await has happened. So claim the tab
+     * now and point it at the checkout when the URL resolves. If the popup is
+     * blocked anyway (win === null), fall back to navigating this tab.
+     */
+    const win = window.open("", "_blank");
+    try {
+      const url = (await resolveCheckoutUrl()) ?? getCheckoutUrl();
+      if (!url) {
+        win?.close();
+        return;
+      }
+      if (win) win.location.href = url;
+      else window.location.href = url;
       setOpen(false);
+    } catch {
+      win?.close();
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -177,9 +197,9 @@ export function CartDrawer() {
                 <Button
                   onClick={handleCheckout}
                   className="w-full bg-ink text-cream hover:bg-cocoa uppercase tracking-[0.2em] text-xs py-6 rounded-none"
-                  disabled={items.length === 0 || isLoading || isSyncing}
+                  disabled={items.length === 0 || isLoading || isSyncing || isCheckingOut}
                 >
-                  {isLoading || isSyncing ? (
+                  {isLoading || isSyncing || isCheckingOut ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>

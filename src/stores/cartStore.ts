@@ -8,6 +8,8 @@ import {
   removeLineFromShopifyCart,
   storefrontApiRequest,
   updateShopifyCartLine,
+  recreateShopifyCart,
+  formatCheckoutUrl,
 } from "@/lib/shopify";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 
@@ -33,6 +35,8 @@ interface CartStore {
   clearCart: () => void;
   syncCart: () => Promise<void>;
   getCheckoutUrl: () => string | null;
+  /** Resolve a checkout URL that is valid right now, rebuilding the cart if needed. */
+  resolveCheckoutUrl: () => Promise<string | null>;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -158,6 +162,53 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => set({ items: [], cartId: null, checkoutUrl: null }),
       getCheckoutUrl: () => get().checkoutUrl,
+
+      /*
+       * The persisted checkoutUrl is written once, when the cart is created, and
+       * then survives in localStorage indefinitely. Shopify carts expire (and are
+       * consumed once an order completes), after which that URL answers 404 —
+       * which is what a shopper sees if they come back to an old bag and press
+       * checkout. So resolve the URL at click time instead of trusting the stored
+       * one: ask Shopify for the cart's current URL, and if the cart is gone,
+       * rebuild it from the lines still in the bag.
+       */
+      resolveCheckoutUrl: async () => {
+        const { cartId, items, checkoutUrl } = get();
+
+        if (cartId) {
+          try {
+            const data = await storefrontApiRequest(CART_QUERY, { id: cartId });
+            const cart = data?.data?.cart;
+            if (cart?.checkoutUrl && cart.totalQuantity > 0) {
+              const fresh = formatCheckoutUrl(cart.checkoutUrl);
+              set({ checkoutUrl: fresh });
+              return fresh;
+            }
+          } catch (e) {
+            // Network failure is not proof the cart is dead — fall back to the
+            // stored URL rather than rebuilding and orphaning a good cart.
+            console.error("Checkout URL refresh failed:", e);
+            return checkoutUrl;
+          }
+        }
+
+        if (!items.length) return null;
+
+        const rebuilt = await recreateShopifyCart(
+          items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+        );
+        if (!rebuilt) return checkoutUrl;
+
+        set({
+          cartId: rebuilt.cartId,
+          checkoutUrl: rebuilt.checkoutUrl,
+          items: items.map((i) => ({
+            ...i,
+            lineId: rebuilt.lineIdByVariant[i.variantId] ?? i.lineId,
+          })),
+        });
+        return rebuilt.checkoutUrl;
+      },
 
       syncCart: async () => {
         const { cartId, isSyncing, clearCart } = get();

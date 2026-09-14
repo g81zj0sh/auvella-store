@@ -248,7 +248,7 @@ export async function fetchProductRecommendations(productId: string): Promise<Sh
 }
 
 // ---------- Cart mutations ----------
-export const CART_QUERY = `query cart($id: ID!) { cart(id: $id) { id totalQuantity } }`;
+export const CART_QUERY = `query cart($id: ID!) { cart(id: $id) { id totalQuantity checkoutUrl } }`;
 
 const CART_CREATE_MUTATION = `
   mutation cartCreate($input: CartInput!) {
@@ -321,6 +321,33 @@ export async function createShopifyCart(item: { variantId: string; quantity: num
   const lineId = cart.lines.edges[0]?.node?.id;
   if (!lineId) return null;
   return { cartId: cart.id, checkoutUrl: formatCheckoutUrl(cart.checkoutUrl), lineId };
+}
+
+/*
+ * Rebuild a whole cart in one mutation. Used when the stored cart has expired or
+ * been completed: its checkout URL then 404s, and the shopper has to be given a
+ * live cart built from the lines still in their bag.
+ */
+export async function recreateShopifyCart(lines: Array<{ variantId: string; quantity: number }>) {
+  if (!lines.length) return null;
+  const data = await storefrontApiRequest(CART_CREATE_MUTATION, {
+    input: { lines: lines.map((l) => ({ quantity: l.quantity, merchandiseId: l.variantId })) },
+  });
+  const errs = data?.data?.cartCreate?.userErrors ?? [];
+  if (errs.length) {
+    console.error("Cart rebuild failed:", errs);
+    return null;
+  }
+  const cart = data?.data?.cartCreate?.cart;
+  if (!cart?.checkoutUrl) return null;
+  // Key line IDs by variant, not by position: Shopify merges lines that share a
+  // merchandise ID, so the returned order need not match the order sent.
+  const lineIdByVariant: Record<string, string> = {};
+  for (const e of cart.lines?.edges ?? []) {
+    const vid = e?.node?.merchandise?.id;
+    if (vid && !lineIdByVariant[vid]) lineIdByVariant[vid] = e.node.id;
+  }
+  return { cartId: cart.id, checkoutUrl: formatCheckoutUrl(cart.checkoutUrl), lineIdByVariant };
 }
 
 export async function addLineToShopifyCart(cartId: string, item: { variantId: string; quantity: number }) {
