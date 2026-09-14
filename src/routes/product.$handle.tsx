@@ -929,7 +929,7 @@ function ProductPage() {
                 {tab === "details" && (
                   <p className="whitespace-pre-line">
                     {node.description?.trim() ||
-                      "Sculpted comfort in a second-skin fit — designed to smooth, support and disappear under everything."}
+                      "Smooths and supports without digging in — and disappears under whatever you put on top."}
                   </p>
                 )}
                 {tab === "fit" && (

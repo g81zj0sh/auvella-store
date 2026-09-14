@@ -106,7 +106,7 @@ const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
 const HANDLE_META: Record<string, { title: string; description: string; query?: string }> = {
   "best-sellers": {
     title: "Best Sellers",
-    description: "The most-loved pieces — restocked and ready.",
+    description: "The pieces we'd put in your bag first.",
   },
   "shapewear-1": {
     title: "Shapewear",
@@ -133,7 +133,7 @@ const HANDLE_META: Record<string, { title: string; description: string; query?: 
   },
   bodysuits: {
     title: "Bodysuits",
-    description: "Second-skin bodysuits engineered to smooth, contour and support.",
+    description: "One-piece layers that smooth and support without a waistband to dig in.",
     query: "bodysuit OR sculpt",
   },
   shapewear: {
@@ -173,7 +173,7 @@ const HANDLE_META: Record<string, { title: string; description: string; query?: 
   },
   robes: {
     title: "Robes",
-    description: "The finishing layer for everyday luxury.",
+    description: "The finishing layer, for the hour before you leave and the one after you get back.",
     query: "robe",
   },
   "soft-essentials": {
@@ -247,7 +247,7 @@ const TILE_SUBTEXT: Record<string, string> = {
   bikinis: "Sets & separates",
   dresses: "Sculpted silhouettes",
   "mini-dresses-1": "Above the knee",
-  "midi-dresses": "Effortless length",
+  "midi-dresses": "Full length",
   "maxi-dresses": "Floor-skimming",
   activewear: "Studio to street",
 };

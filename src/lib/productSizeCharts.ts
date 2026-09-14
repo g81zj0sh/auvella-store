@@ -23,7 +23,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["M", "1.7", "1.8–3.3", "1.8", "1.8"],
       ["L", "1.8", "1.9–3.4", "1.9", "1.9"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. [CHECK: chart prints unit as ‘feet’ (values transcribed exactly, not converted) — possibly Chinese chi (≈ 33 cm); confirm unit with supplier]. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. [CHECK: chart prints unit as ‘feet’ (values transcribed exactly, not converted) — possibly Chinese chi (≈ 33 cm); confirm unit with supplier]. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "one-piece-shapewear-bodysuit-with-tummy-control": {
     guideType: "shapewear",
@@ -36,7 +36,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["2XL", "74 cm (29\")", "64 cm (25\")", "72 cm (28.5\")", "77 cm (30.5\")", "68 cm (27\")"],
       ["3XL", "77 cm (30.5\")", "68 cm (27\")", "74 cm (29\")", "78 cm (30.5\")", "69 cm (27\")"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Measurements are in centimetres (unit inferred; not printed on the supplier chart). garment measurements. ‘Long Back Coat’ is the supplier's printed column name. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. Measurements are in centimetres (unit inferred; not printed on the supplier chart). garment measurements. ‘Long Back Coat’ is the supplier's printed column name. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "high-waist-shaping-shorts-with-lace-trim": {
     guideType: "shapewear-bottoms",
@@ -50,7 +50,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["3XL", "40 cm (15.5\")", "50 cm (19.5\")", "40 cm (15.5\")", "166.4 g"],
       ["4XL", "42 cm (16.5\")", "52 cm (20.5\")", "41 cm (16\")", "180 g"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. All measurements taken with the garment laid flat. ‘Bust’ column name is printed on the supplier chart for these shorts. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. All measurements taken with the garment laid flat. ‘Bust’ column name is printed on the supplier chart for these shorts. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "auvella-long-sleeve-sculpting-bodysuit": {
     guideType: "shapewear",
@@ -62,7 +62,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["XL", "72 cm (28.5\")", "64 cm (25\")", "66 cm (26\")"],
       ["XXL", "76 cm (30\")", "68 cm (27\")", "67 cm (26.5\")"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Chart note: bust +4 cm, waist +4 cm, garment length +1 cm per size. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. Chart note: bust +4 cm, waist +4 cm, garment length +1 cm per size. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "auvella-seamless-comfort-bralette": {
     guideType: "bralette",
@@ -87,7 +87,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["3XL", "22", "48–51", "42.5–46", "52.5–55.5"],
       ["4XL", "24", "51.5–54.5", "46.5–50", "56–58"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Chart printed in inches; dress-size column is printed on the chart.",
+    fitNote: "Cut close to the body — size up if between sizes. Chart printed in inches; dress-size column is printed on the chart.",
   },
   "fleece-lined-drawstring-lounge-set": {
     guideType: "lounge",
@@ -165,7 +165,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["XL", "40.5 cm (15.9\")", "36.5 cm (14.4\")", "40 cm (15.7\")", "53 cm (20.9\")", "59 cm (23.2\")", "30.5 cm (12.0\")", "37.5 cm (14.8\")", "21.5 cm (8.5\")", "29.1 cm (11.5\")", "28.5 cm (11.2\")", "69 g"],
     ],
     fitNote:
-      "Second-skin fit — size up if between sizes. Half (1/2) measurements are taken across the garment laid flat — double them for the full circumference. Corrected supplier specification, confirmed directly with the supplier. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+      "Cut close to the body — size up if between sizes. Half (1/2) measurements are taken across the garment laid flat — double them for the full circumference. Corrected supplier specification, confirmed directly with the supplier. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "long-sleeve-sculpt-maxi-dress": {
     guideType: "clothing",
@@ -187,7 +187,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["M", "74.5 cm (29.5\")", "80 cm (31.5\")", "69 cm (27\")", "76.5 cm (30\")"],
       ["L", "76.5 cm (30\")", "86 cm (34\")", "75 cm (29.5\")", "82.5 cm (32.5\")"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Measurements are in centimetres (unit inferred; not printed on the supplier chart). All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. Measurements are in centimetres (unit inferred; not printed on the supplier chart). All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "seamless-strapless-sculpting-bodysuit": {
     guideType: "shapewear",
@@ -199,7 +199,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["2XL/3XL", "18–22", "44.5–50.5", "36.5–42.5"],
       ["4XL/5XL", "24–28", "51–58", "43–50"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Chart printed in inches with US sizes.",
+    fitNote: "Cut close to the body — size up if between sizes. Chart printed in inches with US sizes.",
   },
   "cotton-lace-brief": {
     guideType: "underwear",
@@ -234,7 +234,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["XL", "57.5–65 kg"],
       ["2XL", "65–75 kg"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Weights are in kilograms.",
+    fitNote: "Cut close to the body — size up if between sizes. Weights are in kilograms.",
   },
   "womens-velvet-jumpsuit-long-sleeve-square-neck": {
     guideType: "clothing",
@@ -258,7 +258,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["2XL", "66 cm (26\")", "70 cm (27.5\")", "70 cm (27.5\")", "70 cm (27.5\")", "130 g"],
       ["3XL", "68 cm (27\")", "72 cm (28.5\")", "72 cm (28.5\")", "72 cm (28.5\")", "140 g"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Measurements are in centimetres.; weight column is garment weight in grams. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. Measurements are in centimetres.; weight column is garment weight in grams. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "lace-breathable-thong-underwear": {
     guideType: "underwear",
@@ -293,7 +293,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["XXL", "32 cm (12.5\")", "70–80 cm (27.5–31.5\")", "85–95 cm (33.5–37.5\")", "80–90 kg"],
       ["XXXL", "34 cm (13.5\")", "75–85 cm (29.5–33.5\")", "95–100 cm (37.5–39.5\")", "90–100 kg"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Size letters and the XXXL hip figure (95–100 cm) confirmed directly with the supplier. Weights converted from jin (1 jin = 0.5 kg). Size ranges refer to body measurements in centimetres.",
+    fitNote: "Cut close to the body — size up if between sizes. Size letters and the XXXL hip figure (95–100 cm) confirmed directly with the supplier. Weights converted from jin (1 jin = 0.5 kg). Size ranges refer to body measurements in centimetres.",
   },
   "slim-fit-long-sleeve-top": {
     guideType: "clothing",
@@ -438,7 +438,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["2XL", "68 cm (27\")", "53 cm (21\")", "35 cm (14\")", "38 cm (15\")", "32 cm (12.5\")", "36 cm (14\")"],
       ["3XL", "68 cm (27\")", "53 cm (21\")", "35 cm (14\")", "38 cm (15\")", "34 cm (13.5\")", "38 cm (15\")"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Flat measurements, cm; manual measurement may vary by 1–2 cm. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. Flat measurements, cm; manual measurement may vary by 1–2 cm. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "womens-high-waisted-breathable-traceless-thong-panties": {
     guideType: "underwear",
@@ -499,7 +499,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["2XL", "54.5 cm (21.5\")", "90 cm (35.5\")", "84 cm (33\")"],
       ["3XL", "55 cm (21.5\")", "94 cm (37\")", "88 cm (34.5\")"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Chart notes: waist size is based on circumference at the navel; if at the upper limit of a size, choose one size larger. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. Chart notes: waist size is based on circumference at the navel; if at the upper limit of a size, choose one size larger. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "women-waist-training-compression-garment": {
     guideType: "shapewear",
@@ -513,7 +513,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["XXL", "31 cm (12\")", "85 cm (33.5\")", "366 g"],
       ["XXXL", "31 cm (12\")", "90 cm (35.5\")", "375 g"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Measurements are in centimetres. with printed tolerances; front length is 31 cm for every size. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. Measurements are in centimetres. with printed tolerances; front length is 31 cm for every size. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "womens-lace-underwear-set": {
     guideType: "shapewear",
@@ -526,7 +526,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["XXL", "92 cm (36\")", "82 cm (32.5\")", "65–75 kg (chart also prints 130–150 jin)"],
       ["XXXL", "95 cm (37.5\")", "85 cm (33.5\")", "70–80 kg (chart also prints 140–160 jin)"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Measurements taken with garment laid flat and unstretched; chart prints weight in both jin and kg — kg values are the chart's own. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Cut close to the body — size up if between sizes. Measurements taken with garment laid flat and unstretched; chart prints weight in both jin and kg — kg values are the chart's own. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "womens-two-piece-swimsuit": {
     guideType: "swim",
@@ -572,7 +572,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["2XL", "16", "18", "44", "106–111 cm (42–44\")", "86–91 cm (34–36\")"],
       ["3XL", "18", "20", "46", "111–116 cm (44–46\")", "91–96 cm (36–38\")"],
     ],
-    fitNote: "Second-skin fit — size up if between sizes. Inch and cm values both printed on the chart; US/UK-AU/DE size columns printed on the chart. (Chart supplied separately by store owner, 2026-07-29 — not yet tagged in the Shopify gallery.). Size ranges refer to body measurements in centimetres.",
+    fitNote: "Cut close to the body — size up if between sizes. Inch and cm values both printed on the chart; US/UK-AU/DE size columns printed on the chart. (Chart supplied separately by store owner, 2026-07-29 — not yet tagged in the Shopify gallery.). Size ranges refer to body measurements in centimetres.",
   },
   "maternity-nursing-bra-front-opening-push-up": {
     guideType: "bra",

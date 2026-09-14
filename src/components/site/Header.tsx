@@ -97,7 +97,7 @@ const nav: NavItem[] = [
       },
     ],
     images: [
-      { src: IMG.bodysuits, label: "Bodysuits", desc: "Second-skin layers that smooth, sculpt and support.", handle: "shapewear" },
+      { src: IMG.bodysuits, label: "Bodysuits", desc: "One-piece layers that hold where it helps and stay put.", handle: "shapewear" },
       { src: IMG.newArrivals, label: "New Season", desc: "Fresh silhouettes in warm neutrals.", handle: "new-in" },
     ],
   },

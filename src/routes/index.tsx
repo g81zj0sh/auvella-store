@@ -56,16 +56,16 @@ const heroPoster = heroPosterAsset.url;
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Auvella — Sculpted Comfort. Effortless Confidence." },
+      { title: "Auvella — Built for the day, not the photo." },
       {
         name: "description",
         content:
-          "Premium shapewear, satin sleepwear and lounge essentials designed to flatter, smooth and move with you.",
+          "Shapewear, bras and lounge built to hold where it helps and stay put all day. Our shapewear runs S–4XL.",
       },
-      { property: "og:title", content: "Auvella — Sculpted Comfort. Effortless Confidence." },
+      { property: "og:title", content: "Auvella — Built for the day, not the photo." },
       {
         property: "og:description",
-        content: "Premium shapewear, satin sleepwear and lounge essentials.",
+        content: "Shapewear, bras and lounge built to hold where it helps and stay put all day.",
       },
     ],
   }),
@@ -357,13 +357,10 @@ function Index() {
         <div className="absolute bottom-0 right-0 p-6 md:p-12 lg:p-16 max-w-xl text-right">
           <p className="text-[11px] uppercase tracking-[0.28em] text-cream/80 mb-4">The Auvella Edit</p>
           <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-cream leading-[1.05]">
-            Sculpted Comfort.
-            <br />
-            <em className="not-italic font-light italic">Effortless Confidence.</em>
+            Built for the day, not the photo.
           </h1>
           <p className="mt-4 text-sm md:text-base text-cream/80 leading-relaxed max-w-md ml-auto">
-            Premium shapewear, soft lounge essentials and satin sleepwear designed to
-            flatter, smooth and move with you.
+            Shapewear, bras and lounge built to hold where it helps and stay put all day.
           </p>
           <div className="mt-6 flex flex-wrap justify-end gap-3">
             <a href="#bestsellers" className="inline-flex items-center justify-center bg-cream text-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-white transition-colors">
@@ -386,7 +383,7 @@ function Index() {
           image={PANEL_IMG.bestsellers}
           handle="new-in"
           name="Best Sellers"
-          sub="Smooths instantly, feels like second skin -no rolling, no squeezing."
+          sub="Holds where it helps. No roll-down, no digging, no adjusting."
           position="55% 38%"
           scale={1.18}
           className="h-[60vh] md:h-[calc(100vh-88px)]"
@@ -395,7 +392,7 @@ function Index() {
           image={PANEL_IMG.shapewear}
           handle="shapewear-1"
           name="Shapewear"
-          sub="Sculpted comfort, second-skin feel."
+          sub="Holds where it helps. Nowhere else."
           position="center 18%"
           scale={1.08}
           className="h-[60vh] md:h-[calc(100vh-88px)]"

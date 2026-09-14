@@ -97,7 +97,7 @@ export const SIZE_GUIDES: Record<Exclude<GuideType, "none">, SizeGuideDef> = {
       ["3XL", "46–48", "39–41", "49–51"],
     ],
     fitNote:
-      'Second-skin sculpting fit. If between sizes, size up — sizing down for "more control" is the most common mistake. Choose by your largest measurement.',
+      'Cut close and firm. If between sizes, size up — sizing down for "more control" is the most common mistake. Choose by your largest measurement.',
     overrides: {
       strapless: "Strapless: choose by bust — bust fit keeps the garment in place.",
     },
@@ -294,7 +294,7 @@ export function fitLabel(guideType: GuideType, fitOverride?: FitOverride): strin
   if (guideType === "bralette") return "Wireless comfort — size up if between";
   if (guideType === "sports-bra") return "Snug performance fit";
   if (guideType === "shapewear" || guideType === "shapewear-bottoms")
-    return "Second-skin fit — size up if between";
+    return "Cut close — size up if between";
   if (guideType === "lounge" && fitOverride === "satin")
     return "Minimal stretch — size up if between";
   if (guideType === "swim" || guideType === "swim-bottoms") return "Size up for more coverage";
