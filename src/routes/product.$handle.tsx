@@ -46,7 +46,7 @@ export const Route = createFileRoute("/product/$handle")({
     const description =
       rawDesc.length > 0
         ? rawDesc.slice(0, 155)
-        : `${node.title} — sculpted comfort and effortless confidence from Auvella.`;
+        : `${node.title} — built to hold where it helps and stay put all day. From Auvella.`;
     const image = node.images.edges[0]?.node.url;
     const price = node.priceRange.minVariantPrice;
     const url = `https://auvellawear.com/product/${params.handle}`;
@@ -935,8 +935,8 @@ function ProductPage() {
                 {tab === "fit" && (
                   <div className="space-y-3">
                     <p>
-                      Second-skin compression knit with four-way stretch — smooths without
-                      squeezing, and holds its shape through the day.
+                      Seamless knit with four-way stretch — smooths without squeezing, and
+                      holds its shape through the day.
                     </p>
                     <p>
                       {sizeGuide.guideType !== "none"

@@ -187,7 +187,6 @@ const DICT: Record<string, string[]> = {
   Sleepwear: ["Vêtements de nuit", "Ropa de dormir", "Nachtwäsche", "Pigiameria", "Nachtkleding", "Pijamas", "ملابس نوم", "睡衣", "ナイトウェア"],
   "Soft Essentials": ["Essentiels doux", "Esenciales suaves", "Soft Essentials", "Essenziali morbidi", "Zachte essentials", "Essenciais suaves", "أساسيات ناعمة", "柔软必备", "ソフトエッセンシャル"],
   Leggings: ["Leggings", "Leggings", "Leggings", "Leggings", "Leggings", "Leggings", "ليجنز", "打底裤", "レギンス"],
-  "Sculpted comfort": ["Confort sculpté", "Comodidad esculpida", "Skulpturierter Komfort", "Comfort scolpito", "Gevormd comfort", "Conforto esculpido", "راحة منحوتة", "雕塑般的舒适", "彫刻された快適さ"],
   "Soft nights, slow mornings": ["Nuits douces, matins lents", "Noches suaves, mañanas lentas", "Sanfte Nächte, langsame Morgen", "Notti morbide, mattine lente", "Zachte nachten, langzame ochtenden", "Noites suaves, manhãs lentas", "ليالٍ هادئة وصباحات بطيئة", "柔和的夜晚，悠然的清晨", "やわらかな夜、ゆったりとした朝"],
   "Support made soft": ["Maintien tout en douceur", "Soporte hecho suave", "Halt mit Sanftheit", "Sostegno reso morbido", "Ondersteuning, zacht gemaakt", "Suporte feito suave", "دعم بلمسة ناعمة", "柔软的支撑", "やさしいサポート"],
   "Comfort that moves": ["Le confort qui bouge", "Comodidad que se mueve", "Komfort, der mitgeht", "Comfort che si muove", "Comfort dat meebeweegt", "Conforto que acompanha", "راحة تتحرك معك", "随你而动的舒适", "動きに寄り添う快適さ"],
