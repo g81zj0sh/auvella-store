@@ -94,7 +94,7 @@ function TrackingPage() {
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com, 07700 900000 or B90 4UF"
+              placeholder="you@example.com, 07700 900000 or your postcode"
               autoComplete="email"
               required
               className="mt-2 h-12 w-full border border-[#ebebeb] bg-white px-4 text-[15px] text-[#0a0a0a] outline-none placeholder:text-[#b5b5b5] focus:border-[#0a0a0a]"

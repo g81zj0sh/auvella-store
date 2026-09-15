@@ -127,8 +127,8 @@ function normaliseOrderNumber(raw: string): string | null {
  * has neither an email nor a phone, and it's what UK shoppers are used to
  * being asked for.
  *
- * A phone is compared on its last 9 digits so "+447467513526", "07467513526"
- * and "7467513526" all match the same person without guessing at country
+ * A phone is compared on its last 9 digits so "+447700900123", "07700900123"
+ * and "7700900123" all match the same person without guessing at country
  * codes. A postcode is compared with case and spaces stripped.
  *
  * Any of these plus the exact order number identifies one order; none of them
