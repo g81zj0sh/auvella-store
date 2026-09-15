@@ -69,6 +69,16 @@ function parseWidgetHtml(html: string): Review[] {
     const verified =
       rev.getAttribute("data-verified-buyer") === "true" ||
       !!rev.querySelector(".jdgm-rev__buyer-badge");
+    // Photos live in the review's picture list; keep full-size hrefs where the
+    // markup offers one, falling back to the thumbnail src.
+    const photos: string[] = [];
+    rev.querySelectorAll(".jdgm-rev__pics img, .jdgm-rev__pic-img, .jdgm-rev__pic img").forEach((img) => {
+      const parent = img.closest("a");
+      const href = parent?.getAttribute("href");
+      const src = img.getAttribute("data-src") || img.getAttribute("src");
+      const url = href && /^https?:/.test(href) ? href : src;
+      if (url && !photos.includes(url)) photos.push(url);
+    });
     out.push({
       name: text(rev.querySelector(".jdgm-rev__author")) || "Anonymous",
       rating: isNaN(rating) ? 5 : rating,
@@ -76,6 +86,7 @@ function parseWidgetHtml(html: string): Review[] {
       body,
       verified,
       date: iso ? formatDate(iso) : undefined,
+      photos: photos.length ? photos : undefined,
     });
   });
   return out;
@@ -148,6 +159,8 @@ export interface ReviewSubmission {
   rating: number;
   title?: string;
   body: string;
+  /** Publicly reachable image URLs, from uploadReviewPhoto. */
+  pictureUrls?: string[];
 }
 
 /**
@@ -170,6 +183,8 @@ export async function submitJudgemeReview(s: ReviewSubmission): Promise<void> {
   form.set("rating", String(s.rating));
   if (s.title) form.set("title", s.title);
   form.set("body", s.body);
+  // Judge.me only accepts publicly fetchable URLs here — see reviewPhoto.functions.ts
+  for (const u of s.pictureUrls ?? []) form.append("picture_urls[]", u);
 
   const res = await fetch(`${API}/reviews`, {
     method: "POST",

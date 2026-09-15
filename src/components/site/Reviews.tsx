@@ -1,6 +1,7 @@
-import { Star, BadgeCheck, Loader2 } from "lucide-react";
+import { Star, BadgeCheck, Loader2, ImagePlus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { submitJudgemeReview } from "@/lib/judgeme";
+import { uploadReviewPhoto } from "@/lib/reviewPhoto.functions";
 
 export interface Review {
   name: string;
@@ -13,6 +14,8 @@ export interface Review {
   fit?: "Runs small" | "True to size" | "Runs large";
   verified?: boolean;
   date?: string;
+  /** Customer photos attached to the review, as public URLs. */
+  photos?: string[];
 }
 
 function Stars({ rating, size = 3 }: { rating: number; size?: number }) {
@@ -101,6 +104,32 @@ function WriteReviewForm({ productGid, onDone }: { productGid: string; onDone: (
   const [body, setBody] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "error">("idle");
   const [error, setError] = useState("");
+  /* Photos are uploaded as they're picked, so submitting is just a URL list. */
+  const [photos, setPhotos] = useState<{ url: string; preview: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  const MAX_PHOTOS = 3;
+
+  const addPhoto = async (file: File) => {
+    if (photos.length >= MAX_PHOTOS || uploading) return;
+    setUploading(true);
+    setError("");
+    try {
+      const dataUrl: string = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = () => rej(new Error("read failed"));
+        r.readAsDataURL(file);
+      });
+      const out = await uploadReviewPhoto({ data: { mimetype: file.type, data: dataUrl } });
+      if (out.ok) setPhotos((p) => [...p, { url: out.url, preview: dataUrl }]);
+      else setError(out.reason);
+    } catch {
+      setError("That photo couldn't be uploaded — you can still post your review without it.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const valid =
     name.trim().length > 0 &&
@@ -120,6 +149,7 @@ function WriteReviewForm({ productGid, onDone }: { productGid: string; onDone: (
         rating,
         title: title.trim() || undefined,
         body: body.trim(),
+        pictureUrls: photos.map((p) => p.url),
       });
       onDone();
     } catch (e) {
@@ -127,6 +157,52 @@ function WriteReviewForm({ productGid, onDone }: { productGid: string; onDone: (
       setError(e instanceof Error ? e.message : "Something went wrong — please try again.");
     }
   };
+
+  const photoField = (
+    <div>
+      <p className="mb-1.5 text-[11px] uppercase tracking-[0.1em] text-[#555555]">
+        Photos <span className="normal-case tracking-normal text-[#8a8a8a]">— optional, up to {MAX_PHOTOS}</span>
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        {photos.map((p, i) => (
+          <div key={p.url} className="relative h-20 w-20 overflow-hidden border border-[#ebebeb]">
+            <img src={p.preview} alt="" className="h-full w-full object-cover" />
+            <button
+              type="button"
+              aria-label="Remove photo"
+              onClick={() => setPhotos((xs) => xs.filter((_, j) => j !== i))}
+              className="absolute right-0 top-0 bg-white/90 p-1 text-[#0a0a0a]"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ))}
+        {photos.length < MAX_PHOTOS && (
+          <label
+            className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-[#d4d4d4] text-[#8a8a8a] transition-colors hover:border-[#0a0a0a] hover:text-[#0a0a0a] ${
+              uploading ? "pointer-events-none opacity-60" : ""
+            }`}
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            <span className="text-[10px] uppercase tracking-[0.1em]">{uploading ? "Adding" : "Add"}</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (f) void addPhoto(f);
+              }}
+            />
+          </label>
+        )}
+      </div>
+      <p className="mt-2 text-[12px] text-[#8a8a8a]">
+        JPG, PNG or WEBP, up to 6MB each. Photos appear once we've approved your review.
+      </p>
+    </div>
+  );
 
   return (
     <div className="mt-6 max-w-[560px] space-y-4">
@@ -163,7 +239,8 @@ function WriteReviewForm({ productGid, onDone }: { productGid: string; onDone: (
         value={body}
         onChange={(e) => setBody(e.target.value)}
       />
-      {state === "error" && <p className="text-[12px] text-[#B3261E]">{error}</p>}
+      {photoField}
+      {error && <p className="text-[12px] text-[#B3261E]">{error}</p>}
       <button
         type="button"
         onClick={submit}
@@ -318,6 +395,26 @@ export function Reviews({
                     <p className="mt-2 max-w-[620px] text-[13px] leading-[1.8] text-[#555555]">
                       {r.body}
                     </p>
+                    {r.photos && r.photos.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {r.photos.map((src) => (
+                          <a
+                            key={src}
+                            href={src}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block h-24 w-24 overflow-hidden border border-[#ebebeb]"
+                          >
+                            <img
+                              src={src}
+                              alt=""
+                              loading="lazy"
+                              className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     {r.fit && (
                       <div className="mt-4">
                         <FitScale pos={FIT_POS[r.fit] ?? 0.5} compact />

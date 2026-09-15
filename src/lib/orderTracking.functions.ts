@@ -46,7 +46,10 @@ const ADMIN_API_VERSION = "2025-07";
 let cachedToken: { value: string; expiresAt: number } | null = null;
 const RENEW_MARGIN_MS = 5 * 60 * 1000;
 
-async function getAdminToken(
+export const SHOPIFY_SHOP_DOMAIN = SHOP_DOMAIN;
+export const SHOPIFY_ADMIN_API_VERSION = ADMIN_API_VERSION;
+
+export async function getAdminToken(
   cfg: { shopifyAdminToken?: string; shopifyClientId?: string; shopifyClientSecret?: string },
 ): Promise<string | null> {
   // A legacy permanent token, if one exists, is used as-is.
