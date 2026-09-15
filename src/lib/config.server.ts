@@ -19,9 +19,17 @@ import process from "node:process";
 export function getServerConfig() {
   return {
     nodeEnv: process.env.NODE_ENV,
-    // Admin API token for the guest order lookup on /tracking. Set as a
-    // Cloudflare Worker secret; absent locally, in which case the lookup
-    // reports "not configured" rather than inventing a status.
+    // Credentials for the guest order lookup on /tracking.
+    //
+    // Shopify retired admin-created custom apps (and their permanent shpat_
+    // tokens) on 1 Jan 2026. Apps made in the Dev Dashboard authenticate to a
+    // store in the same organisation with the client credentials grant, and
+    // those tokens expire after 24 hours — so we store the app's credentials,
+    // not a token, and mint tokens on demand.
+    shopifyClientId: process.env.SHOPIFY_CLIENT_ID,
+    shopifyClientSecret: process.env.SHOPIFY_CLIENT_SECRET,
+    // Optional: a legacy shpat_ token, if one already exists. Used as-is when
+    // present, skipping the exchange.
     shopifyAdminToken: process.env.SHOPIFY_ADMIN_TOKEN,
     // Add server-only values here, e.g.:
     //   databaseUrl: process.env.DATABASE_URL,

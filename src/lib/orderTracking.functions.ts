@@ -9,12 +9,22 @@ import { getServerConfig } from "./config.server";
  * order by number + email for a visitor who isn't logged in, so this runs
  * server-side against the Admin API with a token that never reaches the
  * browser. Only the .handler body is server-only (the rest of this module
- * is shared with the client), so the token is read inside it via
- * getServerConfig(). The token is a Cloudflare Worker secret:
+ * is shared with the client), so credentials are read inside it via
+ * getServerConfig().
  *
- *   SHOPIFY_ADMIN_TOKEN   — Admin API access token from a custom app with
- *                           the read_orders scope (read_all_orders too if
- *                           orders older than 60 days should resolve)
+ * Shopify retired admin-created custom apps on 1 Jan 2026, so there is no
+ * permanent shpat_ token to store any more. A Dev Dashboard app authenticates
+ * to a store in the same organisation with the client credentials grant, and
+ * the resulting token expires after 24 hours. We therefore hold the app's
+ * credentials as Cloudflare Worker secrets and mint a token on demand,
+ * caching it in the isolate until shortly before it expires:
+ *
+ *   SHOPIFY_CLIENT_ID      — Dev Dashboard app client ID
+ *   SHOPIFY_CLIENT_SECRET  — Dev Dashboard app client secret
+ *
+ * The app version must have the read_orders scope released and be installed
+ * on the store (read_all_orders too if orders older than 60 days should
+ * resolve).
  *
  * Privacy: an order is only returned when the submitted email matches the
  * order's email exactly (case-insensitive). A mismatch is reported the same
@@ -27,6 +37,50 @@ import { getServerConfig } from "./config.server";
 
 const SHOP_DOMAIN = "bys-store-2961694-648466.myshopify.com";
 const ADMIN_API_VERSION = "2025-07";
+
+/*
+ * Token cache. Module scope, so it lives as long as the Worker isolate —
+ * a cold start just means one extra exchange, which is cheap. Renewed five
+ * minutes before expiry to absorb clock skew and in-flight requests.
+ */
+let cachedToken: { value: string; expiresAt: number } | null = null;
+const RENEW_MARGIN_MS = 5 * 60 * 1000;
+
+async function getAdminToken(
+  cfg: { shopifyAdminToken?: string; shopifyClientId?: string; shopifyClientSecret?: string },
+): Promise<string | null> {
+  // A legacy permanent token, if one exists, is used as-is.
+  if (cfg.shopifyAdminToken) return cfg.shopifyAdminToken;
+  if (!cfg.shopifyClientId || !cfg.shopifyClientSecret) return null;
+
+  if (cachedToken && cachedToken.expiresAt - RENEW_MARGIN_MS > Date.now()) {
+    return cachedToken.value;
+  }
+
+  const res = await fetch(`https://${SHOP_DOMAIN}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: cfg.shopifyClientId,
+      client_secret: cfg.shopifyClientSecret,
+      grant_type: "client_credentials",
+    }),
+  });
+  if (!res.ok) {
+    // shop_not_permitted here means the app and store aren't in the same
+    // Shopify organisation; anything else is transient.
+    console.error("Shopify token exchange failed:", res.status, await res.text().catch(() => ""));
+    cachedToken = null;
+    return null;
+  }
+  const json = (await res.json()) as { access_token?: string; expires_in?: number };
+  if (!json.access_token) return null;
+  cachedToken = {
+    value: json.access_token,
+    expiresAt: Date.now() + (json.expires_in ?? 86399) * 1000,
+  };
+  return cachedToken.value;
+}
 
 export type TrackingStage = 1 | 2 | 3 | 4;
 
@@ -121,15 +175,31 @@ export const lookupOrder = createServerFn({ method: "POST" })
     const email = normaliseEmail(data.email);
     if (!name || !email) return { ok: false, reason: "invalid" };
 
-    const token = getServerConfig().shopifyAdminToken;
+    const cfg = getServerConfig();
+    let token: string | null;
+    try {
+      token = await getAdminToken(cfg);
+    } catch {
+      return { ok: false, reason: "error" };
+    }
     if (!token) return { ok: false, reason: "not-configured" };
 
-    try {
-      const res = await fetch(`https://${SHOP_DOMAIN}/admin/api/${ADMIN_API_VERSION}/graphql.json`, {
+    const ask = (t: string) =>
+      fetch(`https://${SHOP_DOMAIN}/admin/api/${ADMIN_API_VERSION}/graphql.json`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
+        headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": t },
         body: JSON.stringify({ query: ORDER_QUERY, variables: { q: `name:${name}` } }),
       });
+
+    try {
+      let res = await ask(token);
+      // A cached token can expire mid-flight: drop it and mint one more.
+      if (res.status === 401) {
+        cachedToken = null;
+        const fresh = await getAdminToken(cfg);
+        if (!fresh) return { ok: false, reason: "not-configured" };
+        res = await ask(fresh);
+      }
       if (!res.ok) return { ok: false, reason: "error" };
       const json = (await res.json()) as { data?: { orders?: { nodes?: AdminOrder[] } } };
       const o = json.data?.orders?.nodes?.[0];
