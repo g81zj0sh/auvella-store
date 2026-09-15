@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FavouritesRouteImport } from './routes/favourites'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as AccountCallbackRouteImport } from './routes/account.callback'
 import { Route as CollectionsHandleRouteImport } from './routes/collections.$handle'
@@ -32,6 +33,11 @@ const FavouritesRoute = FavouritesRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackingRoute = TrackingRouteImport.update({
+  id: '/tracking',
+  path: '/tracking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountIndexRoute = AccountIndexRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tracking': typeof TrackingRoute
   '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tracking': typeof TrackingRoute
   '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/favourites': typeof FavouritesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tracking': typeof TrackingRoute
   '/account/callback': typeof AccountCallbackRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/favourites'
     | '/sitemap.xml'
+    | '/tracking'
     | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/favourites'
     | '/sitemap.xml'
+    | '/tracking'
     | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/favourites'
     | '/sitemap.xml'
+    | '/tracking'
     | '/account/callback'
     | '/collections/$handle'
     | '/pages/$slug'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FavouritesRoute: typeof FavouritesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TrackingRoute: typeof TrackingRoute
   AccountCallbackRoute: typeof AccountCallbackRoute
   CollectionsHandleRoute: typeof CollectionsHandleRoute
   PagesSlugRoute: typeof PagesSlugRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tracking': {
+      id: '/tracking'
+      path: '/tracking'
+      fullPath: '/tracking'
+      preLoaderRoute: typeof TrackingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FavouritesRoute: FavouritesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TrackingRoute: TrackingRoute,
   AccountCallbackRoute: AccountCallbackRoute,
   CollectionsHandleRoute: CollectionsHandleRoute,
   PagesSlugRoute: PagesSlugRoute,

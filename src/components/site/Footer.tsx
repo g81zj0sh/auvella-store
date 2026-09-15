@@ -7,8 +7,8 @@ const paymentMethodsAsset = { url: paymentMethodsAssetImg };
 /* Footer — SKIMS layout: white, three centred columns
    (HELP · STAY IN THE KNOW · MORE), slim legal bar with payment icons. */
 
-const help = [
-  { label: "Order Tracking", slug: "shipping" },
+const help: { label: string; slug?: string; to?: string }[] = [
+  { label: "Order Tracking", to: "/tracking" },
   { label: "Returns & Exchanges", slug: "returns" },
   { label: "Size Guide", slug: "size-guide" },
   { label: "Shipping", slug: "shipping" },
@@ -91,13 +91,19 @@ export function Footer() {
           <ul className="mt-5 space-y-3">
             {help.map((l) => (
               <li key={l.label}>
-                <Link
-                  to="/pages/$slug"
-                  params={{ slug: l.slug }}
-                  className="text-[13px] text-[#555555] transition-colors hover:text-[#0a0a0a]"
-                >
-                  {l.label}
-                </Link>
+                {l.to ? (
+                  <Link to={l.to} className="text-[13px] text-[#555555] transition-colors hover:text-[#0a0a0a]">
+                    {l.label}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/pages/$slug"
+                    params={{ slug: l.slug! }}
+                    className="text-[13px] text-[#555555] transition-colors hover:text-[#0a0a0a]"
+                  >
+                    {l.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

@@ -19,6 +19,10 @@ import process from "node:process";
 export function getServerConfig() {
   return {
     nodeEnv: process.env.NODE_ENV,
+    // Admin API token for the guest order lookup on /tracking. Set as a
+    // Cloudflare Worker secret; absent locally, in which case the lookup
+    // reports "not configured" rather than inventing a status.
+    shopifyAdminToken: process.env.SHOPIFY_ADMIN_TOKEN,
     // Add server-only values here, e.g.:
     //   databaseUrl: process.env.DATABASE_URL,
     //   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
