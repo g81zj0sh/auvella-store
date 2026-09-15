@@ -12,11 +12,12 @@ import { lookupOrder, type LookupResult, type TrackedOrder } from "@/lib/orderTr
 const DELIVERY_WINDOW = "5 to 12 business days";
 const SUPPORT_EMAIL = "support@auvellawear.com";
 
-const STAGES: { n: 1 | 2 | 3 | 4; title: string; detail: string }[] = [
+const STAGES: { n: 1 | 2 | 3 | 4 | 5; title: string; detail: string }[] = [
   { n: 1, title: "Order confirmed", detail: "Payment taken and your order logged." },
   { n: 2, title: "Being prepared", detail: "Picked and packed by our supply partner." },
-  { n: 3, title: "Dispatched & in transit", detail: "With the courier and on its way to you." },
-  { n: 4, title: "Delivered", detail: "At your door." },
+  { n: 3, title: "Shipment booked", detail: "Tracking number issued, waiting on the courier to collect." },
+  { n: 4, title: "In transit", detail: "Scanned by the courier and moving towards you." },
+  { n: 5, title: "Delivered", detail: "At your door." },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -167,8 +168,10 @@ function OrderResult({ order }: { order: TrackedOrder }) {
             </div>
           )}
 
-          {/* On schedule vs. over the window */}
-          {order.stage < 4 && (
+          {/* What's true right now — the copy differs by stage because
+              "we'll add tracking soon" is wrong once tracking exists, and
+              "on its way" is wrong before the courier has collected it. */}
+          {order.stage < 5 && (
             <div className="mt-8 bg-[#f4f4f2] px-5 py-5 text-[14px] leading-[1.7] text-[#555555]">
               {overWindow ? (
                 <>
@@ -180,12 +183,24 @@ function OrderResult({ order }: { order: TrackedOrder }) {
                     <SupportLink orderName={order.name} />
                   </p>
                 </>
+              ) : order.stage === 3 ? (
+                <>
+                  <p className="text-[#0a0a0a]">Your tracking number is live.</p>
+                  <p className="mt-2">
+                    The courier hasn't scanned the parcel yet, so tracking will look empty for a few days. That's
+                    normal and doesn't mean anything is wrong — it starts updating once the parcel is collected.
+                  </p>
+                </>
               ) : (
                 <>
-                  <p className="text-[#0a0a0a]">Your order is moving on schedule.</p>
+                  <p className="text-[#0a0a0a]">
+                    {order.stage === 4 ? "On its way to you." : "Your order is moving on schedule."}
+                  </p>
                   <p className="mt-2">
-                    Day {order.businessDaysSinceOrder} of a {DELIVERY_WINDOW} window. We'll add tracking here as soon as the
-                    courier issues it.
+                    {order.businessDaysSinceOrder === 0
+                      ? `Placed today. Standard delivery is ${DELIVERY_WINDOW}.`
+                      : `Day ${order.businessDaysSinceOrder} of a ${DELIVERY_WINDOW} window.`}
+                    {order.stage < 3 && " We'll add tracking here as soon as it's booked."}
                   </p>
                 </>
               )}
@@ -204,25 +219,43 @@ function OrderResult({ order }: { order: TrackedOrder }) {
   );
 }
 
-function StageTracker({ current }: { current: 1 | 2 | 3 | 4 }) {
+function StageTracker({ current }: { current: 1 | 2 | 3 | 4 | 5 }) {
+  const now = STAGES.find((s) => s.n === current);
   return (
-    <ol className="mt-8 grid grid-cols-4 gap-2" aria-label="Order progress">
-      {STAGES.map((s) => {
-        const done = s.n < current;
-        const active = s.n === current;
-        return (
-          <li key={s.n} className="min-w-0">
-            <div className={`h-[3px] w-full ${done || active ? "bg-[#0a0a0a]" : "bg-[#ebebeb]"}`} />
-            <p className={`mt-3 text-[11px] uppercase tracking-[0.12em] ${done || active ? "text-[#0a0a0a]" : "text-[#b5b5b5]"}`}>
-              {s.title}
-            </p>
-            <p className={`mt-1 hidden text-[12px] leading-[1.5] md:block ${active ? "text-[#555555]" : "text-[#b5b5b5]"}`}>
-              {s.detail}
-            </p>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="mt-8">
+      <ol className="grid grid-cols-5 gap-2" aria-label="Order progress">
+        {STAGES.map((s) => {
+          const done = s.n < current;
+          const active = s.n === current;
+          return (
+            <li key={s.n} className="min-w-0">
+              <div className={`h-[3px] w-full ${done || active ? "bg-[#0a0a0a]" : "bg-[#ebebeb]"}`} />
+              {/* Labels under every bar on desktop; mobile names the current stage below instead. */}
+              <p
+                className={`mt-3 hidden text-[11px] uppercase tracking-[0.12em] md:block ${
+                  done || active ? "text-[#0a0a0a]" : "text-[#b5b5b5]"
+                }`}
+              >
+                {s.title}
+              </p>
+              <p
+                className={`mt-1 hidden text-[12px] leading-[1.5] md:block ${
+                  active ? "text-[#555555]" : "text-[#b5b5b5]"
+                }`}
+              >
+                {s.detail}
+              </p>
+            </li>
+          );
+        })}
+      </ol>
+      {now && (
+        <div className="mt-4 md:hidden">
+          <p className="text-[11px] uppercase tracking-[0.12em] text-[#0a0a0a]">{now.title}</p>
+          <p className="mt-1 text-[13px] leading-[1.6] text-[#555555]">{now.detail}</p>
+        </div>
+      )}
+    </div>
   );
 }
 

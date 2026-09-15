@@ -82,7 +82,7 @@ async function getAdminToken(
   return cachedToken.value;
 }
 
-export type TrackingStage = 1 | 2 | 3 | 4;
+export type TrackingStage = 1 | 2 | 3 | 4 | 5;
 
 export type TrackedOrder = {
   name: string; // "#1042"
@@ -195,6 +195,8 @@ const ORDER_QUERY = `
         statusPageUrl
         fulfillments(first: 5) {
           displayStatus
+          inTransitAt
+          deliveredAt
           trackingInfo(first: 1) { company number url }
         }
       }
@@ -215,18 +217,34 @@ type AdminOrder = {
   statusPageUrl: string | null;
   fulfillments: Array<{
     displayStatus: string | null;
+    inTransitAt: string | null;
+    deliveredAt: string | null;
     trackingInfo: Array<{ company: string | null; number: string | null; url: string | null }>;
   }>;
 };
 
+/*
+ * A tracking number existing is NOT the same as a parcel moving. Our supply
+ * partner books the shipment and Shopify records a fulfilment the moment a
+ * label is generated — often a couple of days before the courier physically
+ * collects anything. Treating that as "in transit" tells the customer
+ * something untrue on the exact page that promises not to.
+ *
+ * So "booked" and "in transit" are separate stages, and we only claim
+ * movement when Shopify has an inTransitAt timestamp or a courier status
+ * that says so.
+ */
+const MOVING_STATUSES = new Set(["IN_TRANSIT", "OUT_FOR_DELIVERY", "ATTEMPTED_DELIVERY"]);
+
 function deriveStage(o: AdminOrder): { stage: TrackingStage; label: string } {
-  const delivered = o.fulfillments.some((f) => f.displayStatus === "DELIVERED");
-  if (delivered) return { stage: 4, label: "Delivered" };
-  const dispatched =
-    o.fulfillments.length > 0 ||
-    o.displayFulfillmentStatus === "FULFILLED" ||
-    o.displayFulfillmentStatus === "PARTIALLY_FULFILLED";
-  if (dispatched) return { stage: 3, label: "Dispatched & in transit" };
+  const f = o.fulfillments;
+  if (f.some((x) => x.deliveredAt || x.displayStatus === "DELIVERED")) {
+    return { stage: 5, label: "Delivered" };
+  }
+  if (f.some((x) => x.inTransitAt || MOVING_STATUSES.has(x.displayStatus ?? ""))) {
+    return { stage: 4, label: "In transit" };
+  }
+  if (f.length > 0) return { stage: 3, label: "Shipment booked" };
   return { stage: 2, label: "Being prepared" };
 }
 
