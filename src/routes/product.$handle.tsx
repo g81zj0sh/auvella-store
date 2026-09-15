@@ -139,18 +139,18 @@ function swatchHex(name: string): string | null {
 
 function inferCollection(title: string): { handle: string; label: string; query: string } {
   const t = title.toLowerCase();
-  if (/bodysuit/.test(t)) return { handle: "shapewear", label: "Bodysuits", query: "bodysuit" };
+  if (/bodysuit/.test(t)) return { handle: "bodysuits", label: "Bodysuits", query: "bodysuit" };
   if (/bra|bralette|cami/.test(t))
-    return { handle: "soft-essentials", label: "Bras & Bralettes", query: "bra OR bralette OR cami" };
-  if (/legging/.test(t)) return { handle: "activewear", label: "Activewear", query: "legging OR yoga OR sports" };
+    return { handle: "bras", label: "Bras", query: "bra OR bralette OR cami" };
+  if (/legging/.test(t)) return { handle: "shapewear", label: "Shapewear", query: "legging OR shaping" };
   if (/short|shape|sculpt|brief/.test(t))
-    return { handle: "shapewear-1", label: "Shapewear", query: "shape OR sculpt OR short OR control" };
+    return { handle: "shapewear", label: "Shapewear", query: "shape OR sculpt OR short OR control" };
   if (/pyjama|pajama/.test(t))
     return { handle: "loungewear-sleepwear", label: "Loungewear", query: "pajama OR satin OR lounge" };
   if (/robe/.test(t)) return { handle: "robes", label: "Robes", query: "robe OR satin" };
   if (/dress/.test(t)) return { handle: "dresses", label: "Dresses", query: "dress" };
-  if (/bikini|swim/.test(t)) return { handle: "bikinis", label: "Swim", query: "bikini OR swim" };
-  if (/active|sports/.test(t)) return { handle: "activewear", label: "Activewear", query: "sports OR yoga" };
+  if (/bikini|swim/.test(t)) return { handle: "swim", label: "Swim", query: "bikini OR swim" };
+  if (/active|sports/.test(t)) return { handle: "bras", label: "Bras", query: "sports OR bra" };
   if (/lounge|sleep|fleece/.test(t))
     return { handle: "loungewear-sleepwear", label: "Loungewear", query: "lounge OR fleece OR sleep" };
   return { handle: "new-in", label: "Shop", query: "" };

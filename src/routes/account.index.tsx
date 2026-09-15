@@ -95,7 +95,7 @@ function NotReady() {
       </p>
       <Link
         to="/collections/$handle"
-        params={{ handle: "best-sellers" }}
+        params={{ handle: "everyday-support-edit" }}
         className="mt-8 inline-flex h-11 items-center bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
       >
         Continue Shopping
@@ -283,7 +283,7 @@ function OrderHistory() {
           <p className="text-[13px] text-[#888888]">You haven't placed any orders yet.</p>
           <Link
             to="/collections/$handle"
-            params={{ handle: "best-sellers" }}
+            params={{ handle: "everyday-support-edit" }}
             className="mt-6 inline-flex h-11 items-center bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
           >
             Shop Best Sellers

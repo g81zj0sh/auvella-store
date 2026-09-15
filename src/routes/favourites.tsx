@@ -117,7 +117,7 @@ function OwnView() {
             </p>
             <Link
               to="/collections/$handle"
-              params={{ handle: "best-sellers" }}
+              params={{ handle: "everyday-support-edit" }}
               className="mt-8 inline-flex h-11 items-center bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
             >
               Shop Best Sellers

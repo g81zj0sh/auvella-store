@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { canonicalCollectionHandle, PREVIOUS_SHOPIFY_HANDLE } from "@/lib/collectionHandles";
 import { useEffect, useMemo, useState } from "react";
 import tileBodysuits from "@/assets/tiles/tile-bodysuits.jpg";
 import tileShapewear from "@/assets/tiles/tile-shapewear.jpg";
@@ -91,12 +92,10 @@ import bodysuitsHeroPosterImg from "@/assets/media/bodysuits-hero-poster.jpg";
 const bodysuitsHeroPoster = { url: bodysuitsHeroPosterImg };
 
 const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
-  "shapewear-1": { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url },
+  shapewear: { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url },
   "loungewear-sleepwear": { src: loungewearHeroVideo.url, poster: loungewearHeroPoster.url },
   activewear: { src: activewearHeroVideo.url, poster: activewearHeroPoster.url },
   bodysuits: { src: bodysuitsHeroVideo.url, poster: bodysuitsHeroPoster.url },
-  // the "shapewear" handle serves the Bodysuits collection
-  shapewear: { src: bodysuitsHeroVideo.url, poster: bodysuitsHeroPoster.url },
 };
 
 /* ------------------------------------------------------------------ */
@@ -104,14 +103,9 @@ const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
 /* ------------------------------------------------------------------ */
 
 const HANDLE_META: Record<string, { title: string; description: string; query?: string }> = {
-  "best-sellers": {
-    title: "Best Sellers",
-    description: "The pieces we'd put in your bag first.",
-  },
-  "shapewear-1": {
-    title: "Shapewear",
-    description: "Smoothing shorts, briefs and sculpting layers that hold their shape all day.",
-    query: "shapewear OR sculpt OR control OR shaper OR shaping",
+  "everyday-support-edit": {
+    title: "The Everyday Support Edit",
+    description: "Held where it helps, free where it doesn't. The pieces we'd put in your bag first.",
   },
   "loungewear-sleepwear": {
     title: "Loungewear",
@@ -138,8 +132,8 @@ const HANDLE_META: Record<string, { title: string; description: string; query?: 
   },
   shapewear: {
     title: "Shapewear",
-    description: "Smoothing shorts, briefs and sculpting layers that hold their shape all day.",
-    query: "shapewear OR shaping OR sculpt",
+    description: "Built to be worn for the whole day, not the length of a photo.",
+    query: "shapewear OR sculpt OR control OR shaper OR shaping",
   },
   activewear: {
     title: "Activewear",
@@ -176,10 +170,25 @@ const HANDLE_META: Record<string, { title: string; description: string; query?: 
     description: "The finishing layer, for the hour before you leave and the one after you get back.",
     query: "robe",
   },
-  "soft-essentials": {
-    title: "Soft Essentials",
-    description: "Support made soft — the layers you'll reach for on repeat.",
-    query: "essential OR soft",
+  "shorts-and-waist": {
+    title: "Shorts & Waist",
+    description: "Waistbands wide enough to stay put. Firm through the tummy, easier through the thigh.",
+    query: "short OR waist OR shaper",
+  },
+  "robes-and-sleep": {
+    title: "Robes & Sleep",
+    description: "The finishing layer, for the hour before you leave and the one after you get back.",
+    query: "robe OR pajama OR pyjama OR sleep OR eye mask",
+  },
+  "one-piece": {
+    title: "One-Piece",
+    description: "Cut to hold its line in and out of the water.",
+    query: "one-piece OR swimsuit OR swimwear",
+  },
+  bras: {
+    title: "Bras",
+    description: "Wide straps, wide bands, nothing that digs.",
+    query: "bra OR bralette",
   },
   sleepwear: {
     title: "Loungewear",
@@ -189,15 +198,14 @@ const HANDLE_META: Record<string, { title: string; description: string; query?: 
 };
 
 const HERO_IMG: Record<string, string> = {
-  "one-piece-swimsuits": heroSwim.url,
+  swim: heroSwim.url,
   bikinis: heroSwim.url,
   bodysuits: heroBodysuits.url,
-  shapewear: heroBodysuits.url, // real collection at this handle is BODYSUITS
-  "shapewear-1": shapewearPosterAsset.url,
+  shapewear: shapewearPosterAsset.url,
   "loungewear-sleepwear": heroLoungewear.url,
-  "soft-essentials": heroBras.url,
+  bras: heroBras.url,
   underwear: heroUnderwear.url,
-  "best-sellers": collectionBodysuitsAsset.url,
+  "everyday-support-edit": collectionBodysuitsAsset.url,
   activewear: heroActivewear.url,
   pajamas: heroLoungewear.url,
   "bras-and-tops": heroBras.url,
@@ -217,54 +225,54 @@ const HERO_IMG: Record<string, string> = {
 /* ------------------------------------------------------------------ */
 
 const TILE_LABELS: Record<string, string> = {
-  shapewear: "Bodysuits", // this handle holds the BODYSUITS collection
-  "shapewear-1": "Shapewear",
-  "soft-essentials": "Bras & Bralettes",
+  bodysuits: "Bodysuits",
+  shapewear: "Shapewear",
+  bras: "Bras",
   underwear: "Underwear",
   "loungewear-sleepwear": "Loungewear",
   sets: "Sets",
   robes: "Robes",
   "sleep-accessories": "Sleep Accessories",
-  "one-piece-swimsuits": "Swim",
+  swim: "Swim",
   bikinis: "Bikinis",
   dresses: "Dresses",
-  "mini-dresses-1": "Mini Dresses",
+  "mini-dresses": "Mini Dresses",
   "midi-dresses": "Midi Dresses",
   "maxi-dresses": "Maxi Dresses",
   activewear: "Activewear",
 };
 
 const TILE_SUBTEXT: Record<string, string> = {
-  shapewear: "Sculpt & smooth",
-  "shapewear-1": "Everyday control",
-  "soft-essentials": "Wireless comfort",
+  bodysuits: "No waistband to dig in",
+  shapewear: "Stays put all day",
+  bras: "Nothing that digs",
   underwear: "Seamless basics",
   "loungewear-sleepwear": "Slow-morning soft",
   sets: "Matching pieces",
   robes: "The finishing layer",
   "sleep-accessories": "Silk essentials",
-  "one-piece-swimsuits": "Pool to shore",
+  swim: "Pool to shore",
   bikinis: "Sets & separates",
-  dresses: "Sculpted silhouettes",
-  "mini-dresses-1": "Above the knee",
+  dresses: "Holds its own line",
+  "mini-dresses": "Above the knee",
   "midi-dresses": "Full length",
   "maxi-dresses": "Floor-skimming",
   activewear: "Studio to street",
 };
 
 const TILE_IMG: Record<string, string> = {
-  shapewear: tileBodysuits,
-  "shapewear-1": tileShapewear,
-  "soft-essentials": tileBras,
+  bodysuits: tileBodysuits,
+  shapewear: tileShapewear,
+  bras: tileBras,
   underwear: tileUnderwear,
   "loungewear-sleepwear": tileLoungewear,
   sets: tileSets,
   robes: tileRobes,
   "sleep-accessories": tileSleepAcc,
-  "one-piece-swimsuits": tileSwim,
+  swim: tileSwim,
   bikinis: tileBikinis,
   dresses: tileDresses,
-  "mini-dresses-1": tileMiniDress,
+  "mini-dresses": tileMiniDress,
   "midi-dresses": tileMidiDress,
   "maxi-dresses": tileMaxiDress,
   activewear: tileActivewear,
@@ -272,47 +280,41 @@ const TILE_IMG: Record<string, string> = {
 
 const OVERVIEW_TILES = [
   "shapewear",
-  "shapewear-1",
-  "soft-essentials",
+  "bodysuits",
+  "bras",
   "underwear",
   "loungewear-sleepwear",
-  "one-piece-swimsuits",
   "dresses",
-  "activewear",
+  "swim",
 ];
 
 const LOUNGE_TILES = ["loungewear-sleepwear", "sets", "robes", "sleep-accessories"];
-const DRESS_TILES = ["dresses", "mini-dresses-1", "midi-dresses", "maxi-dresses", "shapewear"];
+const DRESS_TILES = ["dresses", "mini-dresses", "midi-dresses", "maxi-dresses", "bodysuits"];
 
 const TILE_FAMILIES: Record<string, string[]> = {
   "new-in": OVERVIEW_TILES,
-  "best-sellers": OVERVIEW_TILES,
-  // Sculpt family
-  shapewear: ["shapewear-1", "soft-essentials", "activewear", "dresses"],
-  bodysuits: ["shapewear-1", "soft-essentials", "activewear", "dresses"],
-  "shapewear-1": ["shapewear", "soft-essentials", "underwear", "activewear"],
-  activewear: ["soft-essentials", "shapewear", "shapewear-1"],
-  leggings: ["activewear", "shapewear-1", "shapewear"],
+  "everyday-support-edit": OVERVIEW_TILES,
+  // Support family
+  shapewear: ["bodysuits", "bras", "underwear", "dresses"],
+  bodysuits: ["shapewear", "bras", "underwear", "dresses"],
   // Intimates family
-  "soft-essentials": ["underwear", "shapewear", "shapewear-1", "activewear"],
-  "bras-and-tops": ["soft-essentials", "underwear", "shapewear", "activewear"],
-  underwear: ["soft-essentials", "shapewear", "shapewear-1", "loungewear-sleepwear"],
+  bras: ["underwear", "shapewear", "bodysuits", "loungewear-sleepwear"],
+  underwear: ["bras", "shapewear", "bodysuits", "loungewear-sleepwear"],
   // Lounge family
-  "loungewear-sleepwear": ["sets", "robes", "sleep-accessories", "soft-essentials"],
+  "loungewear-sleepwear": ["sets", "robes", "sleep-accessories", "bras"],
   sets: LOUNGE_TILES,
   robes: LOUNGE_TILES,
   "sleep-accessories": LOUNGE_TILES,
   pajamas: LOUNGE_TILES,
   sleepwear: LOUNGE_TILES,
   // Swim family
-  "one-piece-swimsuits": ["bikinis", "activewear", "shapewear"],
-  bikinis: ["one-piece-swimsuits", "activewear", "shapewear"],
+  swim: ["bikinis", "shapewear", "bodysuits"],
+  bikinis: ["swim", "shapewear", "bodysuits"],
   // Dresses family
-  dresses: ["mini-dresses-1", "midi-dresses", "maxi-dresses", "shapewear"],
-  "mini-dresses-1": DRESS_TILES,
+  dresses: ["mini-dresses", "midi-dresses", "maxi-dresses", "bodysuits"],
+  "mini-dresses": DRESS_TILES,
   "midi-dresses": DRESS_TILES,
   "maxi-dresses": DRESS_TILES,
-  "maxi-dresses-1": DRESS_TILES,
 };
 
 function CategoryTile({ handle }: { handle: string }) {
@@ -363,7 +365,13 @@ function titleize(handle: string) {
 }
 
 async function loadCollection(handle: string): Promise<ShopifyCollection> {
-  const real = await fetchCollectionByHandle(handle, 96);
+  let real = await fetchCollectionByHandle(handle, 96);
+  // If Shopify hasn't been renamed yet (or a rename is rolled back), the
+  // previous handle still answers — try it before falling back to a search.
+  if (!real?.products.length) {
+    const prev = PREVIOUS_SHOPIFY_HANDLE[handle];
+    if (prev) real = await fetchCollectionByHandle(prev, 96);
+  }
   if (real && real.products.length) return real;
   const meta = HANDLE_META[handle];
   const products = await fetchProducts(96, meta?.query);
@@ -388,7 +396,13 @@ export const Route = createFileRoute("/collections/$handle")({
   component: CollectionPage,
   validateSearch: (search: Record<string, unknown>): { colour?: string } =>
     typeof search.colour === "string" ? { colour: search.colour } : {},
-  loader: ({ params, context }) => context.queryClient.ensureQueryData(collectionQueryOptions(params.handle)),
+  loader: ({ params, context }) => {
+    const canonical = canonicalCollectionHandle(params.handle);
+    if (canonical !== params.handle) {
+      throw redirect({ to: "/collections/$handle", params: { handle: canonical }, statusCode: 301 });
+    }
+    return context.queryClient.ensureQueryData(collectionQueryOptions(canonical));
+  },
   head: ({ params, loaderData }) => {
     const title = `${loaderData?.title ?? titleize(params.handle)} — Auvella`;
     const description =

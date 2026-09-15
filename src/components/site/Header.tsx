@@ -22,12 +22,9 @@ import {
 } from "@/lib/preferences";
 
 /* ------------------------------------------------------------------ */
-/* Nav model — validated against REAL Shopify collections (2026-07-04) */
-/*   BODYSUITS        -> handle "shapewear"        (real, 13 products) */
-/*   BRAS & BRALETTES -> handle "soft-essentials"  (real, 5)           */
-/*   LOUNGEWEAR       -> handle "loungewear-sleepwear" (real, 6)       */
-/*   ACTIVEWEAR       -> handle "activewear"       (real, 3)           */
-/*   new-in / best-sellers / sets / shapewear-1 -> search fallbacks */
+/* Nav model — handles match the Shopify collections after the Sept 2026 */
+/* rename (bodysuits, shapewear, bras, swim, mini-dresses, ...). Legacy  */
+/* handles 301 via src/lib/collectionHandles.ts.                         */
 /* ------------------------------------------------------------------ */
 
 type MegaLink = { label: string; handle: string };
@@ -59,250 +56,127 @@ const IMG = {
   robe: "https://cdn.shopify.com/s/files/1/0988/0738/2311/collections/hf_20260705_233801_c1d750cb-1ce8-4b98-bfa1-6c1a82e7d58e.png?v=1783295099",
 };
 
-const nav: NavItem[] = [
+/*
+ * Navigation — seven items, plain shopper nouns, ordered by what the brand
+ * leads with. Every sub-link lands on a genuinely different set of products;
+ * a sub-link that would show the same page as its sibling is not a sub-link.
+ * Collections that don't exist yet (Nursing & Maternity, Warm Layers, Cool
+ * Shapewear) are deliberately absent until they have stock — an empty page
+ * reads worse than a shorter menu.
+ */
+const NAV_ALL: NavItem[] = [
   {
-    label: "New In",
-    handle: "new-in",
-    links: [
-      { label: "New Arrivals", handle: "new-in" },
-      { label: "Best Sellers", handle: "best-sellers" },
-    ],
-  },
-  {
-    label: "Bodysuits",
-    handle: "shapewear", // real Shopify collection titled BODYSUITS
+    label: "Shapewear",
+    handle: "shapewear",
     primary: [
-      { label: "All Bodysuits", handle: "shapewear" },
-      { label: "Best Sellers", handle: "best-sellers" },
-      { label: "New In", handle: "new-in" },
-    ],
-    columns: [
-      {
-        title: "Style",
-        links: [
-          { label: "Seamless", handle: "shapewear" },
-          { label: "Square Neck", handle: "shapewear" },
-          { label: "Long Sleeve", handle: "shapewear" },
-          { label: "Strapless", handle: "shapewear" },
-          { label: "Lace", handle: "shapewear" },
-        ],
-      },
-      {
-        title: "Support",
-        links: [
-          { label: "Light Smoothing", handle: "shapewear" },
-          { label: "Everyday Sculpt", handle: "shapewear" },
-          { label: "Tummy Control", handle: "shapewear-1" },
-        ],
-      },
+      { label: "All Shapewear", handle: "shapewear" },
+      { label: "Bodysuits", handle: "bodysuits" },
+      { label: "Shorts & Waist", handle: "shorts-and-waist" },
+      { label: "The Everyday Support Edit", handle: "everyday-support-edit" },
     ],
     images: [
-      { src: IMG.bodysuits, label: "Bodysuits", desc: "One-piece layers that hold where it helps and stay put.", handle: "shapewear" },
-      { src: IMG.newArrivals, label: "New Season", desc: "Fresh silhouettes in warm neutrals.", handle: "new-in" },
-    ],
-  },
-  {
-    label: "Loungewear",
-    handle: "loungewear-sleepwear", // real Shopify collection
-    primary: [
-      { label: "All Loungewear", handle: "loungewear-sleepwear" },
-      { label: "Shop Sets", handle: "sets" },
-      { label: "Dresses", handle: "dresses" },
-      { label: "Robes", handle: "robes" },
-    ],
-    columns: [
       {
-        title: "Style",
-        links: [
-          { label: "Lounge Sets", handle: "sets" },
-          { label: "Dresses", handle: "dresses" },
-          { label: "Robes", handle: "robes" },
-          { label: "Joggers & Sweatpants", handle: "loungewear-sleepwear" },
-          { label: "Tops", handle: "loungewear-sleepwear" },
-        ],
+        src: IMG.sculpt,
+        label: "The Everyday Support Edit",
+        desc: "Held where it helps, free where it doesn't. The pieces we'd put in your bag first.",
+        handle: "everyday-support-edit",
       },
       {
-        title: "Fabric",
-        links: [
-          { label: "Satin", handle: "loungewear-sleepwear" },
-          { label: "Fleece", handle: "loungewear-sleepwear" },
-          { label: "Soft Knit", handle: "loungewear-sleepwear" },
-        ],
+        src: IMG.bodysuits,
+        label: "Bodysuits",
+        desc: "One continuous knit, no waistband to dig in — and an open gusset on the one-piece.",
+        handle: "bodysuits",
       },
-    ],
-    images: [
-      { src: IMG.lounge, label: "Lounge Sets", desc: "One decision, complete comfort.", handle: "sets" },
-      { src: IMG.pyjamas, label: "Satin Sleep", desc: "Silk-soft sets for slow evenings.", handle: "loungewear-sleepwear" },
-      { src: IMG.robe, label: "Robes", desc: "Satin ease, morning to midnight.", handle: "robes" },
     ],
   },
   {
     label: "Bras",
-    handle: "soft-essentials", // real Shopify collection titled BRAS & BRALETTES
-    primary: [
-      { label: "All Bras", handle: "soft-essentials" },
-      { label: "Best Sellers", handle: "best-sellers" },
-    ],
-    columns: [
-      {
-        title: "Style",
-        links: [
-          { label: "Bralettes", handle: "soft-essentials" },
-          { label: "Push Up", handle: "soft-essentials" },
-          { label: "Strapless", handle: "soft-essentials" },
-          { label: "Wireless", handle: "soft-essentials" },
-        ],
-      },
-      {
-        title: "Support",
-        links: [
-          { label: "Light & Everyday", handle: "soft-essentials" },
-          { label: "Sports Bras", handle: "activewear" },
-          { label: "High Impact", handle: "activewear" },
-        ],
-      },
-    ],
+    handle: "bras",
     images: [
-      { src: IMG.bras, label: "Wireless Comfort", desc: "Support without the structure.", handle: "soft-essentials" },
-      { src: IMG.braSet, label: "Seamless Sets", desc: "Matched tops and bottoms in skin tones.", handle: "soft-essentials" },
+      {
+        src: IMG.bras,
+        label: "Bras",
+        desc: "Wide straps, wide bands, nothing that digs. Strapless that stays where you put it.",
+        handle: "bras",
+      },
     ],
   },
   {
     label: "Underwear",
     handle: "underwear",
+  },
+  {
+    label: "Lounge & Sleep",
+    handle: "loungewear-sleepwear",
     primary: [
-      { label: "All Underwear", handle: "underwear" },
-      { label: "New In", handle: "new-in" },
-    ],
-    columns: [
-      {
-        title: "Style",
-        links: [
-          { label: "Briefs", handle: "underwear" },
-          { label: "Thongs", handle: "underwear" },
-          { label: "Boxer Briefs", handle: "underwear" },
-          { label: "High-Waisted", handle: "underwear" },
-        ],
-      },
-      {
-        title: "Fabric",
-        links: [
-          { label: "Soft Cotton", handle: "underwear" },
-          { label: "Seamless", handle: "underwear" },
-          { label: "Lace", handle: "underwear" },
-        ],
-      },
+      { label: "All Lounge & Sleep", handle: "loungewear-sleepwear" },
+      { label: "Sets", handle: "sets" },
+      { label: "Robes & Sleep", handle: "robes-and-sleep" },
     ],
     images: [
-      { src: IMG.shorts, label: "Everyday Seamless", desc: "Invisible under everything.", handle: "underwear" },
-      { src: IMG.braSet, label: "Soft Essentials", desc: "Everyday intimates in warm tones.", handle: "soft-essentials" },
+      {
+        src: IMG.lounge,
+        label: "Sets",
+        desc: "One thing to put on, nothing underneath it. The set with the bra built in.",
+        handle: "sets",
+      },
+      {
+        src: IMG.robe,
+        label: "Robes & Sleep",
+        desc: "For the part of the day after the bra comes off.",
+        handle: "robes-and-sleep",
+      },
     ],
   },
   {
-    label: "Shapewear",
-    handle: "shapewear-1", // real Shopify collection: Shapewear
+    label: "Dresses",
+    handle: "dresses",
     primary: [
-      { label: "All Shapewear", handle: "shapewear-1" },
-      { label: "The Sculpt Edit", handle: "best-sellers" },
-    ],
-    columns: [
-      {
-        title: "Style",
-        links: [
-          { label: "Bodysuits", handle: "shapewear" },
-          { label: "Shorts & Cycling", handle: "shapewear-1" },
-          { label: "Camis", handle: "shapewear-1" },
-          { label: "Waist & Tummy", handle: "shapewear-1" },
-        ],
-      },
-      {
-        title: "Compression",
-        links: [
-          { label: "Light", handle: "shapewear-1" },
-          { label: "Mid", handle: "shapewear-1" },
-          { label: "Strong", handle: "shapewear-1" },
-        ],
-      },
-    ],
-    images: [
-      { src: IMG.shorts, label: "Sculpting Shorts", desc: "Smooth, lift, hold — all day.", handle: "shapewear-1" },
-      { src: IMG.sculpt, label: "The Sculpt Edit", desc: "Our most-loved shaping layers.", handle: "best-sellers" },
-    ],
-  },
-  {
-    label: "Activewear",
-    handle: "activewear", // real Shopify collection
-    primary: [
-      { label: "All Activewear", handle: "activewear" },
-    ],
-    columns: [
-      {
-        title: "Style",
-        links: [
-          { label: "Sports Bras", handle: "activewear" },
-          { label: "Leggings", handle: "activewear" },
-          { label: "Sets", handle: "activewear" },
-          { label: "Tops", handle: "activewear" },
-        ],
-      },
-      {
-        title: "Activity",
-        links: [
-          { label: "Studio", handle: "activewear" },
-          { label: "Running", handle: "activewear" },
-          { label: "Everyday", handle: "activewear" },
-        ],
-      },
-    ],
-    images: [
-      { src: IMG.activewear, label: "Studio to Street", desc: "Performance fabric, editorial lines.", handle: "activewear" },
-      { src: IMG.shorts, label: "High-Rise Support", desc: "Sculpting compression that moves.", handle: "activewear" },
+      { label: "All Dresses", handle: "dresses" },
+      { label: "Maxi", handle: "maxi-dresses" },
+      { label: "Midi", handle: "midi-dresses" },
+      { label: "Mini", handle: "mini-dresses" },
     ],
   },
   {
     label: "Swim",
-    handle: "one-piece-swimsuits", // real Shopify collection titled SWIMWEAR
+    handle: "swim",
     primary: [
-      { label: "All Swim", handle: "one-piece-swimsuits" },
-      { label: "New In", handle: "new-in" },
-    ],
-    columns: [
-      {
-        title: "Style",
-        links: [
-          { label: "One-Pieces", handle: "one-piece-swimsuits" },
-          { label: "Bikinis", handle: "bikinis" },
-          { label: "Triangle", handle: "bikinis" },
-          { label: "Tie-Side", handle: "bikinis" },
-        ],
-      },
-      {
-        title: "Fit",
-        links: [
-          { label: "Sculpting", handle: "one-piece-swimsuits" },
-          { label: "Minimal Coverage", handle: "one-piece-swimsuits" },
-        ],
-      },
+      { label: "All Swim", handle: "swim" },
+      { label: "One-Piece", handle: "one-piece" },
+      { label: "Bikinis & Bottoms", handle: "bikinis" },
     ],
     images: [
-      { src: IMG.swimOnePiece, label: "The One-Piece", desc: "Sculpting fit, sun-ready.", handle: "one-piece-swimsuits" },
-      { src: IMG.swimBikini, label: "Bikinis", desc: "Sets, tops and bottoms in warm tones.", handle: "bikinis" },
+      { src: IMG.swimOnePiece, label: "One-Piece", desc: "Cut to hold its line in and out of the water.", handle: "one-piece" },
+      { src: IMG.swimBikini, label: "Bikinis & Bottoms", desc: "Sets and separates.", handle: "bikinis" },
     ],
   },
   {
-    label: "Sets",
-    handle: "sets",
-    links: [
-      { label: "Shop All Sets", handle: "sets" },
-      { label: "Lounge Sets", handle: "loungewear-sleepwear" },
-      { label: "Activewear Sets", handle: "activewear" },
-    ],
+    label: "New In",
+    handle: "new-in",
   },
 ];
 
+/*
+ * Swim is a summer category in the UK. From 1 November to the end of February
+ * it drops out of the menu (still reachable by URL, search and footer). The
+ * check uses the UTC month on both server and client so SSR and hydration
+ * agree; month granularity means the 1s of clock skew across the boundary
+ * can't produce a mismatch in practice.
+ */
+function swimInSeason(now: Date = new Date()): boolean {
+  const m = now.getUTCMonth(); // 0 = Jan … 11 = Dec
+  return !(m === 10 || m === 11 || m === 0 || m === 1);
+}
+
+function currentNav(): NavItem[] {
+  return swimInSeason() ? NAV_ALL : NAV_ALL.filter((item) => item.handle !== "swim");
+}
+
 /* Shop by Colour palette — main catalogue colours plus primaries.
-   Links pre-filter New In; the fuzzy colour filter handles naming drift,
-   and unstocked colours render a clean empty state. */
+   Links pre-filter the collection the shopper is already browsing; the
+   fuzzy colour filter handles naming drift, and unstocked colours render
+   a clean empty state. */
 const NAV_PALETTE: { name: string; hex: string; border?: boolean }[] = [
   { name: "Black", hex: "#0d0d0d" },
   { name: "White", hex: "#f5f3ee", border: true },
@@ -318,7 +192,7 @@ const NAV_PALETTE: { name: string; hex: string; border?: boolean }[] = [
   { name: "Purple", hex: "#5d3a6e" },
 ];
 
-function ColourColumn() {
+function ColourColumn({ handle }: { handle: string }) {
   return (
     <div>
       <p className="mb-4 text-[10px] uppercase tracking-[0.18em] text-[#888888]">
@@ -329,7 +203,7 @@ function ColourColumn() {
           <Link
             key={c.name}
             to="/collections/$handle"
-            params={{ handle: "new-in" }}
+            params={{ handle }}
             search={{ colour: c.name }}
             aria-label={c.name}
             title={c.name}
@@ -374,7 +248,7 @@ function MegaPanel({ item }: { item: NavItem }) {
               ))}
             </ul>
             <div className="mt-9">
-              <ColourColumn />
+              <ColourColumn handle={item.handle} />
             </div>
           </div>
 
@@ -642,7 +516,7 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
                 light ? "text-white" : "text-[#0a0a0a]"
               }`}
             >
-              {nav.map((item) => (
+              {currentNav().map((item) => (
                 <li key={item.label} className="group relative">
                   <Link
                     to="/collections/$handle"
@@ -651,7 +525,7 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
                   >
                     {item.label}
                   </Link>
-                  {item.columns ? (
+                  {item.columns || item.primary || item.images ? (
                     <MegaPanel item={item} />
                   ) : item.links ? (
                     <SimplePanel item={item} />
@@ -731,7 +605,7 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
 
             <nav className="flex-1 overflow-y-auto px-5 pb-12">
               <ul>
-                {nav.map((item, i) => {
+                {currentNav().map((item, i) => {
                   const hasSub = !!(item.links || item.columns || item.primary);
                   const isOpen = expanded === item.label;
                   return (

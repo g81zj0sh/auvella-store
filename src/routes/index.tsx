@@ -381,8 +381,8 @@ function Index() {
       <section id="bestsellers" className="grid grid-cols-1 md:grid-cols-2 scroll-mt-24">
         <Panel
           image={PANEL_IMG.bestsellers}
-          handle="new-in"
-          name="Best Sellers"
+          handle="everyday-support-edit"
+          name="The Everyday Support Edit"
           sub="Holds where it helps. No roll-down, no digging, no adjusting."
           position="55% 38%"
           scale={1.18}
@@ -390,7 +390,7 @@ function Index() {
         />
         <Panel
           image={PANEL_IMG.shapewear}
-          handle="shapewear-1"
+          handle="shapewear"
           name="Shapewear"
           sub="Holds where it helps. Nowhere else."
           position="center 18%"
@@ -401,10 +401,10 @@ function Index() {
 
       {/* SECTION 3 — FOUR-PANEL CATEGORY ROW (small cards keep original caption styling) */}
       <section id="sleep" className="mt-3 grid grid-cols-2 gap-3 px-3 md:mt-4 md:gap-4 md:px-4 lg:grid-cols-4 scroll-mt-24">
-        <Panel image={PANEL_IMG.bodysuits} handle="shapewear" name="Bodysuits" position="center 15%" scale={1.18} className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
-        <Panel image={PANEL_IMG.loungewear} handle="loungewear-sleepwear" name="Loungewear" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
-        <Panel image={PANEL_IMG.bras} handle="soft-essentials" name="Bras" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
-        <Panel image={PANEL_IMG.activewear} handle="activewear" name="Activewear" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
+        <Panel image={PANEL_IMG.bodysuits} handle="bodysuits" name="Bodysuits" position="center 15%" scale={1.18} className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
+        <Panel image={PANEL_IMG.loungewear} handle="loungewear-sleepwear" name="Lounge & Sleep" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
+        <Panel image={PANEL_IMG.bras} handle="bras" name="Bras" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
+        <Panel image={PANEL_IMG.activewear} handle="dresses" name="Dresses" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
       </section>
 
       {/* SECTION 4 — FULL-WIDTH EDITORIAL BANNER */}
@@ -416,11 +416,11 @@ function Index() {
             MADE FOR YOUR BODY
           </h2>
           <p className="mt-4 text-[12px] uppercase tracking-[0.18em] text-white/80">
-            Seamless. Supportive. Sculpted.
+            Stays put. Doesn't dig. Disappears under white.
           </p>
           <Link
             to="/collections/$handle"
-            params={{ handle: "shapewear-1" }}
+            params={{ handle: "shapewear" }}
             className="mt-7 inline-flex h-12 w-40 items-center justify-center border border-white bg-transparent text-[11px] uppercase tracking-[0.16em] text-white transition-colors duration-[250ms] hover:bg-white hover:text-[#0a0a0a]"
           >
             Shop Now
@@ -431,8 +431,8 @@ function Index() {
       {/* SECTION 5 — FOUR-PANEL SECOND CATEGORY ROW (small cards keep original caption styling) */}
       <section className="mt-3 grid grid-cols-2 gap-3 px-3 md:mt-4 md:gap-4 md:px-4 lg:grid-cols-4">
         <Panel image={PANEL_IMG.sets} handle="sets" name="Sets" position="center 60%" scale={1.15} className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
-        <Panel image={PANEL_IMG.shorts} handle="shapewear-1" name="Shorts" scale={1.15} className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
-        <Panel image={PANEL_IMG.pyjamas} handle="loungewear-sleepwear" name="Pyjamas" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
+        <Panel image={PANEL_IMG.shorts} handle="shorts-and-waist" name="Shorts & Waist" scale={1.15} className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
+        <Panel image={PANEL_IMG.pyjamas} handle="robes-and-sleep" name="Robes & Sleep" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
         <Panel image={PANEL_IMG.newArrivals} handle="new-in" name="New Arrivals" scale={1.22} className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
       </section>
 

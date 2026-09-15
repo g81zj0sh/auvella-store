@@ -70,9 +70,11 @@ const socialPath: Record<(typeof socials)[number], React.ReactNode> = {
 };
 
 const shopLinks = [
-  { label: "Bodysuits", handle: "shapewear" },
-  { label: "Shapewear", handle: "shapewear-1" },
-  { label: "Loungewear", handle: "loungewear-sleepwear" },
+  { label: "Shapewear", handle: "shapewear" },
+  { label: "Bras", handle: "bras" },
+  { label: "Lounge & Sleep", handle: "loungewear-sleepwear" },
+  { label: "Dresses", handle: "dresses" },
+  { label: "Swim", handle: "swim" },
   { label: "New In", handle: "new-in" },
 ];
 

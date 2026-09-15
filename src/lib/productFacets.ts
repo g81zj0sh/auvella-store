@@ -377,28 +377,29 @@ export const PRODUCT_FACETS: Record<string, FacetValues> = {
 /* dropdown.                                                          */
 export const COLLECTION_FACETS: Record<string, string[]> = {
   // Bras
-  "soft-essentials": ["style", "cup", "wiring", "lining", "material"],
-  "bras-and-tops": ["style", "cup", "wiring", "lining", "material"],
+  bras: ["style", "cup", "wiring", "lining", "material"],
   // Bodysuits
-  shapewear: ["sleeve", "support", "target", "material"],
   bodysuits: ["sleeve", "support", "target", "material"],
   // Shapewear (all)
-  "shapewear-1": ["style", "support", "target", "material"],
+  shapewear: ["style", "support", "target", "material"],
+  "shorts-and-waist": ["style", "support", "target", "material"],
+  "everyday-support-edit": ["category", "material"],
   // Underwear
   underwear: ["style", "rise", "material"],
   // Swim
-  "one-piece-swimsuits": ["style", "sleeve", "material"],
+  swim: ["style", "sleeve", "material"],
+  "one-piece": ["style", "sleeve", "material"],
   bikinis: ["style", "sleeve", "material"],
   // Dresses
   dresses: ["length", "sleeve", "neckline", "material"],
-  "mini-dresses-1": ["sleeve", "neckline", "material"],
+  "mini-dresses": ["sleeve", "neckline", "material"],
   "midi-dresses": ["sleeve", "neckline", "material"],
   "maxi-dresses": ["sleeve", "neckline", "material"],
-  "maxi-dresses-1": ["sleeve", "neckline", "material"],
   // Lounge family
   "loungewear-sleepwear": ["style", "fabric", "sleeve", "material"],
   sets: ["fabric", "sleeve", "material"],
   robes: ["fabric", "material"],
+  "robes-and-sleep": ["fabric", "sleeve", "material"],
   "sleep-accessories": ["material"],
   pajamas: ["style", "fabric", "sleeve", "material"],
   sleepwear: ["style", "fabric", "sleeve", "material"],
@@ -407,7 +408,6 @@ export const COLLECTION_FACETS: Record<string, string[]> = {
   leggings: ["style", "support", "material"],
   // Overview pages
   "new-in": ["category", "material"],
-  "best-sellers": ["category", "material"],
 };
 
 export function facetValuesOf(handle: string, key: string): string[] {
