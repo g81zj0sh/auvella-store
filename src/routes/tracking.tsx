@@ -67,7 +67,7 @@ function TrackingPage() {
             Where's my order?
           </h1>
           <p className="mx-auto mt-4 max-w-[46ch] text-[15px] leading-[1.7] text-[#555555]">
-            Enter the order number from your confirmation email and the address you used at checkout.
+            Enter your order number, then any one of the email address, phone number or postcode you used at checkout.
           </p>
         </header>
 
@@ -86,12 +86,14 @@ function TrackingPage() {
             />
           </label>
           <label className="mt-5 block">
-            <span className="text-[11px] uppercase tracking-[0.18em] text-[#0a0a0a]">Email address</span>
+            <span className="text-[11px] uppercase tracking-[0.18em] text-[#0a0a0a]">
+              Email, phone or postcode
+            </span>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="you@example.com, 07700 900000 or B90 4UF"
               autoComplete="email"
               required
               className="mt-2 h-12 w-full border border-[#ebebeb] bg-white px-4 text-[15px] text-[#0a0a0a] outline-none placeholder:text-[#b5b5b5] focus:border-[#0a0a0a]"
@@ -227,8 +229,8 @@ function StageTracker({ current }: { current: 1 | 2 | 3 | 4 }) {
 function LookupFailure({ reason, orderNumber }: { reason: Exclude<LookupResult, { ok: true }>["reason"]; orderNumber: string }) {
   const name = orderNumber.trim() ? `#${orderNumber.replace(/[^0-9]/g, "")}` : "";
   const copy: Record<typeof reason, string> = {
-    invalid: "Check the order number (it's the one starting with # in your confirmation email) and the email address, then try again.",
-    "not-found": "We couldn't find an order with that number and email. Check both against your confirmation email — it's usually a typo in one of them.",
+    invalid: "Check the order number (it's the one starting with #) and your email, phone or postcode, then try again.",
+    "not-found": "We couldn't find a matching order. Check the order number, and try a different detail — the email, phone number or postcode from your order all work.",
     "not-configured":
       "Order lookup isn't switched on yet. Email us with your order number and we'll tell you exactly where it is.",
     error: "Something went wrong on our side, not yours. Try again in a minute, or email us with your order number.",

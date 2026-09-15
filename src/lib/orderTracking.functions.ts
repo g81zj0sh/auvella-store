@@ -120,9 +120,63 @@ function normaliseOrderNumber(raw: string): string | null {
   return `#${digits}`;
 }
 
-function normaliseEmail(raw: string): string | null {
-  const e = raw.trim().toLowerCase();
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? e : null;
+/*
+ * Checkout allows a phone number instead of an email, and orders placed that
+ * way carry no email at all — so the lookup accepts email, phone OR postcode.
+ * Postcode is the useful one: every order has a delivery address even when it
+ * has neither an email nor a phone, and it's what UK shoppers are used to
+ * being asked for.
+ *
+ * A phone is compared on its last 9 digits so "+447467513526", "07467513526"
+ * and "7467513526" all match the same person without guessing at country
+ * codes. A postcode is compared with case and spaces stripped.
+ *
+ * Any of these plus the exact order number identifies one order; none of them
+ * is enough to go fishing with.
+ */
+type Contact =
+  | { kind: "email"; value: string }
+  | { kind: "phone"; value: string }
+  | { kind: "postcode"; value: string };
+
+function normaliseContact(raw: string): Contact | null {
+  const t = raw.trim();
+  if (!t) return null;
+  if (t.includes("@")) {
+    const e = t.toLowerCase();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? { kind: "email", value: e } : null;
+  }
+  const digits = t.replace(/[^0-9]/g, "");
+  // A UK postcode always contains letters; a phone number never does.
+  if (/[a-z]/i.test(t)) {
+    const pc = t.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    return pc.length >= 5 && pc.length <= 8 ? { kind: "postcode", value: pc } : null;
+  }
+  if (digits.length < 9 || digits.length > 15) return null;
+  return { kind: "phone", value: digits.slice(-9) };
+}
+
+function postcodeMatches(candidate: string | null | undefined, pc: string): boolean {
+  if (!candidate) return false;
+  return candidate.toUpperCase().replace(/[^A-Z0-9]/g, "") === pc;
+}
+
+function phoneMatches(candidate: string | null | undefined, last9: string): boolean {
+  if (!candidate) return false;
+  const d = candidate.replace(/[^0-9]/g, "");
+  return d.length >= 9 && d.slice(-9) === last9;
+}
+
+function contactMatchesOrder(o: AdminOrder, c: Contact): boolean {
+  if (c.kind === "email") {
+    return [o.email, o.customer?.email].some((e) => (e ?? "").toLowerCase() === c.value);
+  }
+  if (c.kind === "phone") {
+    return [o.phone, o.customer?.phone, o.shippingAddress?.phone, o.billingAddress?.phone].some((p) =>
+      phoneMatches(p, c.value),
+    );
+  }
+  return [o.shippingAddress?.zip, o.billingAddress?.zip].some((z) => postcodeMatches(z, c.value));
 }
 
 const ORDER_QUERY = `
@@ -131,6 +185,10 @@ const ORDER_QUERY = `
       nodes {
         name
         email
+        phone
+        customer { email phone }
+        shippingAddress { phone zip }
+        billingAddress { phone zip }
         createdAt
         cancelledAt
         displayFulfillmentStatus
@@ -147,6 +205,10 @@ const ORDER_QUERY = `
 type AdminOrder = {
   name: string;
   email: string | null;
+  phone: string | null;
+  customer: { email: string | null; phone: string | null } | null;
+  shippingAddress: { phone: string | null; zip: string | null } | null;
+  billingAddress: { phone: string | null; zip: string | null } | null;
   createdAt: string;
   cancelledAt: string | null;
   displayFulfillmentStatus: string;
@@ -169,11 +231,11 @@ function deriveStage(o: AdminOrder): { stage: TrackingStage; label: string } {
 }
 
 export const lookupOrder = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ orderNumber: z.string().max(20), email: z.string().max(254) }))
+  .inputValidator(z.object({ orderNumber: z.string().max(20), email: z.string().max(254) })) // `email` carries an email OR a phone number
   .handler(async ({ data }): Promise<LookupResult> => {
     const name = normaliseOrderNumber(data.orderNumber);
-    const email = normaliseEmail(data.email);
-    if (!name || !email) return { ok: false, reason: "invalid" };
+    const contact = normaliseContact(data.email);
+    if (!name || !contact) return { ok: false, reason: "invalid" };
 
     const cfg = getServerConfig();
     let token: string | null;
@@ -204,7 +266,9 @@ export const lookupOrder = createServerFn({ method: "POST" })
       const json = (await res.json()) as { data?: { orders?: { nodes?: AdminOrder[] } } };
       const o = json.data?.orders?.nodes?.[0];
       if (!o || o.name !== name) return { ok: false, reason: "not-found" };
-      if ((o.email ?? "").toLowerCase() !== email) return { ok: false, reason: "not-found" };
+      // Mismatches read as not-found so the endpoint can't confirm which
+      // order numbers exist or brute-force a contact detail against one.
+      if (!contactMatchesOrder(o, contact)) return { ok: false, reason: "not-found" };
 
       const { stage, label } = deriveStage(o);
       const t = o.fulfillments.flatMap((f) => f.trackingInfo)[0];
