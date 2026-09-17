@@ -27,7 +27,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
 import { BUNDLE_DEAL, inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
-import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
+import { freeShippingThresholdFmt, useShippingCountry, PROCESSING_LABEL } from "@/lib/shipping";
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
@@ -949,8 +949,8 @@ function ProductPage() {
                   <div className="space-y-3">
                     <p>
                       Free shipping to {shipDest} on orders over {shipThreshold}. Orders are
-                      processed within 1–2 business days and typically arrive in{" "}
-                      {shipCountry.days} business days, tracked.
+                      processed within {PROCESSING_LABEL} business days and arrive{" "}
+                      {shipCountry.days} business days from ordering, tracked.
                     </p>
                     <p>
                       Easy, tracked 30-day returns — items must be unworn with tags attached.

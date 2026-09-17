@@ -98,6 +98,8 @@ export type TrackedOrder = {
   trackingUrl: string | null;
   orderStatusUrl: string | null;
   cancelled: boolean;
+  /** ISO country the order ships to, for the per-country delivery window. */
+  countryCode: string | null;
 };
 
 export type LookupResult =
@@ -190,7 +192,7 @@ const ORDER_QUERY = `
         email
         phone
         customer { email phone }
-        shippingAddress { phone zip }
+        shippingAddress { phone zip countryCodeV2 }
         billingAddress { phone zip }
         createdAt
         cancelledAt
@@ -212,7 +214,7 @@ type AdminOrder = {
   email: string | null;
   phone: string | null;
   customer: { email: string | null; phone: string | null } | null;
-  shippingAddress: { phone: string | null; zip: string | null } | null;
+  shippingAddress: { phone: string | null; zip: string | null; countryCodeV2: string | null } | null;
   billingAddress: { phone: string | null; zip: string | null } | null;
   createdAt: string;
   cancelledAt: string | null;
@@ -306,6 +308,7 @@ export const lookupOrder = createServerFn({ method: "POST" })
           trackingUrl: t?.url ?? null,
           orderStatusUrl: o.statusPageUrl ?? null,
           cancelled: !!o.cancelledAt,
+          countryCode: o.shippingAddress?.countryCodeV2 ?? null,
         },
       };
     } catch {

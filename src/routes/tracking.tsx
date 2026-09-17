@@ -4,12 +4,21 @@ import { Loader2 } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { lookupOrder, type LookupResult, type TrackedOrder } from "@/lib/orderTracking.functions";
+import { COUNTRIES, DEFAULT_DAYS } from "@/lib/shipping";
 
 /* ------------------------------------------------------------------ */
 /* Copy — every line here is meant to be true.                         */
 /* ------------------------------------------------------------------ */
 
-const DELIVERY_WINDOW = "5 to 12 business days";
+/* Delivery copy comes from the same country table as the rest of the site, so
+   this page can never quote a different number from the product pages. */
+const DELIVERY_WINDOW = `${DEFAULT_DAYS.replace(" – ", " to ")} business days`;
+
+function windowFor(countryCode: string | null): { label: string; maxDays: number } {
+  const c = (countryCode && COUNTRIES.find((x) => x.code === countryCode)) || COUNTRIES.find((x) => x.code === "GB")!;
+  const [, max] = c.days.split(" – ").map(Number);
+  return { label: `${c.days.replace(" – ", " to ")} business days`, maxDays: Number.isFinite(max) ? max : 12 };
+}
 const SUPPORT_EMAIL = "support@auvellawear.com";
 
 const STAGES: { n: 1 | 2 | 3 | 4 | 5; title: string; detail: string }[] = [
@@ -136,7 +145,8 @@ function TrackingPage() {
 /* ------------------------------------------------------------------ */
 
 function OrderResult({ order }: { order: TrackedOrder }) {
-  const overWindow = order.businessDaysSinceOrder > 12;
+  const win = windowFor(order.countryCode);
+  const overWindow = order.businessDaysSinceOrder > win.maxDays;
   const placed = new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
   return (
@@ -198,8 +208,8 @@ function OrderResult({ order }: { order: TrackedOrder }) {
                   </p>
                   <p className="mt-2">
                     {order.businessDaysSinceOrder === 0
-                      ? `Placed today. Standard delivery is ${DELIVERY_WINDOW}.`
-                      : `Day ${order.businessDaysSinceOrder} of a ${DELIVERY_WINDOW} window.`}
+                      ? `Placed today. Standard delivery is ${win.label}.`
+                      : `Day ${order.businessDaysSinceOrder} of a ${win.label} window.`}
                     {order.stage < 3 && " We'll add tracking here as soon as it's booked."}
                   </p>
                 </>

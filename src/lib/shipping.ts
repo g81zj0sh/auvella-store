@@ -13,43 +13,60 @@ import {
 
 export type Country = ShippingCountry;
 
-export const COUNTRIES: Country[] = [
-  { code: "GB", name: "United Kingdom", the: true, days: "5 – 12", transit: [3, 6], currency: "GBP" },
-  { code: "US", name: "United States", the: true, days: "3 – 8", currency: "USD" },
-  { code: "DE", name: "Germany", days: "5 – 12", transit: [6, 9], currency: "EUR" },
-  { code: "CA", name: "Canada", days: "5 – 12", transit: [6, 10], currency: "CAD" },
-  { code: "NZ", name: "New Zealand", days: "5 – 12", transit: [5, 10], currency: "NZD" },
-  { code: "AU", name: "Australia", days: "5 – 12", transit: [6, 10], currency: "AUD" },
-  { code: "IE", name: "Ireland", days: "5 – 12", transit: [6, 10], currency: "EUR" },
-  { code: "SE", name: "Sweden", days: "5 – 12", transit: [3, 5], currency: "SEK" },
-  { code: "NL", name: "Netherlands", the: true, days: "5 – 12", transit: [3, 5], currency: "EUR" },
-  { code: "SG", name: "Singapore", days: "5 – 12", transit: [3, 5], currency: "SGD" },
-  { code: "IT", name: "Italy", days: "5 – 12", transit: [6, 10], currency: "EUR" },
-  { code: "DK", name: "Denmark", days: "5 – 12", transit: [6, 10], currency: "DKK" },
-  { code: "BE", name: "Belgium", days: "5 – 12", transit: [5, 8], currency: "EUR" },
-  { code: "AT", name: "Austria", days: "5 – 12", transit: [3, 5], currency: "EUR" },
-  { code: "PL", name: "Poland", days: "5 – 12", transit: [3, 5], currency: "PLN" },
-  { code: "ES", name: "Spain", days: "5 – 12", transit: [6, 10], currency: "EUR" },
-  { code: "NO", name: "Norway", days: "5 – 12", transit: [4, 9], currency: "NOK" },
-  { code: "AE", name: "United Arab Emirates", the: true, days: "5 – 12", transit: [6, 9], currency: "AED" },
-  { code: "CH", name: "Switzerland", days: "5 – 12", currency: "CHF" },
-];
-
-export const DEFAULT_DAYS = "5 – 12";
-
 /*
- * Supply-partner figures (Sept 2026). Processing is the time between the order
- * and the courier booking; transit is per country in COUNTRIES. The two are
- * kept separate on purpose: the popup quotes transit as "shipping", while the
- * "receive your order in" copy elsewhere is a total and stays on `days` until
- * the processing side is settled.
+ * Delivery window per country.
+ *
+ * `transit` is the supply partner's courier figure in business days. `days`,
+ * the "receive your order in …" total shown across the site, is DERIVED from
+ * PROCESSING_DAYS + transit so the two can never disagree. Countries without a
+ * transit figure keep an explicit `days` and should be given one.
  */
 export const PROCESSING_DAYS: [number, number] = [1, 3];
 
-/** "3 – 6" for the popup, from transit; falls back to the total if unset. */
+type CountrySeed = Omit<Country, "days"> & { days?: string };
+
+const COUNTRY_SEED = [] = [
+  { code: "GB", name: "United Kingdom", the: true, transit: [3, 6], currency: "GBP" },
+  // US and CH transit are the "after dispatch" figures the shipping policy page
+  // already published; confirm against the supply partner when possible.
+  { code: "US", name: "United States", the: true, transit: [3, 8], currency: "USD" },
+  { code: "DE", name: "Germany", transit: [6, 9], currency: "EUR" },
+  { code: "CA", name: "Canada", transit: [6, 10], currency: "CAD" },
+  { code: "NZ", name: "New Zealand", transit: [5, 10], currency: "NZD" },
+  { code: "AU", name: "Australia", transit: [6, 10], currency: "AUD" },
+  { code: "IE", name: "Ireland", transit: [6, 10], currency: "EUR" },
+  { code: "SE", name: "Sweden", transit: [3, 5], currency: "SEK" },
+  { code: "NL", name: "Netherlands", the: true, transit: [3, 5], currency: "EUR" },
+  { code: "SG", name: "Singapore", transit: [3, 5], currency: "SGD" },
+  { code: "IT", name: "Italy", transit: [6, 10], currency: "EUR" },
+  { code: "DK", name: "Denmark", transit: [6, 10], currency: "DKK" },
+  { code: "BE", name: "Belgium", transit: [5, 8], currency: "EUR" },
+  { code: "AT", name: "Austria", transit: [3, 5], currency: "EUR" },
+  { code: "PL", name: "Poland", transit: [3, 5], currency: "PLN" },
+  { code: "ES", name: "Spain", transit: [6, 10], currency: "EUR" },
+  { code: "NO", name: "Norway", transit: [4, 9], currency: "NOK" },
+  { code: "AE", name: "United Arab Emirates", the: true, transit: [6, 9], currency: "AED" },
+  { code: "CH", name: "Switzerland", transit: [5, 12], currency: "CHF" },
+] as const satisfies readonly CountrySeed[];
+
+function totalDays(c: CountrySeed): string {
+  if (c.transit) {
+    const [pMin, pMax] = PROCESSING_DAYS;
+    return `${pMin + c.transit[0]} – ${pMax + c.transit[1]}`;
+  }
+  return c.days ?? "5 – 12";
+}
+
+export const COUNTRIES: Country[] = COUNTRY_SEED.map((c) => ({ ...c, days: totalDays(c) }));
+
+export const DEFAULT_DAYS = COUNTRIES.find((c) => c.code === "GB")!.days;
+
 export function transitLabel(c: Country): string {
   return c.transit ? `${c.transit[0]} – ${c.transit[1]}` : c.days;
 }
+
+/** Processing as "1 – 3", for copy that quotes dispatch time. */
+export const PROCESSING_LABEL = `${PROCESSING_DAYS[0]} – ${PROCESSING_DAYS[1]}`;
 const FREE_SHIPPING_GBP = 75;
 
 /*
@@ -181,8 +198,11 @@ export function useShippingCountry() {
     };
   }, [country, setShippingCountry]);
 
+  // Resolve to the canonical entry: the persisted object may predate the
+  // transit figures and still carry an old `days` total.
+  const canonical = country ? (COUNTRIES.find((c) => c.code === country.code) ?? country) : COUNTRIES[0];
   return {
-    country: country ?? COUNTRIES[0],
+    country: canonical,
     ready: country !== null,
     setCountry: setShippingCountry,
   };

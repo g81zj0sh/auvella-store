@@ -1,3 +1,4 @@
+import { PROCESSING_LABEL, COUNTRIES, transitLabel } from "@/lib/shipping";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
@@ -187,7 +188,7 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
         </P>
         <H2>Processing time</H2>
         <P>
-          Orders are processed and dispatched within 1–2 business days (Monday–Friday,
+          Orders are processed and dispatched within {PROCESSING_LABEL} business days (Monday–Friday,
           excluding public holidays). During launch periods or promotions this can extend
           slightly; if your order will be delayed we'll email you.
         </P>
@@ -211,17 +212,16 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
         </ul>
         <H2>Delivery times</H2>
         <P>
-          Delivery times are counted in business days from dispatch, not from the moment
-          you order — add the 1–2 day processing window above.
+          Delivery times below are courier transit, counted in business days from dispatch
+          — add the {PROCESSING_LABEL} day processing window above for the time from ordering.
         </P>
         <ul className="mt-2 list-disc pl-5">
-          <LI>
-            <strong>United States</strong> — typically 3–8 business days after dispatch
-          </LI>
-          <LI>
-            <strong>International and Australia</strong> — typically 5–12 business days
-            after dispatch, depending on destination and customs processing
-          </LI>
+          {COUNTRIES.filter((c) => c.transit).map((c) => (
+            <LI key={c.code}>
+              <strong>{c.name}</strong> — {transitLabel(c)} business days after dispatch
+              {" "}({c.days} from ordering)
+            </LI>
+          ))}
         </ul>
         <P>
           These are estimates, not guarantees. Carrier delays, customs inspections,
