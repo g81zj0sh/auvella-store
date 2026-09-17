@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { COUNTRIES, freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
+import { COUNTRIES, freeShippingThresholdFmt, useShippingCountry, transitLabel } from "@/lib/shipping";
 import { usePreferences } from "@/lib/preferences";
 import { landedOnHome } from "@/lib/landing";
 
@@ -218,7 +218,7 @@ export function ShippingPopup() {
                 </button>,
                 <span key="pay">Secure checkout with Apple&nbsp;Pay, Google&nbsp;Pay &amp; Shop&nbsp;Pay</span>,
                 <span key="days">
-                  Receive Your Order in <span className="font-semibold">{country.days}</span>{" "}
+                  Shipping Takes <span className="font-semibold">{transitLabel(country)}</span>{" "}
                   Business Days
                 </span>,
                 <span key="duty">Duties And Taxes Are Included</span>,
@@ -284,7 +284,7 @@ export function ShippingPopup() {
                       {c.the ? "the " : ""}
                       {c.name}
                     </span>
-                    <span className="text-[11px] text-[#888888]">{c.days} days</span>
+                    <span className="text-[11px] text-[#888888]">{transitLabel(c)} days shipping</span>
                   </button>
                 </li>
               ))}

@@ -103,7 +103,10 @@ export interface ShippingCountry {
   code: string;
   name: string;
   the?: boolean;
+  /** Total delivery window shown as "receive your order in …" — processing included. */
   days: string;
+  /** Courier transit only, in business days, from the supply partner's figures. */
+  transit?: [number, number];
   currency: string;
 }
 

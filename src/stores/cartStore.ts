@@ -10,6 +10,8 @@ import {
   updateShopifyCartLine,
   recreateShopifyCart,
   formatCheckoutUrl,
+  swapShopifyCartLine,
+  setShopifyDiscountCodes,
 } from "@/lib/shopify";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 
@@ -37,6 +39,15 @@ interface CartStore {
   getCheckoutUrl: () => string | null;
   /** Resolve a checkout URL that is valid right now, rebuilding the cart if needed. */
   resolveCheckoutUrl: () => Promise<string | null>;
+  /** Change a line's variant in place (size/colour edit), keeping its quantity. */
+  swapVariant: (
+    variantId: string,
+    next: { variantId: string; variantTitle: string; price: { amount: string; currencyCode: string }; selectedOptions: Array<{ name: string; value: string }> },
+  ) => Promise<void>;
+  /** Discount codes currently applied on the Shopify cart. */
+  discountCodes: string[];
+  applyDiscountCode: (code: string) => Promise<void>;
+  removeDiscountCode: (code: string) => Promise<void>;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -47,6 +58,7 @@ export const useCartStore = create<CartStore>()(
       checkoutUrl: null,
       isLoading: false,
       isSyncing: false,
+      discountCodes: [],
 
       addItem: async (item) => {
         const { items, cartId, clearCart } = get();
@@ -160,7 +172,63 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      clearCart: () => set({ items: [], cartId: null, checkoutUrl: null }),
+      swapVariant: async (variantId, next) => {
+        const { items, cartId } = get();
+        const item = items.find((i) => i.variantId === variantId);
+        if (!item || next.variantId === variantId) return;
+        // Local-only cart (no Shopify id yet): just rewrite the line.
+        if (!cartId || !item.lineId) {
+          set({
+            items: items.map((i) => (i.variantId === variantId ? { ...i, ...next } : i)),
+          });
+          return;
+        }
+        set({ isLoading: true });
+        try {
+          const res = await swapShopifyCartLine(cartId, item.lineId, next.variantId, item.quantity);
+          const current = get().items;
+          // If the new variant was already in the bag Shopify merged the two
+          // lines; reflect that by dropping the old entry and taking Shopify's
+          // quantity for the survivor rather than adding ours on top.
+          const existing = current.find((i) => i.variantId === next.variantId);
+          const merged = current
+            .filter((i) => i.variantId !== variantId)
+            .map((i) =>
+              i.variantId === next.variantId && res
+                ? { ...i, lineId: res.lineId, quantity: res.quantity }
+                : i,
+            );
+          if (!existing) {
+            merged.splice(current.findIndex((i) => i.variantId === variantId), 0, {
+              ...item,
+              ...next,
+              lineId: res?.lineId ?? item.lineId,
+              quantity: res?.quantity ?? item.quantity,
+            });
+          }
+          set({ items: merged });
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      applyDiscountCode: async (code) => {
+        const { cartId, discountCodes } = get();
+        const clean = code.trim().toUpperCase();
+        if (!cartId || !clean) throw new Error("Add something to your bag first.");
+        const next = [...new Set([...discountCodes, clean])];
+        const res = await setShopifyDiscountCodes(cartId, next);
+        set({ discountCodes: res.applied });
+      },
+
+      removeDiscountCode: async (code) => {
+        const { cartId, discountCodes } = get();
+        if (!cartId) return;
+        const res = await setShopifyDiscountCodes(cartId, discountCodes.filter((c) => c !== code));
+        set({ discountCodes: res.applied });
+      },
+
+      clearCart: () => set({ items: [], cartId: null, checkoutUrl: null, discountCodes: [] }),
       getCheckoutUrl: () => get().checkoutUrl,
 
       /*
@@ -233,6 +301,7 @@ export const useCartStore = create<CartStore>()(
       // are restored manually after mount from the root component.
       skipHydration: true,
       partialize: (state) => ({
+        discountCodes: state.discountCodes,
         items: state.items,
         cartId: state.cartId,
         checkoutUrl: state.checkoutUrl,

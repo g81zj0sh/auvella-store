@@ -384,3 +384,159 @@ export async function removeLineFromShopifyCart(cartId: string, lineId: string) 
   if (errs.length) return { success: false } as const;
   return { success: true } as const;
 }
+
+// ---------- Bag drawer helpers ----------
+
+/*
+ * Compact product selection for grids inside the bag (recommendations,
+ * recently viewed). Same shape as ShopifyProduct so the cards and the quick
+ * add flow work unchanged; fewer images because the drawer only shows one.
+ */
+const BAG_PRODUCT_FIELDS = `
+  id title description handle productType
+  priceRange { minVariantPrice { amount currencyCode } }
+  images(first: 6) { edges { node { url altText } } }
+  variants(first: 100) {
+    edges { node {
+      id title
+      price { amount currencyCode }
+      compareAtPrice { amount currencyCode }
+      availableForSale
+      selectedOptions { name value }
+      image { url altText }
+    } }
+  }
+  options { name values }
+`;
+
+/*
+ * Fetch several products by handle in one round trip.
+ *
+ * Storefront product search silently ignores a `handle:` filter and returns
+ * the whole catalogue, so the only reliable way to resolve a list of handles
+ * is one aliased product(handle:) lookup per handle. Order of the result
+ * matches the order of the input; missing handles are dropped.
+ */
+export async function fetchProductsByHandles(handles: string[]): Promise<ShopifyProduct[]> {
+  const clean = [...new Set(handles.filter(Boolean))].slice(0, 12);
+  if (!clean.length) return [];
+  const query = `query BagProducts { ${clean
+    .map((h, i) => `p${i}: product(handle: ${JSON.stringify(h)}) { ${BAG_PRODUCT_FIELDS} }`)
+    .join("\n")} }`;
+  try {
+    const data = await storefrontApiRequest(query);
+    return clean
+      .map((_, i) => data?.data?.[`p${i}`])
+      .filter(Boolean)
+      .map((node: any) => ({ node })) as ShopifyProduct[];
+  } catch {
+    return [];
+  }
+}
+
+/*
+ * Live stock for a set of variants.
+ *
+ * quantityAvailable needs the unauthenticated_read_product_inventory scope on
+ * the Storefront token. Without it Shopify rejects the whole query, so this
+ * resolves to an empty map rather than throwing, and the drawer shows no
+ * stock line at all — which is the correct behaviour for a claim we can't
+ * back with data.
+ */
+export async function fetchVariantStock(variantIds: string[]): Promise<Record<string, number>> {
+  const ids = [...new Set(variantIds)].slice(0, 50);
+  if (!ids.length) return {};
+  const query = `query VariantStock($ids: [ID!]!) {
+    nodes(ids: $ids) { ... on ProductVariant { id quantityAvailable } }
+  }`;
+  try {
+    const data = await storefrontApiRequest(query, { ids });
+    if (data?.errors?.length) return {};
+    const out: Record<string, number> = {};
+    for (const n of data?.data?.nodes ?? []) {
+      if (n?.id && typeof n.quantityAvailable === "number") out[n.id] = n.quantityAvailable;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+const CART_LINES_SWAP_MUTATION = `
+  mutation cartLinesSwap($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+    cartLinesUpdate(cartId: $cartId, lines: $lines) {
+      cart { id lines(first: 100) { edges { node { id quantity merchandise { ... on ProductVariant { id } } } } } }
+      userErrors { field message }
+    }
+  }
+`;
+
+/*
+ * Change a line's variant in place (the "Edit" flow), keeping its quantity.
+ *
+ * Shopify merges lines that share a variant, so after the update the line for
+ * the new variant may not be the one we updated — look it up by merchandise
+ * id in the returned cart rather than assuming position.
+ */
+export async function swapShopifyCartLine(
+  cartId: string,
+  lineId: string,
+  merchandiseId: string,
+  quantity: number,
+): Promise<{ lineId: string; quantity: number } | null> {
+  const data = await storefrontApiRequest(CART_LINES_SWAP_MUTATION, {
+    cartId,
+    lines: [{ id: lineId, merchandiseId, quantity }],
+  });
+  const errs = data?.data?.cartLinesUpdate?.userErrors ?? [];
+  if (errs.length) throw new Error(errs[0]?.message ?? "Couldn't update that item.");
+  const edges = data?.data?.cartLinesUpdate?.cart?.lines?.edges ?? [];
+  const hit = edges.find((e: any) => e?.node?.merchandise?.id === merchandiseId)?.node;
+  return hit ? { lineId: hit.id, quantity: hit.quantity } : null;
+}
+
+const CART_DISCOUNT_CODES_MUTATION = `
+  mutation cartDiscountCodesUpdate($cartId: ID!, $codes: [String!]) {
+    cartDiscountCodesUpdate(cartId: $cartId, discountCodes: $codes) {
+      cart {
+        id
+        discountCodes { code applicable }
+        cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
+      }
+      userErrors { field message }
+    }
+  }
+`;
+
+export type DiscountResult = {
+  applied: string[];
+  subtotal?: { amount: string; currencyCode: string };
+  total?: { amount: string; currencyCode: string };
+};
+
+/*
+ * Apply (or clear) discount codes on the cart.
+ *
+ * Shopify keeps an inapplicable code attached to the cart, so a wrong code
+ * would otherwise sit there silently. If the code comes back applicable:false
+ * we strip it straight back off and report failure, leaving only codes that
+ * actually do something.
+ */
+export async function setShopifyDiscountCodes(cartId: string, codes: string[]): Promise<DiscountResult> {
+  const run = async (list: string[]) => {
+    const data = await storefrontApiRequest(CART_DISCOUNT_CODES_MUTATION, { cartId, codes: list });
+    const errs = data?.data?.cartDiscountCodesUpdate?.userErrors ?? [];
+    if (errs.length) throw new Error(errs[0]?.message ?? "That code couldn't be applied.");
+    return data?.data?.cartDiscountCodesUpdate?.cart;
+  };
+  const cart = await run(codes);
+  const rows: Array<{ code: string; applicable: boolean }> = cart?.discountCodes ?? [];
+  const good = rows.filter((r) => r.applicable).map((r) => r.code);
+  const bad = rows.filter((r) => !r.applicable).map((r) => r.code);
+  if (bad.length) {
+    const cleaned = await run(good);
+    if (bad.length && codes.length) throw new Error("That code isn't valid for this bag.");
+    return { applied: good, subtotal: cleaned?.cost?.subtotalAmount, total: cleaned?.cost?.totalAmount };
+  }
+  return { applied: good, subtotal: cart?.cost?.subtotalAmount, total: cart?.cost?.totalAmount };
+}
