@@ -2,7 +2,20 @@ import { toast } from "sonner";
 
 export const SHOPIFY_API_VERSION = "2025-07";
 export const SHOPIFY_STORE_PERMANENT_DOMAIN = "bys-store-2961694-648466.myshopify.com";
-export const SHOPIFY_STOREFRONT_TOKEN = "849635694076fbe4209a393ca0990077";
+/*
+ * Storefront API token — the "Headless" sales channel (Sept 2026).
+ *
+ * Previously this was Lovable's channel token, which is why the store broke
+ * silently when collections weren't published to Lovable. Moved to our own
+ * Headless channel so the storefront no longer depends on a third party's
+ * app being installed. This token also carries
+ * unauthenticated_read_product_inventory, which the Lovable one did not, so
+ * quantityAvailable (the bag's low-stock line) now resolves.
+ *
+ * Public by design — it only grants unauthenticated read access to published
+ * products and cart operations. It is not a secret.
+ */
+export const SHOPIFY_STOREFRONT_TOKEN = "73c1265bea52698126322f319090937c";
 export const SHOPIFY_STOREFRONT_URL = `https://${SHOPIFY_STORE_PERMANENT_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`;
 
 export interface ShopifyProduct {
