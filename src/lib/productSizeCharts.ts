@@ -524,7 +524,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["4XL", "85.5–100 kg", "100.5–115 kg"],
       ["5XL", "100.5–130 kg", "115.5–130 kg"],
     ],
-    fitNote: "Sized by weight and height rather than by measurements: find the column for your height, then the row your weight falls in. Weights have been converted to kilograms from the original chart (printed in jin, 1 jin = 0.5 kg). Sizes come in pairs (XS/S, M/L, XL/XXL) — the pair is the size to order. If you're at the top of a weight band, take the next size: this is a firm short and the smaller size will hold harder than you want by the afternoon.",
+    fitNote: "Sized by weight and height rather than by measurements: find the column for your height, then the row your weight falls in. Weights are in kilograms. Sizes come in pairs (XS/S, M/L, XL/XXL) — the pair is the size to order. If you're at the top of a weight band, take the next size: this is a firm short and the smaller size will hold harder than you want by the afternoon.",
   },
   "high-waisted-silicone-shapewear-pants": {
     guideType: "shapewear-bottoms",
