@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initMetaPixel, trackMetaPageView } from "../lib/metaPixel";
+import { CookieConsent } from "@/components/site/CookieConsent";
+import { hasMarketingConsent, onConsentChange } from "@/lib/consent";
 import { Toaster } from "sonner";
 import { QuickAddSheet } from "@/components/site/QuickAddSheet";
 import { useQuickAdd } from "@/stores/quickAddStore";
@@ -144,18 +146,34 @@ function RootComponent() {
     void useCartStore.persist?.rehydrate();
   }, []);
   useEffect(() => {
-    // Pixel loads client-side only; the router subscription covers SPA
-    // navigations, which would otherwise never register a PageView after
-    // the first document load.
-    initMetaPixel();
-    return router.subscribe("onResolved", () => {
-      trackMetaPageView();
+    // The Meta pixel is non-essential tracking, so it may not load until the
+    // visitor has agreed — nothing fires on an unanswered or declined banner.
+    // Accepting starts it immediately without a reload.
+    let unsubscribeRouter: (() => void) | undefined;
+
+    const start = () => {
+      if (unsubscribeRouter) return;
+      initMetaPixel();
+      unsubscribeRouter = router.subscribe("onResolved", () => {
+        trackMetaPageView();
+      });
+    };
+
+    if (hasMarketingConsent()) start();
+    const unsubscribeConsent = onConsentChange((state) => {
+      if (state === "accepted") start();
     });
+
+    return () => {
+      unsubscribeConsent();
+      unsubscribeRouter?.();
+    };
   }, [router]);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <GlobalQuickAdd />
+      <CookieConsent />
       <Toaster position="top-center" />
     </QueryClientProvider>
   );
