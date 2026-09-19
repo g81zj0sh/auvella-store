@@ -15,16 +15,6 @@ export const PRODUCT_SIZE_CHARTS = {
     ],
     fitNote: "True to size. Weights are in kilograms.",
   },
-  "sculpt-seamless-bodysuit": {
-    guideType: "shapewear",
-    columns: ["Size", "Length", "Waist (Relaxed)", "Hip (Relaxed)", "Hip (Max Stretch)", "Leg Opening"],
-    rows: [
-      ["S", "48 cm (19\")", "53 cm (21\")", "54 cm (21.5\")", "96 cm (38\")", "49.4 cm (19.5\")"],
-      ["M", "50 cm (19.5\")", "57 cm (22.5\")", "58 cm (23\")", "100 cm (39.5\")", "51.8 cm (20.5\")"],
-      ["L", "52 cm (20.5\")", "61 cm (24\")", "62 cm (24.5\")", "104 cm (41\")", "54.2 cm (21.5\")"],
-    ],
-    fitNote: "Garment measurements, laid flat and relaxed — a seamless compression knit, so the relaxed waist and hip look small on purpose and the garment stretches to fit. Use the Hip (Max Stretch) column: your hip measurement should sit comfortably under it. Length is collar to hem; leg opening includes the hem. Production tolerance is 1.5–2 cm. If you're between two sizes, size up.",
-  },
   "one-piece-shapewear-bodysuit-with-tummy-control": {
     guideType: "shapewear",
     columns: ["Size", "Bust", "Waist", "Hip", "Front Length (from Shoulder)", "Back Length"],
