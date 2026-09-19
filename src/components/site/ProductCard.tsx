@@ -154,11 +154,23 @@ export function ProductCard({ product, badge }: Props) {
     <Link
       to="/product/$handle"
       params={{ handle: node.handle }}
-      className="group block"
-      onMouseEnter={hoverCapable ? () => setHovering(true) : undefined}
-      onMouseLeave={hoverCapable ? () => setHovering(false) : undefined}
+      className="block"
     >
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]">
+      {/*
+        Hover state belongs to the image, not the whole card. The title, price
+        and colour swatches sit inside this same Link, so tracking hover on the
+        Link meant picking a colour counted as hovering the product — the card
+        stayed on its alternate shot and you couldn't see the colour you'd just
+        chosen until you moved the cursor away entirely.
+
+        `group` lives here too so the Quick Add slide-up follows the same
+        boundary.
+      */}
+      <div
+        className="group relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]"
+        onMouseEnter={hoverCapable ? () => setHovering(true) : undefined}
+        onMouseLeave={hoverCapable ? () => setHovering(false) : undefined}
+      >
         {/* Resting layer: the garment alone for bras, the model everywhere else. */}
         {(primary || ghost) && (
           <EditorialImage
