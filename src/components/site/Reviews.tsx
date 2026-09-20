@@ -1,4 +1,4 @@
-import { Star, BadgeCheck, Loader2, ImagePlus, X } from "lucide-react";
+import { Star, Loader2, ImagePlus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { submitJudgemeReview } from "@/lib/judgeme";
 import { uploadReviewPhoto } from "@/lib/reviewPhoto.functions";
@@ -357,14 +357,23 @@ export function Reviews({
                 >
                   {/* Reviewer meta */}
                   <div className="text-[11px] leading-relaxed text-[#888888]">
-                    <p className="flex items-center gap-1.5 text-[13px] text-[#0a0a0a]">
-                      {r.name}
-                      {r.verified && (
-                        <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.08em] text-[#888888]">
-                          <BadgeCheck className="h-3 w-3" /> Verified
+                    <p className="text-[13px] text-[#0a0a0a]">{r.name}</p>
+                    {/*
+                      "Verified Buyer" is a factual claim — Judge.me marks a
+                      review verified when it can tie it to a real order
+                      (review-request emails do this; the on-site form can't).
+                      The badge follows that flag and is never forced on.
+                    */}
+                    {r.verified && (
+                      <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-[#555555]">
+                        Verified Buyer
+                        <span className="grid h-[15px] w-[15px] place-items-center rounded-full bg-[#2e2e2e]">
+                          <svg viewBox="0 0 10 10" className="h-[7px] w-[7px]" aria-hidden="true">
+                            <path d="M1.5 5.5 4 8l4.5-6" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
                         </span>
-                      )}
-                    </p>
+                      </p>
+                    )}
                     <dl className="mt-3 space-y-1">
                       {r.height && (
                         <div className="flex gap-2">

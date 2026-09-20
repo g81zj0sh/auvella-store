@@ -51,6 +51,14 @@ export function SizeGuide({
       category guide when present. */
   productChart?: ProductChart | null;
 }) {
+  /* Hooks first: this component is rendered with guideType "none" while the
+     product is still loading, and gained a chart once the data arrived. With
+     the guard above these reads, that swing changed the hook count between two
+     renders of the same instance and crashed the page. */
+  // ---------- Regional size labelling (labels only; measurements never change) ----------
+  const region = usePreferences((st) => st.sizeRegion);
+  const setRegion = usePreferences((st) => st.setSizeRegion);
+
   if (!productChart && guideType === "none") return null;
   const category =
     guideType !== "none" ? SIZE_GUIDES[guideType] : undefined;
@@ -70,9 +78,6 @@ export function SizeGuide({
   const overrideNote =
     !productChart && fitOverride ? category?.overrides?.[fitOverride] : undefined;
 
-  // ---------- Regional size labelling (labels only; measurements never change) ----------
-  const region = usePreferences((st) => st.sizeRegion);
-  const setRegion = usePreferences((st) => st.setSizeRegion);
   const support = detectRegionSupport(guide.columns, guide.rows);
 
   /** Cell display: strip internal notes, then translate the SIZE column in

@@ -50,6 +50,23 @@ function sampleUrl(url: string): string {
 /** Colour known for this URL without any network — the build-time table first,
     then anything the runtime sampler has already resolved. Lets the first paint
     be correct and makes image swaps instant. */
+/*
+ * Build-time table ONLY — deliberately does not read the runtime `cache`.
+ *
+ * `cache` is module state. On the server that module lives inside a Worker
+ * isolate that is reused across requests, so by the time a second visitor
+ * arrives it may hold entries the visitor's browser has never seen. Reading it
+ * while rendering therefore produces server HTML the client cannot reproduce
+ * on its first render, which is a hydration mismatch.
+ *
+ * This lookup is pure and identical in both places, so it is the only one safe
+ * to call during render. The runtime cache is still used, but after mount.
+ */
+export function tableBackdrop(url: string | undefined): Backdrop | undefined {
+  if (!url) return undefined;
+  return BACKDROPS[fileKey(url)];
+}
+
 export function cachedBackdrop(url: string | undefined): Backdrop | undefined {
   if (!url) return undefined;
   return BACKDROPS[fileKey(url)] ?? cache.get(url);

@@ -21,7 +21,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
-import { sampleBackdrop, cachedBackdrop, backdropCss, type Backdrop } from "@/lib/imageBackdrop";
+import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, type Backdrop } from "@/lib/imageBackdrop";
 import { Loader2, Star, Heart, ChevronLeft, ChevronRight, ScanSearch } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -410,6 +410,67 @@ function ProductPage() {
   const bundleLabel = useBundleLabel();
   const shipDest = `${shipCountry.the ? "the " : ""}${shipCountry.name}`;
 
+  /*
+   * These sit ABOVE the early returns on purpose.
+   *
+   * On a cold load the product query has not resolved yet, so the first
+   * render takes the `isLoading` branch below and stops. When the data
+   * arrived the component rendered again, reached this point and called three
+   * more hooks than it had the first time — the one thing React refuses to
+   * continue past. That took every product page down on any direct visit:
+   * ad clicks, search results, shared links, refreshes. Clicking through from
+   * a collection hid it, because the data was already cached and the first
+   * render went straight through.
+   *
+   * Every hook must run on every render, before any branch that can return
+   * early. `activeImages` and `imageIdx` both resolve above, so these are safe
+   * here and simply compute over an empty gallery while the product loads.
+   */
+  const galleryLen = activeImages.length;
+  const safeIdx = Math.min(imageIdx, Math.max(galleryLen - 1, 0));
+  const prevImg = () => setImageIdx((i) => (Math.min(i, galleryLen - 1) - 1 + galleryLen) % galleryLen);
+  const nextImg = () => setImageIdx((i) => (Math.min(i, galleryLen - 1) + 1) % galleryLen);
+  const mainImg = activeImages[safeIdx]?.node;
+
+  /* Paint the gallery frame with the active shot's own backdrop, so the photo
+     reads edge-to-edge instead of floating on the site's cream. Model shots and
+     ghost shots resolve to different greys, hence per-image rather than fixed. */
+  /* Indexed images resolve synchronously from the build-time table, so the
+     frame is painted the right colour in the same render that swaps the image —
+     no fetch, no fade. The async sampler only runs for images the table lacks. */
+  const [sampled, setSampled] = useState<Backdrop | undefined>(undefined);
+  /* Render reads the build-time table only. The runtime cache is warm on the
+     server (the Worker isolate is reused between visitors) but empty in a
+     fresh browser, so consulting it here made the server paint a colour the
+     client's first render could not reproduce. */
+  const backdrop = backdropCss(tableBackdrop(mainImg?.url) ?? sampled);
+  useEffect(() => {
+    const url = mainImg?.url;
+    if (!url) return;
+    /* After mount the runtime cache is safe: this runs only in the browser. */
+    const hit = cachedBackdrop(url);
+    if (hit) {
+      setSampled(hit);
+      return;
+    }
+    let live = true;
+    sampleBackdrop(url).then((c) => {
+      if (live) setSampled(c);
+    });
+    return () => {
+      live = false;
+    };
+  }, [mainImg?.url]);
+
+  // Warm the next/previous shots so swiping doesn't flash the old colour.
+  useEffect(() => {
+    if (galleryLen < 2) return;
+    [safeIdx + 1, safeIdx - 1].forEach((i) => {
+      const url = activeImages[(i + galleryLen) % galleryLen]?.node.url;
+      if (url && !cachedBackdrop(url)) void sampleBackdrop(url);
+    });
+  }, [safeIdx, galleryLen, activeImages]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white">
@@ -492,40 +553,6 @@ function ProductPage() {
     toast.success("Added to bag", { position: "top-center" });
   };
 
-  const galleryLen = activeImages.length;
-  const safeIdx = Math.min(imageIdx, Math.max(galleryLen - 1, 0));
-  const prevImg = () => setImageIdx((i) => (Math.min(i, galleryLen - 1) - 1 + galleryLen) % galleryLen);
-  const nextImg = () => setImageIdx((i) => (Math.min(i, galleryLen - 1) + 1) % galleryLen);
-  const mainImg = activeImages[safeIdx]?.node;
-
-  /* Paint the gallery frame with the active shot's own backdrop, so the photo
-     reads edge-to-edge instead of floating on the site's cream. Model shots and
-     ghost shots resolve to different greys, hence per-image rather than fixed. */
-  /* Indexed images resolve synchronously from the build-time table, so the
-     frame is painted the right colour in the same render that swaps the image —
-     no fetch, no fade. The async sampler only runs for images the table lacks. */
-  const [sampled, setSampled] = useState<Backdrop | undefined>(undefined);
-  const backdrop = backdropCss(cachedBackdrop(mainImg?.url) ?? sampled);
-  useEffect(() => {
-    const url = mainImg?.url;
-    if (!url || cachedBackdrop(url)) return;
-    let live = true;
-    sampleBackdrop(url).then((c) => {
-      if (live) setSampled(c);
-    });
-    return () => {
-      live = false;
-    };
-  }, [mainImg?.url]);
-
-  // Warm the next/previous shots so swiping doesn't flash the old colour.
-  useEffect(() => {
-    if (galleryLen < 2) return;
-    [safeIdx + 1, safeIdx - 1].forEach((i) => {
-      const url = activeImages[(i + galleryLen) % galleryLen]?.node.url;
-      if (url && !cachedBackdrop(url)) void sampleBackdrop(url);
-    });
-  }, [safeIdx, galleryLen, activeImages]);
 
   // Desktop drag handlers — premium feel: track follows the pointer, then settles.
   const onPointerDown = (e: ReactPointerEvent) => {
