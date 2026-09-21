@@ -161,11 +161,38 @@ export function CartDrawer() {
           </SheetHeader>
 
           {items.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center px-6">
-              <div className="text-center">
-                <ShoppingBag className="h-10 w-10 text-cocoa/60 mx-auto mb-4" strokeWidth={1.25} />
-                <p className="text-cocoa">{t("Your bag is empty")}</p>
+            /*
+             * Empty bag. An empty drawer is still a shopper who opened the bag,
+             * so it gives them a place to go and, if they've been browsing,
+             * the pieces they already looked at with quick-add. Everything on
+             * it is true: the free-shipping threshold is the live one for their
+             * country, returns are the real policy, no urgency, no timers.
+             */
+            <div className="flex-1 overflow-y-auto">
+              <div className="px-6 pt-10 pb-8 text-center">
+                <p className="font-serif text-[22px] font-light leading-tight text-ink">Nothing in here yet.</p>
+                <p className="mx-auto mt-3 max-w-[280px] text-[13px] leading-relaxed text-cocoa">
+                  Free delivery from {display(threshold, baseCurrency)}
+                  {country?.name ? ` to ${country.name}` : ""}, and easy 30-day returns either way.
+                </p>
+                <div className="mx-auto mt-6 flex max-w-[300px] flex-col gap-2">
+                  <Button asChild className="h-11 w-full rounded-none bg-ink text-[11px] font-medium uppercase tracking-[0.18em] text-white hover:bg-ink/85">
+                    <Link to="/collections/$handle" params={{ handle: "everyday-support-edit" }} onClick={() => setOpen(false)}>
+                      {t("Shop Best Sellers")}
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-11 w-full rounded-none border-ink text-[11px] font-medium uppercase tracking-[0.18em] text-ink hover:bg-ink hover:text-white">
+                    <Link to="/collections/$handle" params={{ handle: "new-in" }} onClick={() => setOpen(false)}>
+                      New In
+                    </Link>
+                  </Button>
+                </div>
               </div>
+              {recent && recent.length > 0 && (
+                <div className="border-t border-border px-6 pb-8">
+                  <ProductGrid title="Pick up where you left off" products={recent} onPick={openQuickAdd} display={display} />
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -434,7 +461,9 @@ function ProductGrid({
   return (
     <div className="pt-8">
       <p className="px-6 text-[11px] uppercase tracking-[0.18em] text-cocoa">{title}</p>
-      <div className="mt-4 grid grid-cols-2 gap-px bg-border">
+      {/* Hairline grid; bg-border only shows through the gaps, and only once
+          there is a second column to make a gap — a lone card gets no grey cell. */}
+      <div className={`mt-4 grid grid-cols-2 gap-px ${products.length > 1 ? "bg-border" : ""}`}>
         {products.map((p) => {
           const n = p.node;
           const img = n.images.edges[0]?.node;

@@ -501,6 +501,11 @@ function ProductPage() {
   const colorOption = node.options.find((o) => /colou?r/i.test(o.name));
   const sizeOption = node.options.find((o) => /size/i.test(o.name));
   const hasSize = !sizeOption || !!currentSelected[sizeOption.name];
+  /* Any option that is neither colour nor size — a scent, a version, a pack
+     size. Accessories need this; without it such variants were unselectable. */
+  const otherOptions = node.options.filter(
+    (o) => o !== colorOption && o !== sizeOption && o.values.length > 1,
+  );
 
   const unitPrice = parseFloat(priceVariant?.price.amount ?? "0");
   const currency = priceVariant?.price.currencyCode ?? "GBP";
@@ -907,6 +912,27 @@ function ProductPage() {
                 )}
               </div>
             )}
+            {otherOptions.map((opt) => (
+              <div key={opt.name} className="mt-7">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">{opt.name}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {opt.values.map((v) => {
+                    const active = currentSelected[opt.name] === v;
+                    return (
+                      <button
+                        key={v}
+                        onClick={() => setOpt(opt.name, v)}
+                        className={`flex h-10 items-center justify-center border px-4 text-[12px] transition-colors ${
+                          active ? "border-[#0a0a0a] bg-[#0a0a0a] text-white" : "border-[#DDDDDD] text-[#0a0a0a] hover:border-[#0a0a0a]"
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
 
             {/* Add to bag / Select a size */}
             <button
