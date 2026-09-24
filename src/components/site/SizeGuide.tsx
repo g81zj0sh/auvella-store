@@ -93,7 +93,10 @@ export function SizeGuide({
     }
     const txt = displayText(cell);
     const isSizeCol = colIdx === 0;
-    if (isSizeCol && support.letters.length > 0) {
+    /* Bra charts skip the dress-size suffix: "S (8–10)" beside a list of bra
+       fits implies dress size decides bra size, which it doesn't. */
+    const isBraGuide = (productChart?.guideType ?? guideType) === "bra";
+    if (isSizeCol && support.letters.length > 0 && !isBraGuide) {
       const letter = normalizeLetter(txt);
       if (letter) {
         return (

@@ -540,6 +540,19 @@ export const PRODUCT_SIZE_CHARTS = {
     ],
     fitNote: "Find your usual bra size in the right-hand column. Cup size is your overbust minus your underbust: 3–4\" is A, 4–5\" is B, 5–6\" is C. D cups: the chart points to a 'Plus' version we don't carry, so in the letter size you'll get coverage and a light hold rather than lift — for a big event an underwired strapless is the honest choice. The chart's own advice: if you're between sizes with a larger bust, size up.",
   },
+  "seamless-wireless-full-cup-bra": {
+    guideType: "bra",
+    columns: ["Size", "Fits Bra Sizes"],
+    rows: [
+      ["S", "30DD, 32B, 32C, 32D, 34A"],
+      ["M", "34B, 34C, 34D, 34DD, 36A, 36B"],
+      ["L", "34DD, 36C, 36D, 38A, 38B"],
+      ["XL", "36DD, 38C, 38D, 40B"],
+      ["2XL", "38DD, 40C, 40D, 42B"],
+      ["3XL", "40DD, 42C, 42D, 44B, 44C"],
+    ],
+    fitNote: "Find your usual UK bra size in the right-hand column. Not sure of it? Measure snugly under your bust for the band: 69–74 cm (27–29\") is a 32, 74–79 cm (29–31\") a 34, 79–84 cm (31–33\") a 36, 84–89 cm (33–35\") a 38, 89–94 cm (35–37\") a 40. Then take your fullest bust measurement minus that underbust for the cup: 3.5–4.5\" is A, 4.5–5.5\" B, 5.5–6.5\" C, 6.5–7.5\" D. DD is the largest cup listed for this style. 34DD appears under both M and L — M fits closer, L gives more room. The straps are fixed, so size for the band.",
+  },
   "women-waist-training-compression-garment": {
     guideType: "shapewear",
     columns: ["Size", "Front Length (±1 cm)", "Waist Circumference (±2 cm)", "Garment Weight"],
