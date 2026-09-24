@@ -386,6 +386,20 @@ function ProductPage() {
     mobileGalRef.current?.scrollTo({ left: 0 });
   }, [activeColour]);
 
+  /* Non-colour options (the Body Adhesive's Type, say) never changed the
+     photo, so every variant looked like the first one. When the chosen
+     variant has its own linked photo in the visible gallery, jump to it. */
+  const variantImageUrl = variant?.image?.url;
+  useEffect(() => {
+    if (!variantImageUrl) return;
+    const key = (u: string) => u.split("?")[0];
+    const idx = activeImages.findIndex((i) => key(i.node.url) === key(variantImageUrl));
+    if (idx >= 0) {
+      setImageIdx(idx);
+      mobileGalRef.current?.scrollTo({ left: idx * (mobileGalRef.current?.clientWidth ?? 0) });
+    }
+  }, [variantImageUrl, activeImages]);
+
   // Desktop drag state
   const [dragX, setDragX] = useState(0);
   const dragRef = useRef({ active: false, startX: 0, moved: false });
