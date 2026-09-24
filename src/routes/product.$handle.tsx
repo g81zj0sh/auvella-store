@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { galleryUrls, indexedHex, indexedSwatch } from "@/lib/galleryIndex";
+import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -979,12 +980,23 @@ function ProductPage() {
                 ))}
               </div>
               <div className="pt-5 text-[13px] leading-[1.85] text-[#555555]">
-                {tab === "details" && (
-                  <p className="whitespace-pre-line">
-                    {node.description?.trim() ||
-                      "Smooths and supports without digging in — and disappears under whatever you put on top."}
-                  </p>
-                )}
+                {tab === "details" &&
+                  (() => {
+                    /* Structured HTML when the description has it (every page
+                       rewritten since September does); plain text otherwise. */
+                    const html = safeDescriptionHtml(node.descriptionHtml);
+                    return html && hasStructure(html) ? (
+                      <div
+                        className="[&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-[11px] [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-[0.14em] [&_h3]:text-[#0a0a0a] [&_p]:mt-3 [&_p:first-child]:mt-0 [&_p:first-child]:text-[#0a0a0a] [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-4 [&_li]:marker:text-[#bbbbbb] [&_strong]:font-medium [&_strong]:text-[#0a0a0a]"
+                        dangerouslySetInnerHTML={{ __html: html }}
+                      />
+                    ) : (
+                      <p className="whitespace-pre-line">
+                        {node.description?.trim() ||
+                          "Smooths and supports without digging in — and disappears under whatever you put on top."}
+                      </p>
+                    );
+                  })()}
                 {tab === "fit" && (
                   <div className="space-y-3">
                     <p>

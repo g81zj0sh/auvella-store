@@ -23,6 +23,7 @@ export interface ShopifyProduct {
     id: string;
     title: string;
     description: string;
+    descriptionHtml?: string;
     handle: string;
     /** Shopify's product type, e.g. "Bra" — drives the bra-only hover flip. */
     productType?: string;
@@ -137,7 +138,7 @@ export async function fetchProducts(first = 12, query?: string): Promise<Shopify
 const PRODUCT_BY_HANDLE_QUERY = `
   query GetProduct($handle: String!) {
     product(handle: $handle) {
-      id title description handle productType
+      id title description descriptionHtml handle productType
       priceRange { minVariantPrice { amount currencyCode } }
       images(first: 120) { edges { node { url altText } } }
       variants(first: 250) {
