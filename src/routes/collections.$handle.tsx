@@ -90,12 +90,22 @@ import bodysuitsHeroVideoImg from "@/assets/media/bodysuits-hero.mp4";
 const bodysuitsHeroVideo = { url: bodysuitsHeroVideoImg };
 import bodysuitsHeroPosterImg from "@/assets/media/bodysuits-hero-poster.jpg";
 const bodysuitsHeroPoster = { url: bodysuitsHeroPosterImg };
+import underwearHeroVideoImg from "@/assets/media/underwear-hero.mp4";
+const underwearHeroVideo = { url: underwearHeroVideoImg };
+import underwearHeroPosterImg from "@/assets/media/underwear-hero-poster.jpg";
+const underwearHeroPoster = { url: underwearHeroPosterImg };
+import dressesHeroVideoImg from "@/assets/media/dresses-hero.mp4";
+const dressesHeroVideo = { url: dressesHeroVideoImg };
+import dressesHeroPosterImg from "@/assets/media/dresses-hero-poster.jpg";
+const dressesHeroPoster = { url: dressesHeroPosterImg };
 
 const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
   shapewear: { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url },
   "loungewear-sleepwear": { src: loungewearHeroVideo.url, poster: loungewearHeroPoster.url },
   activewear: { src: activewearHeroVideo.url, poster: activewearHeroPoster.url },
   bodysuits: { src: bodysuitsHeroVideo.url, poster: bodysuitsHeroPoster.url },
+  underwear: { src: underwearHeroVideo.url, poster: underwearHeroPoster.url },
+  dresses: { src: dressesHeroVideo.url, poster: dressesHeroPoster.url },
 };
 
 /* ------------------------------------------------------------------ */
