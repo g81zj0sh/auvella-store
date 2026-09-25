@@ -258,6 +258,14 @@ function ProductPage() {
 
   const priceVariant = variant ?? node?.variants.edges[0]?.node;
 
+  /* Duo item #2: its own colour/size, editable inside the Duo panel. Item #1
+     is the main selection. Starts as a copy of #1 whenever Duo is chosen. */
+  const [duoSecond, setDuoSecond] = useState<Record<string, string>>({});
+  const duoSecondSel = Object.keys(duoSecond).length ? duoSecond : currentSelected;
+  const findVariant = (sel: Record<string, string>) =>
+    node?.variants.edges.find((v) => v.node.selectedOptions.every((o) => sel[o.name] === o.value))?.node;
+  const duoSecondVariant = useMemo(() => findVariant(duoSecondSel), [node, duoSecondSel]);
+
   // Dedupe images by URL (ignore CDN size params) and upscale via Shopify CDN.
   const images = useMemo(() => {
     if (!node) return [] as Array<{ node: { url: string; altText: string | null } }>;
@@ -565,16 +573,29 @@ function ProductPage() {
       return;
     }
     if (!variant) return;
-    const qty = inDuoDeal(node.handle) ? pack : 1;
-    await addItem({
-      product,
-      variantId: variant.id,
-      variantTitle: variant.title,
-      price: variant.price,
-      quantity: qty,
-      selectedOptions: variant.selectedOptions || [],
-    });
-    toast.success(qty === 2 ? "Two added to bag — 15% off applies at checkout" : "Added to bag", { position: "top-center" });
+    const duo = inDuoDeal(node.handle) && pack === 2;
+    const second = duo ? duoSecondVariant : undefined;
+    if (duo && !second) {
+      toast.error("Choose a size for the second one", { position: "top-center" });
+      return;
+    }
+    if (duo && second && second.id !== variant.id) {
+      // Two different sizes/colours of the same product: two lines. The
+      // discount counts per product, so both still earn the 15%.
+      for (const v of [variant, second]) {
+        await addItem({ product, variantId: v.id, variantTitle: v.title, price: v.price, quantity: 1, selectedOptions: v.selectedOptions || [] });
+      }
+    } else {
+      await addItem({
+        product,
+        variantId: variant.id,
+        variantTitle: variant.title,
+        price: variant.price,
+        quantity: duo ? 2 : 1,
+        selectedOptions: variant.selectedOptions || [],
+      });
+    }
+    toast.success(duo ? "Two added to bag — 15% off applies at checkout" : "Added to bag", { position: "top-center" });
   };
 
 
@@ -960,7 +981,10 @@ function ProductPage() {
               strike-through. "Most Popular" sits on the Duo because that is
               the one we want chosen.
             */}
-            {inDuoDeal(node.handle) && variant && (
+            {inDuoDeal(node.handle) && variant && (() => {
+              const duoSecondUnit = (single: number) => (duoSecondVariant ? parseFloat(duoSecondVariant.price.amount) : single);
+              const duoTotal = (single: number) => Math.round((single + duoSecondUnit(single)) * (1 - DUO_DEAL.percent / 100) * 100) / 100;
+              return (
               <div className="mt-7">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Buy 2, save {DUO_DEAL.percent}%</p>
                 <div className="mt-3 space-y-2">
@@ -992,16 +1016,45 @@ function ProductPage() {
                           </span>
                         </span>
                         <span className="text-right">
-                          <span className="block text-[15px] text-[#0a0a0a]">{cur(n === 1 ? single : duoPrice(single))}</span>
-                          {n === 2 && <span className="block text-[11px] text-[#999999] line-through">{cur(single * 2)}</span>}
+                          <span className="block text-[15px] text-[#0a0a0a]">{cur(n === 1 ? single : duoTotal(single))}</span>
+                          {n === 2 && <span className="block text-[11px] text-[#999999] line-through">{cur(single + duoSecondUnit(single))}</span>}
                         </span>
                       </button>
                     );
                   })}
                 </div>
+                {pack === 2 && (
+                  <div className="mt-3 space-y-2 border border-[#e6e4e0] bg-[#faf9f7] p-3">
+                    {([1, 2] as const).map((n) => {
+                      const sel = n === 1 ? currentSelected : duoSecondSel;
+                      const set = (name: string, value: string) =>
+                        n === 1 ? setOpt(name, value) : setDuoSecond({ ...duoSecondSel, [name]: value });
+                      return (
+                        <div key={n} className="flex flex-wrap items-center gap-2">
+                          <span className="w-6 text-[11px] text-[#888888]">#{n}</span>
+                          {node.options.filter((o) => o.values.length > 1).map((o) => (
+                            <select
+                              key={o.name}
+                              value={sel[o.name] ?? ""}
+                              onChange={(e) => set(o.name, e.target.value)}
+                              aria-label={`${o.name} for item ${n}`}
+                              className="h-9 border border-[#DDDDDD] bg-white px-2 text-[12px] text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none"
+                            >
+                              {o.values.map((v) => (
+                                <option key={v} value={v}>{v}</option>
+                              ))}
+                            </select>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    {!duoSecondVariant && <p className="text-[11px] text-[#b00020]">That combination isn't available for #2 — pick another.</p>}
+                  </div>
+                )}
                 <p className="mt-2 text-[11px] text-[#888888]">Two of this product, in any sizes — the saving applies automatically at checkout.</p>
               </div>
-            )}
+              );
+            })()}
 
             {/* Add to bag / Select a size */}
             <button
@@ -1017,7 +1070,7 @@ function ProductPage() {
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : hasSize ? (
-                <>{inDuoDeal(node.handle) && pack === 2 ? <>Add 2 to Bag — {cur(duoPrice(unitPrice))}</> : <>Add to Bag — {cur(unitPrice)}</>}</>
+                <>{inDuoDeal(node.handle) && pack === 2 ? <>Add 2 to Bag — {cur(Math.round((unitPrice + (duoSecondVariant ? parseFloat(duoSecondVariant.price.amount) : unitPrice)) * (1 - DUO_DEAL.percent / 100) * 100) / 100)}</> : <>Add to Bag — {cur(unitPrice)}</>}</>
               ) : (
                 "Select a Size"
               )}
