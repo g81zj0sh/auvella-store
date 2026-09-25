@@ -60,12 +60,25 @@ export function CartDrawer() {
   const t = useT();
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const totalPrice = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
-  /* "Buy 2, save 15%": mirrors the Shopify automatic rule so the bag shows the
-     same figure checkout will. Eligible items can mix. */
-  const duoItems = items.filter((i) => inDuoDeal(i.product.node.handle));
-  const duoQty = duoItems.reduce((s, i) => s + i.quantity, 0);
-  const duoEligibleTotal = duoItems.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
-  const duoSaving = duoQty >= DUO_DEAL.minQuantity ? Math.round(duoEligibleTotal * DUO_DEAL.percent) / 100 : 0;
+  /* "Buy 2, save 15%": mirrors the Simple Discounts quantity break so the bag
+     shows the figure checkout will. Counted PER PRODUCT: units of one product
+     across its sizes, not across the bag. */
+  const perProduct = new Map<string, { qty: number; total: number }>();
+  for (const i of items) {
+    const h = i.product.node.handle;
+    if (!inDuoDeal(h)) continue;
+    const cur = perProduct.get(h) ?? { qty: 0, total: 0 };
+    cur.qty += i.quantity;
+    cur.total += parseFloat(i.price.amount) * i.quantity;
+    perProduct.set(h, cur);
+  }
+  let duoSaving = 0;
+  let duoOneShort = 0;
+  for (const v of perProduct.values()) {
+    if (v.qty >= DUO_DEAL.minQuantity) duoSaving += v.total * (DUO_DEAL.percent / 100);
+    else duoOneShort += 1;
+  }
+  duoSaving = Math.round(duoSaving * 100) / 100;
   const payable = totalPrice - duoSaving;
   const baseCurrency = items[0]?.price.currencyCode ?? "GBP";
 
@@ -378,8 +391,8 @@ export function CartDrawer() {
                     <span className="text-cocoa">Buy 2, save {DUO_DEAL.percent}% — applied at checkout</span>
                     <span className="text-ink">−{display(duoSaving, baseCurrency)}</span>
                   </div>
-                ) : duoQty === 1 ? (
-                  <p className="mb-2 text-[12px] text-cocoa">Add one more eligible piece to save {DUO_DEAL.percent}% on both.</p>
+                ) : duoOneShort > 0 ? (
+                  <p className="mb-2 text-[12px] text-cocoa">Add a second of the same product to save {DUO_DEAL.percent}% on both.</p>
                 ) : null}
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-[0.2em] text-cocoa">{t("Subtotal")}</span>

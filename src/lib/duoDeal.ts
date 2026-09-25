@@ -1,14 +1,17 @@
 /*
- * The live "Buy 2, save 15%" automatic discount, mirrored for the storefront.
+ * The live "Buy 2, save 15%" quantity break, mirrored for the storefront.
  *
- * Shopify rule DiscountAutomaticNode/1738471309607: 15% off every eligible
- * item once 2 or more eligible items are in the cart. Eligible items can be
- * mixed - two bras, or a bodysuit and a swimsuit - so the saving the page
- * shows is what checkout will apply. Keyed by handle so it survives
- * product-ID changes.
+ * Shopify DiscountAutomaticNode/1738478518567, an app-managed automatic
+ * discount from Simple Discounts (type "Tier/Quantity break discount"),
+ * scoped to the "Buy 2, save 15% (eligible)" collection (duo-eligible) with
+ * "Same product only": 15% off a product once 2+ units OF THAT PRODUCT are
+ * in the cart. Counted per product, not across the bag - two different
+ * products at one each get nothing. Verified at checkout 25 Sept 2026.
+ * Keyed by handle so it survives product-ID changes; keep this list and the
+ * collection in step.
  *
  * Deliberately NOT applied to: the three underwear singles (they carry the
- * 3-for-£30 rule and two offers on one page fight), the co-ord and fleece
+ * 3-for-GBP30 rule and two offers on one page fight), the co-ord and fleece
  * sets (heavy shipping, thin margin on a multiple), accessories, and
  * single-purchase items with no natural "two of".
  *

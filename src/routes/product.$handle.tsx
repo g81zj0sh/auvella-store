@@ -999,7 +999,7 @@ function ProductPage() {
                     );
                   })}
                 </div>
-                <p className="mt-2 text-[11px] text-[#888888]">Mix any two eligible pieces — the saving applies automatically at checkout.</p>
+                <p className="mt-2 text-[11px] text-[#888888]">Two of this product, in any sizes — the saving applies automatically at checkout.</p>
               </div>
             )}
 
