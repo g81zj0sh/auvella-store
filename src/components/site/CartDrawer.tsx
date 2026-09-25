@@ -12,6 +12,7 @@ import { useDisplayPrice, useT } from "@/lib/preferences";
 import { freeShippingThreshold, useShippingCountry } from "@/lib/shipping";
 import { cartLineImage } from "@/lib/cartImage";
 import { BUNDLE_DEAL, bundleLabel, inBundleDeal } from "@/lib/bundleDeal";
+import { DUO_DEAL, inDuoDeal } from "@/lib/duoDeal";
 import { estimateDelivery, DISPATCH_CUTOFF_LONDON } from "@/lib/deliveryEstimate";
 import {
   fetchProductRecommendations,
@@ -59,6 +60,13 @@ export function CartDrawer() {
   const t = useT();
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const totalPrice = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
+  /* "Buy 2, save 15%": mirrors the Shopify automatic rule so the bag shows the
+     same figure checkout will. Eligible items can mix. */
+  const duoItems = items.filter((i) => inDuoDeal(i.product.node.handle));
+  const duoQty = duoItems.reduce((s, i) => s + i.quantity, 0);
+  const duoEligibleTotal = duoItems.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
+  const duoSaving = duoQty >= DUO_DEAL.minQuantity ? Math.round(duoEligibleTotal * DUO_DEAL.percent) / 100 : 0;
+  const payable = totalPrice - duoSaving;
   const baseCurrency = items[0]?.price.currencyCode ?? "GBP";
 
   const { country } = useShippingCountry();
@@ -365,9 +373,17 @@ export function CartDrawer() {
                     <span className="text-ink">{delivery.label}</span> to {delivery.countryName}
                   </p>
                 )}
+                {duoSaving > 0 ? (
+                  <div className="mb-2 flex items-center justify-between text-[12px]">
+                    <span className="text-cocoa">Buy 2, save {DUO_DEAL.percent}% — applied at checkout</span>
+                    <span className="text-ink">−{display(duoSaving, baseCurrency)}</span>
+                  </div>
+                ) : duoQty === 1 ? (
+                  <p className="mb-2 text-[12px] text-cocoa">Add one more eligible piece to save {DUO_DEAL.percent}% on both.</p>
+                ) : null}
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-[0.2em] text-cocoa">{t("Subtotal")}</span>
-                  <span className="font-serif text-[20px] text-ink">{display(totalPrice, baseCurrency)}</span>
+                  <span className="font-serif text-[20px] text-ink">{display(payable, baseCurrency)}</span>
                 </div>
                 <Button
                   onClick={handleCheckout}
@@ -377,7 +393,7 @@ export function CartDrawer() {
                   {isLoading || isSyncing || isCheckingOut ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <>{t("Checkout")} — {display(totalPrice, baseCurrency)}</>
+                    <>{t("Checkout")} — {display(payable, baseCurrency)}</>
                   )}
                 </Button>
               </div>

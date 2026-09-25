@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { galleryUrls, indexedHex, indexedSwatch } from "@/lib/galleryIndex";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
+import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -192,6 +193,8 @@ function ProductPage() {
 
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [imageIdx, setImageIdx] = useState(0);
+  /* 1 = Single, 2 = Duo. Only offered where the Shopify rule applies. */
+  const [pack, setPack] = useState<1 | 2>(1);
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [barVisible, setBarVisible] = useState(false);
   const favHandles = useFavorites((s) => s.handles);
@@ -562,15 +565,16 @@ function ProductPage() {
       return;
     }
     if (!variant) return;
+    const qty = inDuoDeal(node.handle) ? pack : 1;
     await addItem({
       product,
       variantId: variant.id,
       variantTitle: variant.title,
       price: variant.price,
-      quantity: 1,
+      quantity: qty,
       selectedOptions: variant.selectedOptions || [],
     });
-    toast.success("Added to bag", { position: "top-center" });
+    toast.success(qty === 2 ? "Two added to bag — 15% off applies at checkout" : "Added to bag", { position: "top-center" });
   };
 
 
@@ -949,6 +953,56 @@ function ProductPage() {
               </div>
             ))}
 
+            {/*
+              Single / Duo. True and plain: the Duo price is what checkout
+              charges (Shopify automatic rule), the struck figure is two at
+              full price, and there is no timer, no "deal ends", no second
+              strike-through. "Most Popular" sits on the Duo because that is
+              the one we want chosen.
+            */}
+            {inDuoDeal(node.handle) && variant && (
+              <div className="mt-7">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Buy 2, save {DUO_DEAL.percent}%</p>
+                <div className="mt-3 space-y-2">
+                  {([1, 2] as const).map((n) => {
+                    const active = pack === n;
+                    const single = parseFloat(variant.price.amount);
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setPack(n)}
+                        aria-pressed={active}
+                        className={`relative flex w-full items-center justify-between border px-4 py-3.5 text-left transition-colors ${
+                          active ? "border-[#0a0a0a] bg-[#faf9f7]" : "border-[#DDDDDD] hover:border-[#0a0a0a]"
+                        }`}
+                      >
+                        {n === 2 && (
+                          <span className="absolute -top-2.5 right-3 bg-[#0a0a0a] px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-white">
+                            Most Popular
+                          </span>
+                        )}
+                        <span className="flex items-center gap-3">
+                          <span className={`grid h-4 w-4 place-items-center rounded-full border ${active ? "border-[#0a0a0a]" : "border-[#bbbbbb]"}`}>
+                            {active && <span className="h-2 w-2 rounded-full bg-[#0a0a0a]" />}
+                          </span>
+                          <span>
+                            <span className="block text-[14px] text-[#0a0a0a]">{n === 1 ? "Single" : "Duo"}</span>
+                            <span className="block text-[11px] text-[#777777]">{n === 1 ? "Standard price" : `You save ${DUO_DEAL.percent}%`}</span>
+                          </span>
+                        </span>
+                        <span className="text-right">
+                          <span className="block text-[15px] text-[#0a0a0a]">{cur(n === 1 ? single : duoPrice(single))}</span>
+                          {n === 2 && <span className="block text-[11px] text-[#999999] line-through">{cur(single * 2)}</span>}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] text-[#888888]">Mix any two eligible pieces — the saving applies automatically at checkout.</p>
+              </div>
+            )}
+
             {/* Add to bag / Select a size */}
             <button
               ref={atcRef}
@@ -963,7 +1017,7 @@ function ProductPage() {
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : hasSize ? (
-                <>Add to Bag — {cur(unitPrice)}</>
+                <>{inDuoDeal(node.handle) && pack === 2 ? <>Add 2 to Bag — {cur(duoPrice(unitPrice))}</> : <>Add to Bag — {cur(unitPrice)}</>}</>
               ) : (
                 "Select a Size"
               )}
