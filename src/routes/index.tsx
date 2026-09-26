@@ -493,15 +493,17 @@ function MarqueeStrip() {
 
 const ugcItems = [
   /* Verified product matches — each image links to the exact piece it features */
-  { image: ugc1.url, handle: "seamless-strapless-sculpting-bodysuit", label: "@maelinaaa" },
+  /* Three of these pointed at products deleted in September; re-matched by
+     eye against the live catalogue on 26 Sept 2026. */
+  { image: ugc1.url, handle: "one-piece-shapewear-bodysuit-with-tummy-control", label: "@maelinaaa" },
   { image: ugc2.url, handle: "long-sleeve-zip-one-piece-swimsuit", label: "@sofiarrx" },
   { image: ugc3Black, handle: "high-waist-body-shaping-shorts", label: "@ellavayne" },
   { image: ugc4.url, handle: "satin-tie-waist-robe", label: "@zara.renn" },
   { image: ugc5.url, handle: "strapless-tummy-control-body-shaper", label: "@noraluxe" },
   { image: ugc6.url, handle: "womens-tie-side-triangle-bikini-set", label: "@chloemerritt" },
-  { image: ugc7.url, handle: "seamless-backless-adjustable-bodysuit", label: "@tessavibes" },
+  { image: ugc7.url, handle: "seamless-sculpting-bodysuit", label: "@tessavibes" },
   { image: ugc8.url, handle: "auvella-long-sleeve-sculpting-bodysuit", label: "@oliviaarc" },
-  { image: ugc9.url, handle: "seamless-strapless-sculpting-bodysuit", label: "@briellxo" },
+  { image: ugc9.url, handle: "one-piece-shapewear-bodysuit-with-tummy-control", label: "@briellxo" },
 ];
 
 /* UGC entries whose handle is a product (not a collection) */
