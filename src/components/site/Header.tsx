@@ -1,3 +1,4 @@
+import { SOCIAL_LINKS } from "@/lib/socialLinks";
 import { Link } from "@tanstack/react-router";
 import { User, Menu, X, Globe, Check, ChevronDown, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -790,11 +791,14 @@ function MobileRegionRows() {
 
 /* Dead-link social icon — no navigation until real URLs are provided. */
 function SocialIcon({ label, children }: { label: string; children: React.ReactNode }) {
+  const href = SOCIAL_LINKS[label];
+  if (!href) return null; // no account for this network yet
   return (
     <a
-      href="#"
-      aria-label={label}
-      onClick={(e) => e.preventDefault()}
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Auvella on ${label}`}
       className="text-[#0a0a0a] transition-opacity hover:opacity-60"
     >
       <svg viewBox="0 0 24 24" className="h-5 w-5" xmlns="http://www.w3.org/2000/svg">
