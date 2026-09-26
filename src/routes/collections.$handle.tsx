@@ -99,6 +99,9 @@ const dressesHeroVideo = { url: dressesHeroVideoImg };
 import dressesHeroPosterImg from "@/assets/media/dresses-hero-poster.jpg";
 const dressesHeroPoster = { url: dressesHeroPosterImg };
 
+/* Sub-collections that show no hero banner — title strip only. Only these. */
+const NO_HERO = new Set(["shorts-and-waist", "one-piece", "maxi-dresses", "midi-dresses", "mini-dresses"]);
+
 const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
   shapewear: { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url },
   "loungewear-sleepwear": { src: loungewearHeroVideo.url, poster: loungewearHeroPoster.url },
@@ -845,7 +848,16 @@ function CollectionPage() {
     <div className="min-h-screen bg-white">
       <Header />
 
-      {/* Collection hero — full-width, 45vh, name bottom-left */}
+      {/* Collection hero — full-width, 45vh, name bottom-left.
+          Sub-collections listed in NO_HERO skip the banner and get a plain
+          title strip instead (Joshua, 26 Sept 2026): the parent already
+          carries the visual. */}
+      {NO_HERO.has(handle) ? (
+        <section className="container-px border-b border-[#EBEBEB] py-6 md:py-8">
+          <h1 className="text-[11px] uppercase tracking-widest text-[#0a0a0a]">{title}</h1>
+          {description && <p className="mt-1.5 max-w-[560px] text-[12px] leading-snug text-[#555555]">{description}</p>}
+        </section>
+      ) : (
       <section className="relative h-[45vh] w-full overflow-hidden bg-[#f5f5f5]">
         {HERO_VIDEO[handle] ? (
           <video
@@ -869,6 +881,7 @@ function CollectionPage() {
           )}
         </div>
       </section>
+      )}
 
       {/* SKIMS-style category tile row */}
       <CategoryTiles handle={handle} />
