@@ -1,6 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { canonicalCollectionHandle, PREVIOUS_SHOPIFY_HANDLE } from "@/lib/collectionHandles";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import tileBodysuits from "@/assets/tiles/tile-bodysuits.jpg";
 import tileShapewear from "@/assets/tiles/tile-shapewear.jpg";
 import tileBras from "@/assets/tiles/tile-bras.jpg";
@@ -100,6 +101,15 @@ import dressesHeroPosterImg from "@/assets/media/dresses-hero-poster.jpg";
 const dressesHeroPoster = { url: dressesHeroPosterImg };
 
 /* Sub-collections that show no hero banner — title strip only. Only these. */
+/* Parent of each hero-less sub-collection: breadcrumb and the "More from" rail. */
+const PARENT: Record<string, { handle: string; label: string }> = {
+  "shorts-and-waist": { handle: "shapewear", label: "Shapewear" },
+  "one-piece": { handle: "swim", label: "Swim" },
+  "maxi-dresses": { handle: "dresses", label: "Dresses" },
+  "midi-dresses": { handle: "dresses", label: "Dresses" },
+  "mini-dresses": { handle: "dresses", label: "Dresses" },
+};
+
 const NO_HERO = new Set(["shorts-and-waist", "one-piece", "maxi-dresses", "midi-dresses", "mini-dresses"]);
 
 const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
@@ -289,6 +299,8 @@ const TILE_IMG: Record<string, string> = {
   "midi-dresses": tileMidiDress,
   "maxi-dresses": tileMaxiDress,
   activewear: tileActivewear,
+  // No bundled tile for the Edit; use its collection image from Shopify.
+  "everyday-support-edit": "https://cdn.shopify.com/s/files/1/0988/0738/2311/collections/hf_20260703_015314_d1d265c5-5ef9-47f1-898d-3f92b2facce2.png?width=800",
 };
 
 const OVERVIEW_TILES = [
@@ -320,6 +332,9 @@ const TILE_FAMILIES: Record<string, string[]> = {
   "sleep-accessories": LOUNGE_TILES,
   pajamas: LOUNGE_TILES,
   sleepwear: LOUNGE_TILES,
+  // Sub-collections with no family were opening on a bare page (26 Sept 2026)
+  "shorts-and-waist": ["shapewear", "bodysuits", "everyday-support-edit", "underwear"],
+  "one-piece": ["swim", "bikinis", "shapewear", "bodysuits"],
   // Swim family
   swim: ["bikinis", "shapewear", "bodysuits"],
   bikinis: ["swim", "shapewear", "bodysuits"],
@@ -353,6 +368,33 @@ function CategoryTile({ handle }: { handle: string }) {
       <p className="mt-2.5 text-[12px] font-medium uppercase tracking-[0.1em] text-[#0a0a0a]">{label}</p>
       {sub && <p className="mt-0.5 text-[12px] leading-snug text-[#8a8a8a]">{sub}</p>}
     </Link>
+  );
+}
+
+/* A second row so a small sub-collection doesn't end after three cards:
+   the parent collection's other products, excluding what's already shown. */
+function MoreFrom({ parent, exclude }: { parent: { handle: string; label: string }; exclude: string[] }) {
+  const { data } = useQuery({
+    queryKey: ["more-from", parent.handle],
+    queryFn: () => fetchCollectionByHandle(parent.handle, 24),
+    staleTime: 5 * 60_000,
+  });
+  const items = (data?.products ?? []).filter((p) => !exclude.includes(p.node.handle)).slice(0, 8);
+  if (!items.length) return null;
+  return (
+    <section className="container-px border-t border-[#EBEBEB] py-10 md:py-14">
+      <div className="mb-6 flex items-baseline justify-between">
+        <h2 className="font-serif text-[20px] font-light text-[#0a0a0a]">More from {parent.label}</h2>
+        <Link to="/collections/$handle" params={{ handle: parent.handle }} className="text-[11px] uppercase tracking-[0.14em] text-[#0a0a0a] underline-offset-4 hover:underline">
+          View all
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 gap-x-2 gap-y-8 md:grid-cols-4 md:gap-x-3">
+        {items.map((p) => (
+          <ProductCard key={p.node.id} product={p} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -853,9 +895,18 @@ function CollectionPage() {
           title strip instead (Joshua, 26 Sept 2026): the parent already
           carries the visual. */}
       {NO_HERO.has(handle) ? (
-        <section className="container-px border-b border-[#EBEBEB] py-6 md:py-8">
-          <h1 className="text-[11px] uppercase tracking-widest text-[#0a0a0a]">{title}</h1>
-          {description && <p className="mt-1.5 max-w-[560px] text-[12px] leading-snug text-[#555555]">{description}</p>}
+        <section className="container-px border-b border-[#EBEBEB] pb-6 pt-5 md:pb-8 md:pt-7">
+          {PARENT[handle] && (
+            <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1.5 text-[11px] text-[#888888]">
+              <Link to="/" className="hover:text-[#0a0a0a]">Home</Link>
+              <span>/</span>
+              <Link to="/collections/$handle" params={{ handle: PARENT[handle].handle }} className="hover:text-[#0a0a0a]">{PARENT[handle].label}</Link>
+              <span>/</span>
+              <span className="text-[#0a0a0a]">{title}</span>
+            </nav>
+          )}
+          <h1 className="font-serif text-[28px] font-light leading-none text-[#0a0a0a] md:text-[34px]">{title}</h1>
+          {description && <p className="mt-2.5 max-w-[600px] text-[13px] leading-relaxed text-[#555555]">{description}</p>}
         </section>
       ) : (
       <section className="relative h-[45vh] w-full overflow-hidden bg-[#f5f5f5]">
@@ -955,7 +1006,7 @@ function CollectionPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-8 md:grid-cols-4 md:gap-x-3 md:gap-y-12">
+            <div className={`grid grid-cols-2 gap-x-2 gap-y-8 md:gap-x-3 md:gap-y-12 ${filtered.length <= 3 ? "md:grid-cols-3" : "md:grid-cols-4"}`}>
               {visible.map((p) => (
                 <ProductCard key={p.node.id} product={p} />
               ))}
@@ -980,6 +1031,8 @@ function CollectionPage() {
           </>
         )}
       </section>
+
+      {PARENT[handle] && <MoreFrom parent={PARENT[handle]} exclude={products.map((p) => p.node.handle)} />}
 
       <Footer />
     </div>
