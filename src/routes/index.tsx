@@ -507,17 +507,6 @@ const ugcItems = [
 ];
 
 /* UGC entries whose handle is a product (not a collection) */
-const PRODUCT_UGC_HANDLES = new Set([
-  "seamless-strapless-sculpting-bodysuit",
-  "long-sleeve-zip-one-piece-swimsuit",
-  "high-waist-body-shaping-shorts",
-  "satin-tie-waist-robe",
-  "strapless-tummy-control-body-shaper",
-  "womens-tie-side-triangle-bikini-set",
-  "seamless-backless-adjustable-bodysuit",
-  "auvella-long-sleeve-sculpting-bodysuit",
-]);
-
 function UgcStrip() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
@@ -572,7 +561,7 @@ function UgcStrip() {
           {ugcItems.map((u, i) => (
             <Link
               key={i}
-              to={PRODUCT_UGC_HANDLES.has(u.handle) ? "/product/$handle" : "/collections/$handle"}
+              to="/product/$handle"
               params={{ handle: u.handle }}
               draggable={false}
               className="group relative block w-[42vw] shrink-0 md:w-[calc((100%-1.25rem)/6)]"
