@@ -7,7 +7,7 @@
  */
 export const SOCIAL_LINKS: Record<string, string> = {
   Instagram: "https://www.instagram.com/auvellawear",
-  Facebook: "https://www.facebook.com/share/1JhhhrkCpZ/",
+  Facebook: "https://www.facebook.com/profile.php?id=61593998109059",
   YouTube: "https://www.youtube.com/@AuvellaWear",
   TikTok: "https://www.tiktok.com/@auvellawear",
 };
