@@ -1006,7 +1006,7 @@ function CollectionPage() {
           </div>
         ) : (
           <>
-            <div className={`grid grid-cols-2 gap-x-2 gap-y-8 md:gap-x-3 md:gap-y-12 ${filtered.length <= 3 ? "md:grid-cols-3" : "md:grid-cols-4"}`}>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-8 md:grid-cols-4 md:gap-x-3 md:gap-y-12">
               {visible.map((p) => (
                 <ProductCard key={p.node.id} product={p} />
               ))}
