@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { lookupOrder, type LookupResult, type TrackedOrder } from "@/lib/orderTracking.functions";
-import { COUNTRIES, DEFAULT_DAYS } from "@/lib/shipping";
+import { COUNTRIES, DEFAULT_DAYS, transitLabel, PROCESSING_LABEL } from "@/lib/shipping";
 
 /* ------------------------------------------------------------------ */
 /* Copy — every line here is meant to be true.                         */
@@ -12,6 +12,9 @@ import { COUNTRIES, DEFAULT_DAYS } from "@/lib/shipping";
 
 /* Delivery copy comes from the same country table as the rest of the site, so
    this page can never quote a different number from the product pages. */
+// Shown to shoppers: shipping days only (UK). The lateness check below still
+// measures order-to-door, since it counts from the order date.
+const UK_SHIPPING = `${transitLabel(COUNTRIES.find((c) => c.code === "GB")!).replace(" – ", " to ")} business days`;
 const DELIVERY_WINDOW = `${DEFAULT_DAYS.replace(" – ", " to ")} business days`;
 
 function windowFor(countryCode: string | null): { label: string; maxDays: number } {
@@ -37,7 +40,7 @@ export const Route = createFileRoute("/tracking")({
       { title: "Track your order — Auvella" },
       {
         name: "description",
-        content: `Check where your Auvella order is. Standard delivery is ${DELIVERY_WINDOW}; we'd rather say so than promise faster.`,
+        content: `Check where your Auvella order is. UK shipping takes ${UK_SHIPPING} once dispatched.`,
       },
       { property: "og:title", content: "Track your order — Auvella" },
     ],
@@ -168,10 +171,9 @@ function TrackingPage() {
         <aside className="mt-14 border border-[#0a0a0a] px-6 py-7 md:px-8">
           <p className="text-[10px] uppercase tracking-[0.28em] text-[#8a8a8a]">The honest version</p>
           <p className="mt-3 text-[15px] leading-[1.75] text-[#0a0a0a]">
-            Our garments ship directly from our supply partner rather than a UK warehouse, so standard delivery is a
-            steady <strong className="font-medium">{DELIVERY_WINDOW}</strong>. We'd rather tell you that here than
-            print "3–5 days" and let you find out otherwise. Tracking appears on this page as soon as the courier
-            issues it.
+            Orders are dispatched within {PROCESSING_LABEL} business days, then UK shipping takes a steady{" "}
+            <strong className="font-medium">{UK_SHIPPING}</strong>. Tracking appears on this page as soon as the
+            courier issues it &mdash; usually a day or two after dispatch.
           </p>
         </aside>
       </main>

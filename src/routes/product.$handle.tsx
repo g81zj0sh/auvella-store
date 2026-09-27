@@ -29,7 +29,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
 import { BUNDLE_DEAL, inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
-import { freeShippingThresholdFmt, useShippingCountry, PROCESSING_LABEL } from "@/lib/shipping";
+import { freeShippingThresholdFmt, useShippingCountry, PROCESSING_LABEL, transitLabel } from "@/lib/shipping";
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
@@ -843,7 +843,7 @@ function ProductPage() {
               <p className="font-medium text-[#0a0a0a]">
                 Free shipping on orders {shipThreshold}+
               </p>
-              <p>Receive your order in {shipCountry.days} business days</p>
+              <p>{transitLabel(shipCountry)} business day shipping</p>
               <p>Easy, tracked 30-day returns</p>
             </div>
 
@@ -1135,8 +1135,8 @@ function ProductPage() {
                   <div className="space-y-3">
                     <p>
                       Free shipping to {shipDest} on orders over {shipThreshold}. Orders are
-                      processed within {PROCESSING_LABEL} business days and arrive{" "}
-                      {shipCountry.days} business days from ordering, tracked.
+                      dispatched within {PROCESSING_LABEL} business days, then shipping takes{" "}
+                      {transitLabel(shipCountry)} business days, tracked.
                     </p>
                     <p>
                       Easy, tracked 30-day returns — items must be unworn with tags attached.

@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { isLoggedIn } from "@/lib/customerAuth";
 import { FavouritesButton } from "@/components/site/FavouritesButton";
-import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES } from "@/lib/shipping";
+import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES, transitLabel } from "@/lib/shipping";
 import { SearchDrawer } from "@/components/site/SearchDrawer";
 import auvellaWordmarkImg from "@/assets/auvella-wordmark.png";
 const auvellaWordmark = { url: auvellaWordmarkImg };
@@ -433,7 +433,7 @@ function AnnouncementBar() {
   const displayCurrency = usePreferences((s) => s.currency);
   const messages = [
     "Duties And Taxes Are Included",
-    `Receive Your Order In ${country.days} Business Days`,
+    `${transitLabel(country)} Business Day Shipping`,
     `Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`,
   ];
   const [idx, setIdx] = useState(0);

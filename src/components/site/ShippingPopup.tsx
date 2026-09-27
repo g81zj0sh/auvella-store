@@ -294,8 +294,7 @@ export function ShippingPopup() {
                 c.name.toLowerCase().includes(pickerQuery.trim().toLowerCase()),
               ).length === 0 && (
                 <p className="mt-3 text-[12px] leading-relaxed text-[#555555]">
-                  We don't ship to "{pickerQuery.trim()}" yet — orders outside our
-                  listed destinations default to 5 – 10 business days.
+                  We don't ship to "{pickerQuery.trim()}" yet.
                 </p>
               )}
             <div className="mt-5 text-center">

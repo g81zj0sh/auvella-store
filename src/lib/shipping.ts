@@ -27,9 +27,8 @@ type CountrySeed = Omit<Country, "days"> & { days?: string };
 
 const COUNTRY_SEED = [] = [
   { code: "GB", name: "United Kingdom", the: true, transit: [3, 6], currency: "GBP" },
-  // US and CH transit are the "after dispatch" figures the shipping policy page
-  // already published; confirm against the supply partner when possible.
-  { code: "US", name: "United States", the: true, transit: [3, 8], currency: "USD" },
+  // US and CH confirmed by Joshua, 27 Sept 2026.
+  { code: "US", name: "United States", the: true, transit: [5, 8], currency: "USD" },
   { code: "DE", name: "Germany", transit: [6, 9], currency: "EUR" },
   { code: "CA", name: "Canada", transit: [6, 10], currency: "CAD" },
   { code: "NZ", name: "New Zealand", transit: [5, 10], currency: "NZD" },
@@ -46,7 +45,7 @@ const COUNTRY_SEED = [] = [
   { code: "ES", name: "Spain", transit: [6, 10], currency: "EUR" },
   { code: "NO", name: "Norway", transit: [4, 9], currency: "GBP" },
   { code: "AE", name: "United Arab Emirates", the: true, transit: [6, 9], currency: "AED" },
-  { code: "CH", name: "Switzerland", transit: [5, 12], currency: "CHF" },
+  { code: "CH", name: "Switzerland", transit: [6, 9], currency: "CHF" },
 ] as const satisfies readonly CountrySeed[];
 
 function totalDays(c: CountrySeed): string {
