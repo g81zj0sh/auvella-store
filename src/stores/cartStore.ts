@@ -13,6 +13,8 @@ import {
   swapShopifyCartLine,
   setShopifyDiscountCodes,
   updateShopifyCartCountry,
+  fetchCartTotals,
+  type CartTotals,
 } from "@/lib/shopify";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 
@@ -37,6 +39,9 @@ interface CartStore {
   removeItem: (variantId: string) => Promise<void>;
   clearCart: () => void;
   syncCountry: (countryCode: string) => Promise<void>;
+  /** Shopify's own totals and discount lines for the current cart. */
+  totals: CartTotals | null;
+  refreshTotals: () => Promise<void>;
   syncCart: () => Promise<void>;
   getCheckoutUrl: () => string | null;
   /** Resolve a checkout URL that is valid right now, rebuilding the cart if needed. */
@@ -58,6 +63,7 @@ export const useCartStore = create<CartStore>()(
       items: [],
       cartId: null,
       checkoutUrl: null,
+      totals: null,
       isLoading: false,
       isSyncing: false,
       discountCodes: [],
@@ -238,6 +244,33 @@ export const useCartStore = create<CartStore>()(
         if (!cartId) return;
         const url = await updateShopifyCartCountry(cartId, countryCode);
         if (url) set({ checkoutUrl: url });
+        await get().refreshTotals();
+      },
+      refreshTotals: async () => {
+        const { cartId, items } = get();
+        if (!cartId) {
+          if (get().totals) set({ totals: null });
+          return;
+        }
+        try {
+          const t = await fetchCartTotals(cartId);
+          if (!t) return;
+          // Line prices come back in the market's currency: keep the bag's
+          // lines on the same numbers checkout will use. Only write when
+          // something changed, so this can't loop.
+          let changed = false;
+          const next = items.map((i) => {
+            const p = t.linePrices[i.variantId];
+            if (p && (p.amount !== i.price.amount || p.currencyCode !== i.price.currencyCode)) {
+              changed = true;
+              return { ...i, price: p };
+            }
+            return i;
+          });
+          set(changed ? { totals: t, items: next, ...(t.checkoutUrl ? { checkoutUrl: t.checkoutUrl } : {}) } : { totals: t, ...(t.checkoutUrl ? { checkoutUrl: t.checkoutUrl } : {}) });
+        } catch (e) {
+          console.warn("Cart totals unavailable:", e);
+        }
       },
       getCheckoutUrl: () => get().checkoutUrl,
 
@@ -319,3 +352,13 @@ export const useCartStore = create<CartStore>()(
     },
   ),
 );
+
+/* After any change to the bag's lines or codes, ask Shopify for its totals.
+   Debounced so a run of quantity taps costs one request. */
+let totalsTimer: ReturnType<typeof setTimeout> | undefined;
+useCartStore.subscribe((state, prev) => {
+  if (state.items === prev.items && state.cartId === prev.cartId && state.discountCodes === prev.discountCodes) return;
+  if (typeof window === "undefined") return;
+  clearTimeout(totalsTimer);
+  totalsTimer = setTimeout(() => void useCartStore.getState().refreshTotals(), 300);
+});

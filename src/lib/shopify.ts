@@ -79,6 +79,34 @@ export function shopifySrcSet(url: string, maxWidth = 1600): string {
     .join(", ");
 }
 
+/*
+ * Market context. Shopify prices each market itself (its own FX rate, its own
+ * rounding, any per-market adjustment); a US shopper is charged those prices
+ * at checkout whatever the site showed. Until 27 Sept 2026 the site fetched
+ * GBP and converted locally, so page and checkout disagreed abroad. Now every
+ * query carries @inContext(country) for the shopper's stored country and
+ * Shopify returns that market's prices in its currency. On the server (no
+ * preference) the default GB market is used; the client refetches for
+ * anyone else (see the root route).
+ */
+const COUNTRY_CODE = /^[A-Z]{2}$/;
+export function storefrontCountry(): string {
+  try {
+    if (typeof window === "undefined") return "GB";
+    const raw = window.localStorage.getItem("auvella-preferences");
+    const code = raw ? JSON.parse(raw)?.state?.shippingCountry?.code : undefined;
+    return typeof code === "string" && COUNTRY_CODE.test(code) ? code : "GB";
+  } catch {
+    return "GB";
+  }
+}
+
+function withMarketContext(query: string): string {
+  const country = storefrontCountry();
+  // Named query with optional variables: `query Name($a: T) {` -> add the directive.
+  return query.replace(/^(\s*query\s+\w+(?:\s*\([^)]*\))?)(\s*\{)/, `$1 @inContext(country: ${country})$2`);
+}
+
 export async function storefrontApiRequest(query: string, variables: any = {}) {
   const response = await fetch(SHOPIFY_STOREFRONT_URL, {
     method: "POST",
@@ -86,7 +114,7 @@ export async function storefrontApiRequest(query: string, variables: any = {}) {
       "Content-Type": "application/json",
       "X-Shopify-Storefront-Access-Token": SHOPIFY_STOREFRONT_TOKEN,
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({ query: withMarketContext(query), variables }),
   });
 
   if (response.status === 402) {
@@ -263,6 +291,69 @@ export async function fetchProductRecommendations(productId: string): Promise<Sh
 
 // ---------- Cart mutations ----------
 export const CART_QUERY = `query cart($id: ID!) { cart(id: $id) { id totalQuantity checkoutUrl } }`;
+
+/*
+ * Shopify's own arithmetic for the bag: market prices per line, every
+ * automatic or code discount it will apply, and the total it will charge.
+ * The drawer shows these instead of mirroring the rules by hand, so the bag
+ * and checkout agree to the penny in every market.
+ */
+export type CartTotals = {
+  currency: string;
+  total: number;
+  discounts: Array<{ label: string; amount: number }>;
+  linePrices: Record<string, { amount: string; currencyCode: string }>;
+  checkoutUrl: string | null;
+};
+
+const CART_TOTALS_QUERY = `
+  query cartTotals($id: ID!) {
+    cart(id: $id) {
+      checkoutUrl
+      cost { totalAmount { amount currencyCode } }
+      discountAllocations {
+        discountedAmount { amount }
+        ... on CartAutomaticDiscountAllocation { title }
+        ... on CartCodeDiscountAllocation { code }
+      }
+      lines(first: 100) {
+        edges { node {
+          merchandise { ... on ProductVariant { id price { amount currencyCode } } }
+          discountAllocations {
+            discountedAmount { amount }
+            ... on CartAutomaticDiscountAllocation { title }
+            ... on CartCodeDiscountAllocation { code }
+          }
+        } }
+      }
+    }
+  }
+`;
+
+export async function fetchCartTotals(cartId: string): Promise<CartTotals | null> {
+  const data = await storefrontApiRequest(CART_TOTALS_QUERY, { id: cartId });
+  const cart = data?.data?.cart;
+  if (!cart?.cost?.totalAmount) return null;
+  const byLabel = new Map<string, number>();
+  const add = (a: any) => {
+    const label = a.title ?? a.code ?? "Discount";
+    byLabel.set(label, (byLabel.get(label) ?? 0) + parseFloat(a.discountedAmount?.amount ?? "0"));
+  };
+  for (const a of cart.discountAllocations ?? []) add(a);
+  const linePrices: CartTotals["linePrices"] = {};
+  for (const e of cart.lines?.edges ?? []) {
+    const n = e.node;
+    if (n.merchandise?.id && n.merchandise.price) linePrices[n.merchandise.id] = n.merchandise.price;
+    for (const a of n.discountAllocations ?? []) add(a);
+  }
+  return {
+    currency: cart.cost.totalAmount.currencyCode,
+    total: parseFloat(cart.cost.totalAmount.amount),
+    discounts: [...byLabel.entries()].filter(([, v]) => v > 0).map(([label, amount]) => ({ label, amount: Math.round(amount * 100) / 100 })),
+    linePrices,
+    checkoutUrl: cart.checkoutUrl ? formatCheckoutUrl(cart.checkoutUrl) : null,
+  };
+}
 
 const CART_CREATE_MUTATION = `
   mutation cartCreate($input: CartInput!) {

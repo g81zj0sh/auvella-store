@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initMetaPixel, trackMetaPageView } from "../lib/metaPixel";
+import { usePreferences } from "../lib/preferences";
 import { CookieConsent } from "@/components/site/CookieConsent";
 import { hasMarketingConsent, onConsentChange } from "@/lib/consent";
 import { Toaster } from "sonner";
@@ -160,11 +161,24 @@ function RootComponent() {
     };
 
     if (hasMarketingConsent()) start();
+
+    // Market: the server rendered GB prices. If this shopper's country is
+    // anything else - or changes - refetch everything in their market.
+    let lastCountry = "GB";
+    const syncMarket = () => {
+      const code = usePreferences.getState().shippingCountry?.code ?? "GB";
+      if (code === lastCountry) return;
+      lastCountry = code;
+      void queryClient.invalidateQueries();
+    };
+    syncMarket();
+    const unsubscribePrefs = usePreferences.subscribe(syncMarket);
     const unsubscribeConsent = onConsentChange((state) => {
       if (state === "accepted") start();
     });
 
     return () => {
+      unsubscribePrefs();
       unsubscribeConsent();
       unsubscribeRouter?.();
     };

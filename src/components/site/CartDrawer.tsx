@@ -59,6 +59,7 @@ export function CartDrawer() {
   const display = useDisplayPrice();
   const t = useT();
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+  const baseCurrency = items[0]?.price.currencyCode ?? "GBP";
   const totalPrice = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
   /* "Buy 2, save 15%": mirrors the Simple Discounts quantity break so the bag
      shows the figure checkout will. Counted PER PRODUCT: units of one product
@@ -91,8 +92,17 @@ export function CartDrawer() {
   const bundlePerUnitOff = 2.99;
   const bundleSaving =
     bundleUnits >= BUNDLE_DEAL.minQuantity ? Math.round(bundleUnits * bundlePerUnitOff * 100) / 100 : 0;
-  const payable = totalPrice - duoSaving - bundleSaving;
-  const baseCurrency = items[0]?.price.currencyCode ?? "GBP";
+  /* Shopify's own numbers win whenever they're in the bag's currency; the
+     local mirrors above only cover the moment before they arrive. */
+  const totals = useCartStore((s) => s.totals);
+  const shopifyTotals = totals && totals.currency === baseCurrency && items.length > 0 ? totals : null;
+  const savingLines: Array<{ label: string; amount: number }> = shopifyTotals
+    ? shopifyTotals.discounts
+    : [
+        ...(bundleSaving > 0 ? [{ label: bundleLabel(baseCurrency), amount: bundleSaving }] : []),
+        ...(duoSaving > 0 ? [{ label: `Buy 2, save ${DUO_DEAL.percent}%`, amount: duoSaving }] : []),
+      ];
+  const payable = shopifyTotals ? shopifyTotals.total : totalPrice - duoSaving - bundleSaving;
 
   const { country } = useShippingCountry();
   const threshold = freeShippingThreshold(baseCurrency);
@@ -398,18 +408,13 @@ export function CartDrawer() {
                     <span className="text-ink">{delivery.label}</span> to {delivery.countryName}
                   </p>
                 )}
-                {bundleSaving > 0 && (
-                  <div className="mb-2 flex items-center justify-between text-[12px]">
-                    <span className="text-cocoa">{bundleLabel(baseCurrency)} — applied at checkout</span>
-                    <span className="text-ink">−{display(bundleSaving, baseCurrency)}</span>
+                {savingLines.map((l) => (
+                  <div key={l.label} className="mb-2 flex items-center justify-between text-[12px]">
+                    <span className="text-cocoa">{l.label} — applied at checkout</span>
+                    <span className="text-ink">−{display(l.amount, baseCurrency)}</span>
                   </div>
-                )}
-                {duoSaving > 0 ? (
-                  <div className="mb-2 flex items-center justify-between text-[12px]">
-                    <span className="text-cocoa">Buy 2, save {DUO_DEAL.percent}% — applied at checkout</span>
-                    <span className="text-ink">−{display(duoSaving, baseCurrency)}</span>
-                  </div>
-                ) : duoOneShort > 0 ? (
+                ))}
+                {duoSaving === 0 && duoOneShort > 0 ? (
                   <p className="mb-2 text-[12px] text-cocoa">Add a second of the same product to save {DUO_DEAL.percent}% on both.</p>
                 ) : null}
                 <div className="flex items-center justify-between">
