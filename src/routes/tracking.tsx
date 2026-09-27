@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
@@ -44,22 +44,27 @@ export const Route = createFileRoute("/tracking")({
   }),
   /* The shipping-confirmation email links here with ?order=1042&email=…
      so the form arrives filled in (27 Sept 2026). */
-  validateSearch: (search: Record<string, unknown>): { order?: string; email?: string } => ({
-    ...(typeof search.order === "string" && search.order ? { order: search.order.slice(0, 20) } : {}),
-    ...(typeof search.email === "string" && search.email ? { email: search.email.slice(0, 120) } : {}),
-  }),
+  // The router parses ?order=1001 as a NUMBER, so accept both and coerce.
+  validateSearch: (search: Record<string, unknown>): { order?: string; email?: string } => {
+    const o = search.order;
+    const e = search.email;
+    const order = typeof o === "string" || typeof o === "number" ? String(o).slice(0, 20) : "";
+    const email = typeof e === "string" ? e.slice(0, 120) : "";
+    return { ...(order ? { order } : {}), ...(email ? { email } : {}) };
+  },
   component: TrackingPage,
 });
 
 function TrackingPage() {
   const prefill = Route.useSearch();
-  const [orderNumber, setOrderNumber] = useState(prefill.order ? `#${prefill.order.replace(/^#/, "")}` : "");
-  const [email, setEmail] = useState(prefill.email ?? "");
+  const orderParam = prefill.order != null ? String(prefill.order) : "";
+  const emailParam = prefill.email != null ? String(prefill.email) : "";
+  const [orderNumber, setOrderNumber] = useState(orderParam ? `#${orderParam.replace(/^#/, "")}` : "");
+  const [email, setEmail] = useState(emailParam);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<LookupResult | null>(null);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function runLookup() {
     if (busy) return;
     setBusy(true);
     setResult(null);
@@ -72,6 +77,33 @@ function TrackingPage() {
       setBusy(false);
     }
   }
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    await runLookup();
+  }
+
+  /* Arriving from the shipping email (?order=…&email=…): take the values into
+     the form, then wipe them from the address bar BEFORE anything can record
+     the page. This is a layout effect on a child route, so it runs before the
+     root's effects - including the one that starts the Meta pixel, whose
+     PageView would otherwise send the customer's email to Meta in the URL. */
+  const fromEmail = !!(orderParam && emailParam);
+  const useIsoLayout = typeof window === "undefined" ? useEffect : useLayoutEffect;
+  useIsoLayout(() => {
+    if (orderParam || emailParam) {
+      window.history.replaceState(window.history.state, "", "/tracking");
+    }
+  }, []);
+
+  // ...and look the order up straight away, so the email's button lands on
+  // the parcel's status rather than a form.
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (!fromEmail || autoRan.current) return;
+    autoRan.current = true;
+    void runLookup();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
