@@ -44,7 +44,7 @@ const COUNTRY_SEED = [] = [
   { code: "AT", name: "Austria", transit: [3, 5], currency: "EUR" },
   { code: "PL", name: "Poland", transit: [3, 5], currency: "PLN" },
   { code: "ES", name: "Spain", transit: [6, 10], currency: "EUR" },
-  { code: "NO", name: "Norway", transit: [4, 9], currency: "NOK" },
+  { code: "NO", name: "Norway", transit: [4, 9], currency: "GBP" },
   { code: "AE", name: "United Arab Emirates", the: true, transit: [6, 9], currency: "AED" },
   { code: "CH", name: "Switzerland", transit: [5, 12], currency: "CHF" },
 ] as const satisfies readonly CountrySeed[];
