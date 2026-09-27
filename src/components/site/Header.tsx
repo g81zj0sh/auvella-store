@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { isLoggedIn } from "@/lib/customerAuth";
 import { FavouritesButton } from "@/components/site/FavouritesButton";
-import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
+import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES } from "@/lib/shipping";
 import { SearchDrawer } from "@/components/site/SearchDrawer";
 import auvellaWordmarkImg from "@/assets/auvella-wordmark.png";
 const auvellaWordmark = { url: auvellaWordmarkImg };
@@ -337,6 +337,10 @@ function SimplePanel({ item }: { item: NavItem }) {
 /* ------------------------------------------------------------------ */
 
 function GlobePicker({ light }: { light: boolean }) {
+  /* Ship to: the only way to change country after the first-visit popup is
+     dismissed (QA re-check, 27 Sept 2026). Changing it re-files the Shopify
+     cart in that market and resets the currency to match. */
+  const { country: shipTo, setCountry } = useShippingCountry();
   const currency = usePreferences((s) => s.currency);
   const setCurrency = usePreferences((s) => s.setCurrency);
   const language = usePreferences((s) => s.language);
@@ -358,6 +362,20 @@ function GlobePicker({ light }: { light: boolean }) {
         className="w-72 rounded-none border-[#EBEBEB] bg-white p-0 shadow-lg"
       >
         <div className="max-h-[70vh] overflow-y-auto p-4" data-no-translate>
+          <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-[#888888]">Ship to</p>
+          <select
+            value={shipTo.code}
+            onChange={(e) => {
+              const c = COUNTRIES.find((x) => x.code === e.target.value);
+              if (c) setCountry(c);
+            }}
+            aria-label="Ship to"
+            className="mb-5 h-9 w-full border border-[#EBEBEB] bg-white px-2 text-[12px] text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none"
+          >
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>{c.name}</option>
+            ))}
+          </select>
           <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-[#888888]">Currency</p>
           <div className="grid grid-cols-3 gap-1">
             {CURRENCIES.map((c) => {
