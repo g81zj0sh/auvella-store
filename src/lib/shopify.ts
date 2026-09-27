@@ -374,14 +374,12 @@ const CART_CREATE_MUTATION = `
  * 2026). The country comes from the same preference the bag uses.
  */
 function buyerIdentity() {
-  try {
-    if (typeof window === "undefined") return undefined;
-    const raw = window.localStorage.getItem("auvella-preferences");
-    const code = raw ? JSON.parse(raw)?.state?.shippingCountry?.code : undefined;
-    return code ? { countryCode: code } : undefined;
-  } catch {
-    return undefined;
-  }
+  // Always send a country. With none, Shopify files the cart under the store's
+  // primary market, which is flagged as the US in the Markets data (and not
+  // switchable in the current admin) - so a shopper who adds to bag before
+  // their country is detected would land in a USD checkout. Default to GB,
+  // exactly as storefrontCountry() does for product prices.
+  return { countryCode: storefrontCountry() };
 }
 
 const CART_BUYER_IDENTITY_UPDATE_MUTATION = `
