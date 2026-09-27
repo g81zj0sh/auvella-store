@@ -276,6 +276,47 @@ const CART_CREATE_MUTATION = `
   }
 `;
 
+/*
+ * The shopper's country goes on the cart as buyerIdentity. Without it Shopify
+ * files every cart in the store's default market, so a UK shopper whose bag
+ * says pounds lands in a US-market checkout priced in dollars (QA, 27 Sept
+ * 2026). The country comes from the same preference the bag uses.
+ */
+function buyerIdentity() {
+  try {
+    if (typeof window === "undefined") return undefined;
+    const raw = window.localStorage.getItem("auvella-preferences");
+    const code = raw ? JSON.parse(raw)?.state?.shippingCountry?.code : undefined;
+    return code ? { countryCode: code } : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const CART_BUYER_IDENTITY_UPDATE_MUTATION = `
+  mutation cartBuyerIdentityUpdate($cartId: ID!, $buyerIdentity: CartBuyerIdentityInput!) {
+    cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+      cart { id checkoutUrl }
+      userErrors { field message }
+    }
+  }
+`;
+
+/** Re-file an existing cart under a new country (the shopper changed it). */
+export async function updateShopifyCartCountry(cartId: string, countryCode: string) {
+  const data = await storefrontApiRequest(CART_BUYER_IDENTITY_UPDATE_MUTATION, {
+    cartId,
+    buyerIdentity: { countryCode },
+  });
+  const errs = data?.data?.cartBuyerIdentityUpdate?.userErrors ?? [];
+  if (errs.length) {
+    console.error("Cart country update failed:", errs);
+    return null;
+  }
+  const cart = data?.data?.cartBuyerIdentityUpdate?.cart;
+  return cart?.checkoutUrl ? formatCheckoutUrl(cart.checkoutUrl) : null;
+}
+
 const CART_LINES_ADD_MUTATION = `
   mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
     cartLinesAdd(cartId: $cartId, lines: $lines) {
@@ -323,7 +364,7 @@ function isCartNotFoundError(userErrors: Array<{ field: string[] | null; message
 
 export async function createShopifyCart(item: { variantId: string; quantity: number }) {
   const data = await storefrontApiRequest(CART_CREATE_MUTATION, {
-    input: { lines: [{ quantity: item.quantity, merchandiseId: item.variantId }] },
+    input: { lines: [{ quantity: item.quantity, merchandiseId: item.variantId }], buyerIdentity: buyerIdentity() },
   });
   const errs = data?.data?.cartCreate?.userErrors ?? [];
   if (errs.length) {
@@ -345,7 +386,7 @@ export async function createShopifyCart(item: { variantId: string; quantity: num
 export async function recreateShopifyCart(lines: Array<{ variantId: string; quantity: number }>) {
   if (!lines.length) return null;
   const data = await storefrontApiRequest(CART_CREATE_MUTATION, {
-    input: { lines: lines.map((l) => ({ quantity: l.quantity, merchandiseId: l.variantId })) },
+    input: { lines: lines.map((l) => ({ quantity: l.quantity, merchandiseId: l.variantId })), buyerIdentity: buyerIdentity() },
   });
   const errs = data?.data?.cartCreate?.userErrors ?? [];
   if (errs.length) {

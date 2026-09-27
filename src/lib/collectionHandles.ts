@@ -21,6 +21,8 @@ export const LEGACY_COLLECTION_HANDLES: Record<string, string> = {
   "mini-dresses-1": "mini-dresses",
   "maxi-dresses-1": "maxi-dresses",
   "best-sellers": "everyday-support-edit",
+  // No leggings are stocked; the alias rendered an empty grid (QA, 27 Sept 2026).
+  leggings: "shapewear",
 };
 
 /**

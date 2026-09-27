@@ -79,7 +79,15 @@ export function CartDrawer() {
     else duoOneShort += 1;
   }
   duoSaving = Math.round(duoSaving * 100) / 100;
-  const payable = totalPrice - duoSaving;
+  /* "3 for £30": Shopify's rule is £2.99 off EVERY eligible item once 3+ eligible
+     items are in the bag (3 × £12.99 → £30.00). The bag showed the nudge but
+     never the saving (QA, 27 Sept 2026). Mirrored in the bag's base currency. */
+  const bundleItems = items.filter((i) => inBundleDeal(i.product.node.handle));
+  const bundleUnits = bundleItems.reduce((s, i) => s + i.quantity, 0);
+  const bundlePerUnitOff = 2.99;
+  const bundleSaving =
+    bundleUnits >= BUNDLE_DEAL.minQuantity ? Math.round(bundleUnits * bundlePerUnitOff * 100) / 100 : 0;
+  const payable = totalPrice - duoSaving - bundleSaving;
   const baseCurrency = items[0]?.price.currencyCode ?? "GBP";
 
   const { country } = useShippingCountry();
@@ -385,6 +393,12 @@ export function CartDrawer() {
                     )}
                     <span className="text-ink">{delivery.label}</span> to {delivery.countryName}
                   </p>
+                )}
+                {bundleSaving > 0 && (
+                  <div className="mb-2 flex items-center justify-between text-[12px]">
+                    <span className="text-cocoa">{bundleLabel(baseCurrency)} — applied at checkout</span>
+                    <span className="text-ink">−{display(bundleSaving, baseCurrency)}</span>
+                  </div>
                 )}
                 {duoSaving > 0 ? (
                   <div className="mb-2 flex items-center justify-between text-[12px]">

@@ -191,7 +191,10 @@ export function useShippingCountry() {
     if (!detectPromise) detectPromise = detectCountry();
     let cancelled = false;
     detectPromise.then((c) => {
-      if (!cancelled) setShippingCountry(c);
+      if (!cancelled) {
+        setShippingCountry(c);
+        void import("@/stores/cartStore").then((m) => m.useCartStore.getState().syncCountry(c.code));
+      }
     });
     return () => {
       cancelled = true;
@@ -204,6 +207,9 @@ export function useShippingCountry() {
   return {
     country: canonical,
     ready: country !== null,
-    setCountry: setShippingCountry,
+    setCountry: (c: ShippingCountry) => {
+      setShippingCountry(c);
+      void import("@/stores/cartStore").then((m) => m.useCartStore.getState().syncCountry(c.code));
+    },
   };
 }

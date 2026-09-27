@@ -12,6 +12,7 @@ import {
   formatCheckoutUrl,
   swapShopifyCartLine,
   setShopifyDiscountCodes,
+  updateShopifyCartCountry,
 } from "@/lib/shopify";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 
@@ -35,6 +36,7 @@ interface CartStore {
   updateQuantity: (variantId: string, quantity: number) => Promise<void>;
   removeItem: (variantId: string) => Promise<void>;
   clearCart: () => void;
+  syncCountry: (countryCode: string) => Promise<void>;
   syncCart: () => Promise<void>;
   getCheckoutUrl: () => string | null;
   /** Resolve a checkout URL that is valid right now, rebuilding the cart if needed. */
@@ -229,6 +231,14 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: () => set({ items: [], cartId: null, checkoutUrl: null, discountCodes: [] }),
+      /* The shopper changed country: move the existing Shopify cart to that
+         market so checkout opens in the right currency. */
+      syncCountry: async (countryCode: string) => {
+        const { cartId } = get();
+        if (!cartId) return;
+        const url = await updateShopifyCartCountry(cartId, countryCode);
+        if (url) set({ checkoutUrl: url });
+      },
       getCheckoutUrl: () => get().checkoutUrl,
 
       /*
