@@ -42,12 +42,19 @@ export const Route = createFileRoute("/tracking")({
       { property: "og:title", content: "Track your order — Auvella" },
     ],
   }),
+  /* The shipping-confirmation email links here with ?order=1042&email=…
+     so the form arrives filled in (27 Sept 2026). */
+  validateSearch: (search: Record<string, unknown>): { order?: string; email?: string } => ({
+    ...(typeof search.order === "string" && search.order ? { order: search.order.slice(0, 20) } : {}),
+    ...(typeof search.email === "string" && search.email ? { email: search.email.slice(0, 120) } : {}),
+  }),
   component: TrackingPage,
 });
 
 function TrackingPage() {
-  const [orderNumber, setOrderNumber] = useState("");
-  const [email, setEmail] = useState("");
+  const prefill = Route.useSearch();
+  const [orderNumber, setOrderNumber] = useState(prefill.order ? `#${prefill.order.replace(/^#/, "")}` : "");
+  const [email, setEmail] = useState(prefill.email ?? "");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<LookupResult | null>(null);
 
