@@ -63,19 +63,23 @@ export function CartDrawer() {
   /* "Buy 2, save 15%": mirrors the Simple Discounts quantity break so the bag
      shows the figure checkout will. Counted PER PRODUCT: units of one product
      across its sizes, not across the bag. */
-  const perProduct = new Map<string, { qty: number; total: number }>();
+  /* Shopify rounds the 15% per unit, then multiplies (£19.99 → £2.99 off each,
+     not £5.997 → £6.00 on the pair). Match it, or the bag and checkout
+     disagree by pennies (QA re-check, 27 Sept 2026). */
+  const perProduct = new Map<string, { qty: number; saving: number }>();
   for (const i of items) {
     const h = i.product.node.handle;
     if (!inDuoDeal(h)) continue;
-    const cur = perProduct.get(h) ?? { qty: 0, total: 0 };
+    const cur = perProduct.get(h) ?? { qty: 0, saving: 0 };
+    const unitOff = Math.round(parseFloat(i.price.amount) * (DUO_DEAL.percent / 100) * 100) / 100;
     cur.qty += i.quantity;
-    cur.total += parseFloat(i.price.amount) * i.quantity;
+    cur.saving += unitOff * i.quantity;
     perProduct.set(h, cur);
   }
   let duoSaving = 0;
   let duoOneShort = 0;
   for (const v of perProduct.values()) {
-    if (v.qty >= DUO_DEAL.minQuantity) duoSaving += v.total * (DUO_DEAL.percent / 100);
+    if (v.qty >= DUO_DEAL.minQuantity) duoSaving += v.saving;
     else duoOneShort += 1;
   }
   duoSaving = Math.round(duoSaving * 100) / 100;
