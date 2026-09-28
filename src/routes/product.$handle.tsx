@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { galleryUrls, indexedHex, indexedSwatch } from "@/lib/galleryIndex";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
-import { WhyAuvella } from "@/components/site/WhyAuvella";
+import { ProductStory } from "@/components/site/ProductStory";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -1151,8 +1151,15 @@ function ProductPage() {
         </section>
       </main>
 
-      {/* ============ WHY AUVELLA ============ */}
-      <WhyAuvella descriptionHtml={node.descriptionHtml} title={node.title} />
+      {/* ============ PRODUCT STORY (Smooche-style long form) ============ */}
+      <ProductStory
+        handle={node.handle}
+        title={node.title}
+        descriptionHtml={node.descriptionHtml}
+        colour={activeColour}
+        imageUrls={images.map((i) => i.node.url)}
+        country={shipCountry}
+      />
 
       {/* ============ RAIL ============
           One row only (Joshua, 28 Sept 2026): "Similar Styles" removed. */}

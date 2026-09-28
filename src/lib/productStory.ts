@@ -135,3 +135,76 @@ export function fabrics(descriptionHtml: string | null | undefined): Fabric[] {
     .sort((a, b) => (parseInt(b.share ?? "0") || 0) - (parseInt(a.share ?? "0") || 0))
     .slice(0, 3);
 }
+
+
+/* ----------------------------------------------------- page sections -- */
+
+/** Opening paragraphs of the description (everything before the first h3). */
+export function introText(html: string | null | undefined): string[] {
+  const head = (html ?? "").split(/<h3>/i)[0];
+  return [...head.matchAll(/<p>([\s\S]*?)<\/p>/gi)].map((m) => strip(m[1])).filter(Boolean).slice(0, 2);
+}
+
+/** The fit note (or "How to use" on accessories), as plain text. */
+export function fitNote(html: string | null | undefined): { heading: string; text: string } | null {
+  const m = (html ?? "").match(/<h3>\s*(Fit note|How to use)\s*<\/h3>\s*([\s\S]*?)(?=<h3>|$)/i);
+  if (!m) return null;
+  const text = strip(m[2]);
+  return text ? { heading: m[1], text } : null;
+}
+
+/** "Sizes S to XL" style line from the Details list, if present. */
+export function sizesLine(html: string | null | undefined): string | null {
+  return detailBullets(html ?? "").find((b) => /^sizes?\b/i.test(b)) ?? null;
+}
+
+/** The Details bullet(s) that describe the fabric. */
+export function fabricLine(html: string | null | undefined): string | null {
+  const b = detailBullets(html ?? "").filter((x) => FIBRE_WORDS.some((f) => f.re.test(x)) || /ice[- ]silk/i.test(x));
+  return b.length ? b.join("; ") : null;
+}
+
+/** Highlighted phrase for the fabric section headline, from the main fabric's tag. */
+export function fabricHeadline(f: Fabric[]): string {
+  const tag = f[0]?.tag ?? "";
+  const byTag: Record<string, string> = {
+    Stretch: "moves with you", Smooth: "stays smooth", Breathable: "breathes", Cool: "stays cool",
+    "Easy care": "keeps its shape", Warm: "keeps you warm", Grip: "stays put", Lined: "keeps its shape",
+  };
+  // Any stretch in the mix is the most tangible benefit to lead with.
+  if (f.some((x) => x.tag === "Stretch")) return "moves with you";
+  return byTag[tag] ?? "keeps its shape";
+}
+
+/** Product-specific points only (no store-wide fill), lead text before " — ". */
+export function specificPoints(descriptionHtml: string | null | undefined, title = "", max = 3): string[] {
+  const text = title + " · " + detailBullets(descriptionHtml ?? "").join(" · ");
+  const out: string[] = [];
+  for (const s of SPECIFIC) {
+    if (out.length === max) break;
+    if (s.test.test(text)) out.push(s.point.split(" — ")[0]);
+  }
+  return out;
+}
+
+export type TableRow = { label: string; others: "yes" | "not-always" };
+
+/** Rows for the Why Auvella? table. Others is ticked only where it's true of
+ *  the category (stretch fabric); everything else is "not always" - never a
+ *  cross, because other brands' versions often do have these features. */
+export function comparisonRows(descriptionHtml: string | null | undefined, title = ""): TableRow[] {
+  const rows: TableRow[] = specificPoints(descriptionHtml, title, 3).map((label) => ({ label, others: "not-always" as const }));
+  if (fabrics(descriptionHtml).some((f) => f.tag === "Stretch")) rows.push({ label: "Stretch that springs back", others: "yes" });
+  rows.push({ label: "Honest fit note on the page", others: "not-always" });
+  rows.push({ label: "Price shown is the price you pay", others: "not-always" });
+  return rows.slice(0, 5);
+}
+
+/** Construction facts from Details: not colours, sizes or the fabric line. */
+export function constructionBullets(html: string | null | undefined, max = 3): string[] {
+  return detailBullets(html ?? "")
+    .filter((b) => !/^colou?rs?\b/i.test(b) && !/^sizes?\b/i.test(b))
+    .filter((b) => !FIBRE_WORDS.some((f) => f.re.test(b)) && !/ice[- ]silk/i.test(b))
+    .map((b) => b.charAt(0).toUpperCase() + b.slice(1))
+    .slice(0, max);
+}
