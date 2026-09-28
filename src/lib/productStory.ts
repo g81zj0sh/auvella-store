@@ -25,7 +25,8 @@ const strip = (html: string) =>
 
 /** The Details bullets, where fabric and construction facts live. */
 function detailBullets(html: string): string[] {
-  const m = html.match(/<h3>\s*Details\s*<\/h3>\s*<ul>([\s\S]*?)<\/ul>/i);
+  // "Details" or, on some older pages, "The details".
+  const m = html.match(/<h3>\s*(?:The\s+)?Details\s*<\/h3>\s*<ul>([\s\S]*?)<\/ul>/i);
   if (!m) return [];
   return [...m[1].matchAll(/<li>([\s\S]*?)<\/li>/gi)].map((x) => strip(x[1]));
 }
@@ -112,7 +113,10 @@ function fibreCard(key: FibreKey, ctx: string): Omit<Fabric, "share"> {
     case "silk":
       return { name: "Mulberry silk", line: "Smooth against skin and hair.", tag: "Smooth" };
     case "silicone":
-      return { name: "Silicone", line: "Holds to skin on its own — no straps, no band.", tag: "Grip" };
+      // A grip band on a regular bra is not the same as a stick-on cup.
+      return /silicone band|silicone strip|anti-slip/i.test(ctx)
+        ? { name: "Silicone grip band", line: "An anti-slip band that keeps it in place without straps.", tag: "Grip" }
+        : { name: "Silicone", line: "Holds to skin on its own — no straps, no band.", tag: "Grip" };
   }
 }
 
@@ -192,12 +196,14 @@ export type TableRow = { label: string; others: "yes" | "not-always" };
 /** Rows for the Why Auvella? table. Others is ticked only where it's true of
  *  the category (stretch fabric); everything else is "not always" - never a
  *  cross, because other brands' versions often do have these features. */
-export function comparisonRows(descriptionHtml: string | null | undefined, title = ""): TableRow[] {
+export function comparisonRows(descriptionHtml: string | null | undefined, title = "", opts: { sized?: boolean } = {}): TableRow[] {
   const rows: TableRow[] = specificPoints(descriptionHtml, title, 3).map((label) => ({ label, others: "not-always" as const }));
   if (fabrics(descriptionHtml).some((f) => f.tag === "Stretch")) rows.push({ label: "Stretch that springs back", others: "yes" });
-  rows.push({ label: "Honest fit note on the page", others: "not-always" });
-  rows.push({ label: "Price shown is the price you pay", others: "not-always" });
-  return rows.slice(0, 5);
+  rows.push({ label: "An honest fit note on the page", others: "not-always" });
+  if (opts.sized !== false) rows.push({ label: "Sizes mapped to real measurements", others: "not-always" });
+  rows.push({ label: "The price you see is the price you pay", others: "not-always" });
+  rows.push({ label: "Tracked delivery, 30-day returns", others: "not-always" });
+  return rows.slice(0, 6);
 }
 
 /** Construction facts from Details: not colours, sizes or the fabric line. */
@@ -207,4 +213,31 @@ export function constructionBullets(html: string | null | undefined, max = 3): s
     .filter((b) => !FIBRE_WORDS.some((f) => f.re.test(b)) && !/ice[- ]silk/i.test(b))
     .map((b) => b.charAt(0).toUpperCase() + b.slice(1))
     .slice(0, max);
+}
+
+/** Headline for the second story section: fabric-led when the fabric is
+ *  known, otherwise led by the product's strongest construction point. */
+export function actionHeadline(descriptionHtml: string | null | undefined, title = ""): { lead: string; hi: string } {
+  const f = fabrics(descriptionHtml);
+  if (f.length) return { lead: "A fabric that", hi: fabricHeadline(f) };
+  const first = specificPoints(descriptionHtml, title, 1)[0] ?? "";
+  const map: Record<string, [string, string]> = {
+    "Seamless": ["Made to", "disappear"],
+    "Wire-free": ["Made to", "never dig in"],
+    "Fastens at the front": ["Made to", "fasten in seconds"],
+    "Buttons at the front": ["Made to", "fasten in seconds"],
+    "Zips at the front for easy on and off": ["Made to", "zip on easy"],
+    "Strapless": ["Made to", "go strapless"],
+    "Low, open back": ["Made to", "stay out of sight"],
+    "High waist that sits above the waistline": ["A waist that", "stays up"],
+    "Ties you set yourself, for your own fit": ["A fit that's", "yours to set"],
+    "Soft padded cups for shape": ["Shape that", "stays soft"],
+    "Dries fast": ["Made to", "dry fast"],
+    "Long sleeves for cover and warmth": ["Made for", "cooler days"],
+    "No boning": ["Made to", "move with you"],
+    "Fleece-lined": ["Made to", "keep you warm"],
+    "Straps that adjust or come off": ["Straps that", "work for you"],
+  };
+  const hit = map[first];
+  return hit ? { lead: hit[0], hi: hit[1] } : { lead: "Made for", hi: "every day" };
 }
