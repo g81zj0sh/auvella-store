@@ -26,7 +26,7 @@ const SUPPORT_EMAIL = "support@auvellawear.com";
 
 const STAGES: { n: 1 | 2 | 3 | 4 | 5; title: string; detail: string }[] = [
   { n: 1, title: "Order confirmed", detail: "Payment taken and your order logged." },
-  { n: 2, title: "Being prepared", detail: "Picked and packed by our supply partner." },
+  { n: 2, title: "Being prepared", detail: "Picked and packed for dispatch." },
   { n: 3, title: "Shipment booked", detail: "Tracking number issued, waiting on the courier to collect." },
   { n: 4, title: "In transit", detail: "Scanned by the courier and moving towards you." },
   { n: 5, title: "Delivered", detail: "At your door." },
