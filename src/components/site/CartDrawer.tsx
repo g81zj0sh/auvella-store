@@ -11,8 +11,8 @@ import { useQuickAdd } from "@/stores/quickAddStore";
 import { useDisplayPrice, useT } from "@/lib/preferences";
 import { freeShippingThreshold, useShippingCountry } from "@/lib/shipping";
 import { cartLineImage } from "@/lib/cartImage";
-import { BUNDLE_DEAL, bundleLabel, inBundleDeal } from "@/lib/bundleDeal";
-import { DUO_DEAL, inDuoDeal } from "@/lib/duoDeal";
+import { BUNDLE_DEAL, BUNDLE_SHOPIFY_TITLE, bundleLabel, inBundleDeal } from "@/lib/bundleDeal";
+import { DUO_DEAL, inDuoDeal, duoUnitOff } from "@/lib/duoDeal";
 import { estimateDelivery, DISPATCH_CUTOFF_LONDON } from "@/lib/deliveryEstimate";
 import {
   fetchProductRecommendations,
@@ -72,7 +72,7 @@ export function CartDrawer() {
     const h = i.product.node.handle;
     if (!inDuoDeal(h)) continue;
     const cur = perProduct.get(h) ?? { qty: 0, saving: 0 };
-    const unitOff = Math.round(parseFloat(i.price.amount) * (DUO_DEAL.percent / 100) * 100) / 100;
+    const unitOff = duoUnitOff(parseFloat(i.price.amount));
     cur.qty += i.quantity;
     cur.saving += unitOff * i.quantity;
     perProduct.set(h, cur);
@@ -97,7 +97,9 @@ export function CartDrawer() {
   const totals = useCartStore((s) => s.totals);
   const shopifyTotals = totals && totals.currency === baseCurrency && items.length > 0 ? totals : null;
   const savingLines: Array<{ label: string; amount: number }> = shopifyTotals
-    ? shopifyTotals.discounts
+    ? shopifyTotals.discounts.map((d) =>
+        d.label.toLowerCase() === BUNDLE_SHOPIFY_TITLE.toLowerCase() ? { ...d, label: bundleLabel(baseCurrency) } : d,
+      )
     : [
         ...(bundleSaving > 0 ? [{ label: bundleLabel(baseCurrency), amount: bundleSaving }] : []),
         ...(duoSaving > 0 ? [{ label: `Buy 2, save ${DUO_DEAL.percent}%`, amount: duoSaving }] : []),

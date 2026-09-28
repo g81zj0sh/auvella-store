@@ -983,7 +983,7 @@ function ProductPage() {
             */}
             {inDuoDeal(node.handle) && variant && (() => {
               const duoSecondUnit = (single: number) => (duoSecondVariant ? parseFloat(duoSecondVariant.price.amount) : single);
-              const duoTotal = (single: number) => Math.round((single + duoSecondUnit(single)) * (1 - DUO_DEAL.percent / 100) * 100) / 100;
+              const duoTotal = (single: number) => duoPrice(single, duoSecondUnit(single));
               return (
               <div className="mt-7">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Buy 2, save {DUO_DEAL.percent}%</p>
@@ -1070,7 +1070,7 @@ function ProductPage() {
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : hasSize ? (
-                <>{inDuoDeal(node.handle) && pack === 2 ? <>Add 2 to Bag — {cur(Math.round((unitPrice + (duoSecondVariant ? parseFloat(duoSecondVariant.price.amount) : unitPrice)) * (1 - DUO_DEAL.percent / 100) * 100) / 100)}</> : <>Add to Bag — {cur(unitPrice)}</>}</>
+                <>{inDuoDeal(node.handle) && pack === 2 ? <>Add 2 to Bag — {cur(duoPrice(unitPrice, duoSecondVariant ? parseFloat(duoSecondVariant.price.amount) : unitPrice))}</> : <>Add to Bag — {cur(unitPrice)}</>}</>
               ) : (
                 "Select a Size"
               )}

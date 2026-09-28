@@ -1,4 +1,4 @@
-import { convertPrice, formatPrice, usePreferences } from "@/lib/preferences";
+import { formatPrice, usePreferences } from "@/lib/preferences";
 
 /*
  * The live "3 for £30 Underwear" automatic discount, mirrored for the storefront.
@@ -34,11 +34,17 @@ export function inBundleDeal(handle: string | undefined | null): boolean {
  * rounding step of this. Trailing .00 is dropped so the badge stays short.
  */
 export function bundleLabel(currency: string): string {
-  const raw = convertPrice(BUNDLE_DEAL.bundleTotalGBP, "GBP", currency);
-  const step = raw >= 1000 ? 500 : raw >= 100 ? 5 : 1;
-  const rounded = Math.round(raw / step) * step;
-  return `${BUNDLE_DEAL.minQuantity} for ${formatPrice(rounded, currency).replace(/\.00$/, "")}`;
+  /* Only the UK price is a round "3 for GBP30". Other markets are charged
+     Shopify's own market prices minus a converted saving (US: 3 x $18 - $12.12
+     = $41.88), so a converted "3 for $38" would promise the wrong amount
+     (QA 28 Sept 2026). Outside GBP the deal is named, never priced; the
+     bag shows the exact saving from Shopify. */
+  if (currency !== "GBP") return "3-pack underwear deal";
+  return `${BUNDLE_DEAL.minQuantity} for ${formatPrice(BUNDLE_DEAL.bundleTotalGBP, "GBP").replace(/\.00$/, "")}`;
 }
+
+/** The Shopify automatic discount's title, as it appears in cart allocations. */
+export const BUNDLE_SHOPIFY_TITLE = "Underwear 3-pack deal";
 
 /** Hook form — follows the shopper's active display currency. */
 export function useBundleLabel(): string {

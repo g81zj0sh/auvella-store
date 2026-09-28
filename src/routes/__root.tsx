@@ -169,7 +169,10 @@ function RootComponent() {
       const code = usePreferences.getState().shippingCountry?.code ?? "GB";
       if (code === lastCountry) return;
       lastCountry = code;
-      void queryClient.invalidateQueries();
+      // Zustand notifies subscribers before persist writes to localStorage,
+      // and the request layer reads the country from there - so refetch on
+      // the next tick, or it asks Shopify for the OLD market (QA 28 Sept).
+      setTimeout(() => void queryClient.invalidateQueries(), 0);
     };
     syncMarket();
     const unsubscribePrefs = usePreferences.subscribe(syncMarket);

@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { lookupOrder, type LookupResult, type TrackedOrder } from "@/lib/orderTracking.functions";
-import { COUNTRIES, DEFAULT_DAYS, transitLabel, PROCESSING_LABEL } from "@/lib/shipping";
+import { COUNTRIES, DEFAULT_DAYS, transitLabel, PROCESSING_LABEL, useShippingCountry } from "@/lib/shipping";
 
 /* ------------------------------------------------------------------ */
 /* Copy — every line here is meant to be true.                         */
@@ -59,6 +59,7 @@ export const Route = createFileRoute("/tracking")({
 });
 
 function TrackingPage() {
+  const { country: shipTo } = useShippingCountry();
   const prefill = Route.useSearch();
   const orderParam = prefill.order != null ? String(prefill.order) : "";
   const emailParam = prefill.email != null ? String(prefill.email) : "";
@@ -171,8 +172,8 @@ function TrackingPage() {
         <aside className="mt-14 border border-[#0a0a0a] px-6 py-7 md:px-8">
           <p className="text-[10px] uppercase tracking-[0.28em] text-[#8a8a8a]">The honest version</p>
           <p className="mt-3 text-[15px] leading-[1.75] text-[#0a0a0a]">
-            Orders are dispatched within {PROCESSING_LABEL} business days, then UK shipping takes a steady{" "}
-            <strong className="font-medium">{UK_SHIPPING}</strong>. Tracking appears on this page as soon as the
+            Orders are dispatched within {PROCESSING_LABEL} business days, then shipping to {shipTo.name} takes a
+            steady <strong className="font-medium">{transitLabel(shipTo).replace(" – ", " to ")} business days</strong>. Tracking appears on this page as soon as the
             courier issues it &mdash; usually a day or two after dispatch.
           </p>
         </aside>

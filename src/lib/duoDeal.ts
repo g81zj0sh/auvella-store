@@ -57,6 +57,14 @@ export function inDuoDeal(handle: string | undefined | null): boolean {
 }
 
 /** Price of two once the discount lands, from one unit price. */
-export function duoPrice(unit: number): number {
-  return Math.round(unit * 2 * (1 - DUO_DEAL.percent / 100) * 100) / 100;
+/** Per-item saving exactly as Shopify computes it: 15%, rounded DOWN to the
+ *  penny (GBP19.99 -> GBP2.99 off, not GBP3.00). QA 28 Sept 2026: the page said
+ *  GBP33.98 for two while checkout charged GBP34.00. */
+export function duoUnitOff(unit: number): number {
+  return Math.floor(unit * (DUO_DEAL.percent / 100) * 100 + 1e-6) / 100;
+}
+
+/** Price of two once the discount lands, from one or two unit prices. */
+export function duoPrice(unit: number, second: number = unit): number {
+  return Math.round((unit - duoUnitOff(unit) + second - duoUnitOff(second)) * 100) / 100;
 }
