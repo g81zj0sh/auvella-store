@@ -8,6 +8,7 @@ import { STORY_IMAGES } from "@/lib/storyImages";
 import { COUNTRIES, PROCESSING_LABEL, transitLabel, type Country } from "@/lib/shipping";
 import { inDuoDeal, DUO_DEAL } from "@/lib/duoDeal";
 import { inBundleDeal } from "@/lib/bundleDeal";
+import type { Review } from "@/components/site/Reviews";
 
 /*
  * Long-form product story after smooche.com product pages, at their scale
@@ -61,9 +62,10 @@ type Props = {
   imageUrls: string[];
   country: Country;
   sized?: boolean;
+  reviews?: Review[];
 };
 
-export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls, country, sized = true }: Props) {
+export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls, country, sized = true, reviews = [] }: Props) {
   const html = descriptionHtml ?? "";
   const entry = colour ? GALLERY_INDEX[handle]?.[colour] : undefined;
   const model = entry?.m?.length ? entry.m : imageUrls.slice(0, 3);
@@ -89,6 +91,40 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
     ? fab.map((f) => `${f.share ? f.share + " " : ""}${f.name}: ${f.line.charAt(0).toLowerCase()}${f.line.slice(1)}`).join(" ")
     : fit?.text ?? "";
 
+  // Real results, counted from VERIFIED-BUYER reviews only (Auvella's own
+  // customers via Judge.me's post-delivery requests). The imported reviews
+  // came from other stores' customers, so they don't count towards
+  // "results". Hidden until 5+ verified reviews exist.
+  const results: Array<{ value: string; label: string; basis: string }> = [];
+  const verified = reviews.filter((r) => r.verified);
+  const n = verified.length;
+  if (n >= 5) {
+    reviews = verified;
+    const pct = (k: number, of: number) => `${Math.round((k / of) * 100)}%`;
+    const high = reviews.filter((r) => r.rating >= 4).length;
+    results.push({ value: pct(high, n), label: "Rated it 4 or 5 stars", basis: `Based on ${n} verified reviews` });
+    const fits = reviews.filter((r) => r.fit);
+    if (fits.length >= 5) {
+      const tts = fits.filter((r) => r.fit === "True to size").length;
+      results.push({ value: pct(tts, fits.length), label: "Said it fits true to size", basis: `Based on ${fits.length} verified reviews that rated the fit` });
+    }
+    const mentions = (re: RegExp) => reviews.filter((r) => re.test(`${r.title ?? ""} ${r.body}`)).length;
+    const topics: Array<[RegExp, string]> = [
+      [/comfort|comfy/i, "Mentioned comfort"],
+      [/quality|well made|well-made/i, "Mentioned the quality"],
+      [/stay(s|ed)? (up|put|in place)|doesn'?t roll|didn'?t roll|no roll/i, "Said it stays in place"],
+    ];
+    for (const [re, label] of topics) {
+      if (results.length >= 3) break;
+      const k = mentions(re);
+      if (k >= 3) results.push({ value: pct(k, n), label, basis: `Of ${n} verified reviews, in their own words` });
+    }
+    if (results.length < 3) {
+      const avg = reviews.reduce((s, r) => s + r.rating, 0) / n;
+      results.push({ value: avg.toFixed(1), label: "Average rating out of 5", basis: `Based on ${n} verified reviews` });
+    }
+  }
+
   const faqs: Array<{ q: string; a: string }> = [
     ...(fit ? [{ q: fit.heading === "How to use" ? "How do I use it?" : "How does it fit?", a: fit.text }] : []),
     ...(fabricText ? [{ q: "What's it made of?", a: fabricText.charAt(0).toUpperCase() + fabricText.slice(1) + "." }] : []),
@@ -106,31 +142,6 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
 
   return (
     <div className="bg-white">
-      {/* ── 1. The product ─────────────────────────────────────────────── */}
-      <section className="mx-auto grid max-w-[1320px] items-center gap-10 px-5 py-16 md:grid-cols-2 md:gap-20 md:px-10 md:py-28">
-        <div className="relative aspect-[4/5] overflow-hidden bg-[#f4f4f2]">
-          {shotA && <img src={img(shotA, 1100)} alt={`${title} worn`} loading="lazy" className="h-full w-full object-cover" />}
-          {colour && (
-            <span className="absolute bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap font-serif text-[30px] font-normal tracking-wide text-[#0a0a0a] [text-shadow:0_1px_14px_rgba(255,255,255,0.85)]">
-              {colour}
-            </span>
-          )}
-        </div>
-        <div>
-          <h2 className={H2}>
-            The <Highlight>{title}</Highlight>
-          </h2>
-          {intro.map((p) => (
-            <p key={p} className={`mt-6 max-w-[560px] ${BODY}`}>{p}</p>
-          ))}
-          <div className="mt-10 grid max-w-[560px] gap-5 sm:grid-cols-2">
-            {featureA.map((f) => (
-              <span key={f} className="flex items-center gap-3 text-[16px] font-medium text-[#0a0a0a]"><Tick />{f}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── 2. How it acts: story left, image right ─────────────────────── */}
       <section className="mx-auto grid max-w-[1320px] items-center gap-10 px-5 pb-16 md:grid-cols-2 md:gap-20 md:px-10 md:pb-28">
         <div className="order-2 md:order-1">
@@ -171,25 +182,25 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
         </div>
       </section>
 
-      {/* ── 3. Find your fit ───────────────────────────────────────────── */}
-      <section className="mx-auto max-w-[1320px] px-5 pb-20 md:px-10 md:pb-28">
-        <div className="grid items-center gap-8 bg-[#f5f4f2] px-7 py-10 md:grid-cols-[220px_1fr_1fr_1fr] md:px-12 md:py-12">
-          <h2 className="font-serif text-[36px] font-normal leading-[1.1] text-[#0a0a0a] md:text-[44px]">Find your<br className="hidden md:block" /> fit</h2>
-          {[
-            { t: "1. Measure", d: "Bust, waist and hips — a soft tape and two minutes." },
-            { t: "2. Check the guide", d: "Tap Size Guide: every size mapped to real measurements." },
-            { t: "3. Try it at home", d: "Not right? Returns are open for 30 days from delivery." },
-          ].map((s, i) => (
-            <div key={s.t} className="flex items-center gap-5">
-              {thumbs[i] && <img src={img(thumbs[i], 240)} alt="" loading="lazy" className="h-[88px] w-[88px] shrink-0 rounded-full object-cover object-top" />}
-              <div>
-                <p className="text-[19px] font-medium text-[#0a0a0a]">{s.t}</p>
-                <p className="mt-1 text-[14px] leading-snug text-[#666666]">{s.d}</p>
+      {/* ── 3. Real results: counted from this product's reviews ─────────
+          Smooche's percentages come from a customer panel; Auvella has
+          none, and invented or cherry-picked figures would be illegal
+          (DMCC Act). Every number is counted from verified-buyer reviews,
+          with the count shown; the section appears with 5+ of them. */}
+      {results.length > 0 && (
+        <section className="mx-auto max-w-[1320px] px-5 pb-20 md:px-10 md:pb-28" aria-labelledby="real-results">
+          <h2 id="real-results" className="text-center font-serif text-[44px] font-normal text-[#0a0a0a] md:text-[60px]">Real results</h2>
+          <div className={`mt-12 grid gap-4 md:mt-16 ${results.length >= 3 ? "md:grid-cols-3" : results.length === 2 ? "md:grid-cols-2" : "mx-auto max-w-[440px]"}`}>
+            {results.map((r) => (
+              <div key={r.label} className="bg-[#f5f4f2] px-8 py-14 text-center md:py-16">
+                <p className="font-serif text-[88px] font-normal leading-none text-[#0a0a0a] md:text-[112px]">{r.value}</p>
+                <p className="mx-auto mt-6 max-w-[300px] text-[18px] font-medium leading-snug text-[#0a0a0a]">{r.label}</p>
+                <p className="mt-3 text-[13px] text-[#888888]">{r.basis}</p>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── 4. Why Auvella? ────────────────────────────────────────────── */}
       <section className="bg-[#f5f4f2]" aria-labelledby="why-auvella">

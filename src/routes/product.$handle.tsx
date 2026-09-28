@@ -1160,6 +1160,7 @@ function ProductPage() {
         imageUrls={images.map((i) => i.node.url)}
         country={shipCountry}
         sized={!/accessor|mask|adhesive/i.test(`${node.productType ?? ""} ${node.title}`)}
+        reviews={judgeme?.reviews ?? []}
       />
 
       {/* ============ RAIL ============
