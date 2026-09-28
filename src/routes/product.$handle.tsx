@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { galleryUrls, indexedHex, indexedSwatch } from "@/lib/galleryIndex";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
+import { WhyAuvella } from "@/components/site/WhyAuvella";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -1150,13 +1151,11 @@ function ProductPage() {
         </section>
       </main>
 
-      {/* ============ RAILS ============ */}
-      <Rail
-        title="Similar Styles"
-        queryKey={["rail-similar", handle]}
-        queryFn={() => fetchProducts(13, crumb.query || undefined)}
-        excludeHandle={handle}
-      />
+      {/* ============ WHY AUVELLA ============ */}
+      <WhyAuvella descriptionHtml={node.descriptionHtml} title={node.title} />
+
+      {/* ============ RAIL ============
+          One row only (Joshua, 28 Sept 2026): "Similar Styles" removed. */}
       <Rail
         title="We Think You'd Like"
         products={recommendations.length ? recommendations : undefined}
