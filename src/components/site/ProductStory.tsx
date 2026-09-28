@@ -143,7 +143,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
   return (
     <div className="bg-white">
       {/* ── 2. How it acts: story left, image right ─────────────────────── */}
-      <section className="mx-auto grid max-w-[1320px] items-center gap-10 px-5 pb-16 md:grid-cols-2 md:gap-20 md:px-10 md:pb-28">
+      <section className="mx-auto grid max-w-[1320px] items-center gap-10 px-5 pb-16 pt-24 md:grid-cols-2 md:gap-20 md:px-10 md:pb-28 md:pt-40">
         <div className="order-2 md:order-1">
           <h2 className={H2}>
             {head.lead} <Highlight>{head.hi}</Highlight>
@@ -155,7 +155,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
             ))}
           </ul>
         </div>
-        <div className="relative order-1 aspect-[4/5] overflow-hidden bg-[#f4f4f2] md:order-2">
+        <div className="relative order-1 aspect-[4/5] overflow-hidden rounded-[20px] bg-[#f4f4f2] md:order-2">
           {shotB && <img src={img(shotB, 1100)} alt={story?.alt ?? `${title} detail`} loading="lazy" className="h-full w-full object-cover" />}
           {story?.callouts?.length ? (
             <>
