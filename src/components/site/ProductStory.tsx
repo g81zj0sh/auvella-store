@@ -220,26 +220,26 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
         </section>
       )}
 
-      {/* ── 4. Why Auvella? ────────────────────────────────────────────── */}
+      {/* ── 4. Why Auvella? ────────────────────────────────────────────
+          Wide on desktop (fills the screen like smooche.com); on phones the
+          same three columns shrink to fit the screen - no sideways scroll. */}
       <section className="bg-[#f5f4f2]" aria-labelledby="why-auvella">
-        <div className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-28">
-          <h2 id="why-auvella" className="text-center font-serif text-[44px] font-normal text-[#0a0a0a] md:text-[60px]">Why Auvella?</h2>
-          <div className="mt-12 overflow-x-auto md:mt-16">
-            {/* Equal Auvella / Others columns (Joshua, 29 Sept 2026: Others as
-                big as Auvella, like smooche.com); rounded Auvella header. */}
-            <table className="w-full min-w-[560px] table-fixed border-collapse">
+        <div className="mx-auto max-w-[1480px] px-4 py-16 md:px-10 md:py-28">
+          <h2 id="why-auvella" className="text-center font-serif text-[40px] font-normal text-[#0a0a0a] md:text-[64px]">Why Auvella?</h2>
+          <div className="mt-10 md:mt-16">
+            <table className="w-full table-fixed border-collapse">
               <colgroup>
-                <col className="w-[44%]" />
-                <col className="w-[28%]" />
-                <col className="w-[28%]" />
+                <col className="w-[46%] md:w-[44%]" />
+                <col className="w-[27%] md:w-[28%]" />
+                <col className="w-[27%] md:w-[28%]" />
               </colgroup>
               <thead>
                 <tr>
                   <th className="border-b-2 border-[#0a0a0a]" />
-                  <th className="rounded-t-[18px] border-b-2 border-[#0a0a0a] bg-[#0a0a0a] py-6 font-serif text-[22px] font-normal uppercase tracking-[0.2em] text-white md:text-[26px]">
+                  <th className="rounded-t-[14px] border-b-2 border-[#0a0a0a] bg-[#0a0a0a] py-4 font-serif text-[15px] font-normal uppercase tracking-[0.12em] text-white md:rounded-t-[20px] md:py-7 md:text-[30px] md:tracking-[0.2em]">
                     Auvella
                   </th>
-                  <th className="border-b-2 border-[#0a0a0a] py-6 font-serif text-[22px] font-normal uppercase tracking-[0.2em] text-[#0a0a0a] md:text-[26px]">
+                  <th className="border-b-2 border-[#0a0a0a] py-4 font-serif text-[15px] font-normal uppercase tracking-[0.12em] text-[#0a0a0a] md:py-7 md:text-[30px] md:tracking-[0.2em]">
                     Others
                   </th>
                 </tr>
@@ -249,12 +249,12 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
                   const last = i === rows.length - 1;
                   return (
                     <tr key={r.label} className="border-b border-[#e0ddd8]">
-                      <td className="py-6 pl-4 text-[16px] font-medium text-[#0a0a0a] md:text-[18px]">{r.label}</td>
-                      <td className={`bg-[#ebe8e3] py-6 ${last ? "rounded-b-[18px]" : ""}`}>
-                        <span className="flex justify-center"><Tick size={26} /></span>
+                      <td className="py-4 pl-2 pr-2 text-[13px] font-medium leading-snug text-[#0a0a0a] md:py-7 md:pl-5 md:text-[20px]">{r.label}</td>
+                      <td className={`bg-[#ebe8e3] py-4 md:py-7 ${last ? "rounded-b-[14px] md:rounded-b-[20px]" : ""}`}>
+                        <span className="flex justify-center"><span className="scale-[0.85] md:scale-110"><Tick size={26} /></span></span>
                       </td>
-                      <td className="py-6">
-                        <span className="flex justify-center">{r.others === "yes" ? <Tick muted size={26} /> : <NotAlways />}</span>
+                      <td className="py-4 md:py-7">
+                        <span className="flex justify-center"><span className="scale-[0.85] md:scale-110">{r.others === "yes" ? <Tick muted size={26} /> : <NotAlways />}</span></span>
                       </td>
                     </tr>
                   );
