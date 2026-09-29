@@ -294,16 +294,17 @@ export function actionHeadline(descriptionHtml: string | null | undefined, title
 export function beforeYouAsk(html: string | null | undefined, title = "", productType = ""): Array<{ q: string; a: string }> {
   const all = title + " · " + detailBullets(html ?? "").join(" · ");
   const has = (re: RegExp) => re.test(all);
-  // Category from the product type first: sleepwear, loungewear, swim,
-  // underwear, dresses and accessories never get these questions, whatever
-  // words their titles contain ("cami", "waist", "bra").
-  if (/sleep|lounge|swim|underwear|dress|accessor/i.test(productType)) return [];
-  const kind = /^bra$/i.test(productType) || /\bbra\b|bralette/i.test(title)
-    ? "bra"
-    : /^shapewear$/i.test(productType) || /bodysuit|shaping|shaper|compression/i.test(title)
-      ? "shape"
-      : null;
-  if (!kind) return [];
+  // Category from the product type first, so a sleepwear cami or a
+  // bikini bottom never gets shapewear questions.
+  const other = /sleep|lounge|swim|underwear|dress|accessor/i.test(productType);
+  const kind = other
+    ? null
+    : /^bra$/i.test(productType) || /\bbra\b|bralette/i.test(title)
+      ? "bra"
+      : /^shapewear$/i.test(productType) || /bodysuit|shaping|shaper|compression/i.test(title)
+        ? "shape"
+        : null;
+  if (!kind) return otherQuestions(html, title, productType);
 
   const seamless = has(/seamless/i);
   const lace = has(/\blace\b/i);
@@ -360,4 +361,100 @@ export function beforeYouAsk(html: string | null | undefined, title = "", produc
     { q: adhesive || strapless ? "Will it stay up?" : "Will it stay in place?", a: stay },
     { q: "Will it show?", a: show },
   ];
+}
+
+/*
+ * Every other category gets its own three questions. Each answer comes from
+ * the product's own Details, fit note or fabric; a question whose answer
+ * isn't in the product's details is skipped, never guessed.
+ */
+function otherQuestions(html: string | null | undefined, title: string, productType: string): Array<{ q: string; a: string }> {
+  const bullets = detailBullets(html ?? "");
+  const all = title + " · " + bullets.join(" · ");
+  const has = (re: RegExp) => re.test(all);
+  const fit = fitNote(html);
+  const fab = fabrics(html);
+  const setLine = bullets.find((b) => /sold as a set|two pieces|top and (trousers|briefs|shorts|bottoms)/i.test(b));
+  // Fit answers: the first two sentences of the fit note, enough for a card.
+  const sentences = (t: string) => t.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const fitShort = (drop?: RegExp) =>
+    fit ? sentences(fit.text).filter((x) => !drop || !drop.test(x)).slice(0, 2).join(" ") : "";
+  const fitQ = fit && fit.heading !== "How to use" ? { q: "How does it fit?", a: fitShort() } : null;
+  const fabricQ = fab.length
+    ? { q: "What's the fabric like?", a: fab.map((f) => `${f.share ? f.share + " " : ""}${f.name}: ${f.line.charAt(0).toLowerCase()}${f.line.slice(1)}`).join(" ") }
+    : null;
+  const pieces = setLine?.match(/:\s*(.+)$/)?.[1];
+  const setQ = setLine
+    ? { q: "Is it a set?", a: pieces ? `Yes — ${pieces.replace(/\.$/, "")}.` : "Yes — the pieces come together as a set." }
+    : null;
+  const pick = (...qs: Array<{ q: string; a: string } | null | false>) =>
+    qs.filter((x): x is { q: string; a: string } => !!x).slice(0, 3);
+
+  if (/swim/i.test(productType) || /bikini|swimsuit|swimwear/i.test(title)) {
+    return pick(
+      fitQ,
+      has(/lining|lined/i) && { q: "Is it see-through when wet?", a: "It's lined, so it stays opaque when wet." },
+      setQ,
+      { q: "How do I look after it?", a: "Rinse it in cool, fresh water after the pool or the sea and dry it flat in the shade — chlorine, salt and sun are what wear swimwear out." },
+    );
+  }
+  if (/dress/i.test(productType) || /dress/i.test(title)) {
+    // The fit note's own words about underwear win; the neckline decides
+    // otherwise, and a sleeveless cut never gets "your everyday bra works".
+    const noteBra = fit ? sentences(fit.text).filter((x) => /\bbra\b|bralette|underwear/i.test(x)).join(" ") : "";
+    const under = noteBra
+      ? noteBra
+      : has(/strapless|off[- ]the[- ]shoulder|off-shoulder/i)
+        ? "A strapless bra or stick-on cups — the neckline leaves your shoulders bare."
+        : has(/open back|backless|low back/i)
+          ? "A low-back or stick-on bra, so nothing shows through the open back."
+          : has(/sleeveless/i)
+            ? "The sleeveless cut can show a regular bra at the shoulder — a bralette or a strapless bra sits cleaner."
+            : "Your everyday bra works with this neckline.";
+    const len = (all.match(/\b(maxi|midi|mini)\b/i) || [])[1];
+    const heightNote = fit ? sentences(fit.text).find((x) => /height|tall|knee|ankle/i.test(x)) : undefined;
+    const fitDress = fit ? sentences(fit.text).filter((x) => !/\bbra\b|bralette|underwear|height|tall|knee|ankle/i.test(x)).slice(0, 2).join(" ") : "";
+    return pick(
+      fitDress ? { q: "How does it fit?", a: fitDress } : null,
+      { q: "What do I wear underneath?", a: under },
+      len ? { q: "How long is it?", a: heightNote ?? `${len.charAt(0).toUpperCase() + len.slice(1).toLowerCase()} length.` } : null,
+      fabricQ,
+    );
+  }
+  if (/underwear/i.test(productType) || /brief|thong|panties/i.test(title)) {
+    const show = has(/seamless/i)
+      ? "It's cut seamless, so there's no line under trousers or leggings."
+      : has(/\blace\b/i)
+        ? "The lace edges lie flat; under very thin, tight fabric the texture can show."
+        : null;
+    const breathe = has(/cotton gusset/i)
+      ? "Yes — the gusset is cotton, and the fabric is light and breathable."
+      : fab.some((f) => /^cotton$/i.test(f.name))
+        ? "Yes — it's cotton: soft and breathable."
+        : has(/breathable|quick-drying/i)
+          ? "Yes — the fabric is light, breathable and quick-drying."
+          : null;
+    const leak = has(/leak/i);
+    return pick(
+      leak && {
+        q: "How much can it hold?",
+        a: "It has a three-layer leak-resistant gusset. We don't publish an absorbency rating, so on heavier days wear it as backup to a tampon or cup.",
+      },
+      show ? { q: "Will it show under clothes?", a: show } : null,
+      fitQ && { q: fitQ.q, a: leak ? fitShort(/absorb/i) : fitQ.a },
+      breathe ? { q: "Is it breathable?", a: breathe } : null,
+    );
+  }
+  if (/accessor/i.test(productType) || /mask|adhesive/i.test(title)) {
+    const howTo = fit && fit.heading === "How to use" ? { q: "How do I use it?", a: fitShort() } : null;
+    return pick(
+      has(/light-blocking/i) && { q: "Will it block the light?", a: "Yes — it's light-blocking, with an adjustable elastic strap so it sits snug without pressing." },
+      has(/mulberry silk/i) && { q: "Is it real silk?", a: "Yes — double-sided mulberry silk." },
+      howTo,
+      has(/skin-friendly/i) && { q: "Is it gentle on skin?", a: "It's a skin-friendly formula. If your skin is sensitive, test a small patch first." },
+      has(/range of fabrics/i) && { q: "Will it work on my fabric?", a: "It's made for a range of fabrics. On silk or delicates, test it on an inside seam first." },
+    );
+  }
+  // Loungewear, sleepwear, robes, sets.
+  return pick(fitQ, fabricQ, setQ);
 }

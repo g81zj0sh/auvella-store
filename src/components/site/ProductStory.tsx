@@ -189,9 +189,9 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
       {worries.length > 0 && (
         <section className="mx-auto max-w-[1320px] px-5 pb-20 md:px-10 md:pb-28" aria-labelledby="before-you-ask">
           <h2 id="before-you-ask" className="text-center font-serif text-[44px] font-normal text-[#0a0a0a] md:text-[60px]">Before you ask</h2>
-          <div className="mt-12 grid gap-4 md:mt-16 md:grid-cols-3">
+          <div className={`mt-12 grid gap-4 md:mt-16 ${worries.length >= 3 ? "md:grid-cols-3" : "mx-auto max-w-[880px] md:grid-cols-2"}`}>
             {worries.map((w) => (
-              <div key={w.q} className="rounded-[20px] bg-[#f5f4f2] px-8 py-12 md:px-10 md:py-14">
+              <div key={w.q} className="rounded-[20px] bg-[#f5f4f2] px-8 py-12 transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:px-10 md:py-14">
                 <p className="font-serif text-[28px] font-normal leading-tight text-[#0a0a0a] md:text-[32px]">{w.q}</p>
                 <p className="mt-5 text-[16px] leading-[1.8] text-[#555555]">{w.a}</p>
               </div>
@@ -210,7 +210,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
           <h2 id="real-results" className="text-center font-serif text-[44px] font-normal text-[#0a0a0a] md:text-[60px]">Real results</h2>
           <div className={`mt-12 grid gap-4 md:mt-16 ${results.length >= 3 ? "md:grid-cols-3" : results.length === 2 ? "md:grid-cols-2" : "mx-auto max-w-[440px]"}`}>
             {results.map((r) => (
-              <div key={r.label} className="bg-[#f5f4f2] px-8 py-14 text-center md:py-16">
+              <div key={r.label} className="rounded-[20px] bg-[#f5f4f2] px-8 py-14 text-center transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:py-16">
                 <p className="font-serif text-[88px] font-normal leading-none text-[#0a0a0a] md:text-[112px]">{r.value}</p>
                 <p className="mx-auto mt-6 max-w-[300px] text-[18px] font-medium leading-snug text-[#0a0a0a]">{r.label}</p>
                 <p className="mt-3 text-[13px] text-[#888888]">{r.basis}</p>
