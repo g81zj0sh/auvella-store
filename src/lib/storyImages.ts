@@ -39,4 +39,38 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/bikini-beach-holiday.webp",
     alt: "Solid Colour Bikini Set in hot pink, at the edge of the sea on holiday",
   },
+  // Batch 1 (30 Sept 2026): mixed posed moments and mirror shots at real
+  // places, neutral and slight-smile expressions; garments applied by Seedream.
+  "seamless-shaping-long-sleeve-bodysuit": {
+    src: "/story/long-sleeve-bodysuit-brunch.webp",
+    alt: "Seamless Long Sleeve Shaping Bodysuit in black worn with jeans at a café terrace",
+  },
+  "satin-cami-pajama-set": {
+    src: "/story/satin-cami-pyjamas-kitchen.webp",
+    alt: "Satin Cami Pyjama Set in deep red on a slow morning at home",
+  },
+  "fleece-lined-drawstring-lounge-set": {
+    src: "/story/fleece-lounge-set-autumn-walk.webp",
+    alt: "Fleece Drawstring Lounge Set in cream on an autumn walk with a coffee",
+  },
+  "v-neck-bodycon-mini-dress": {
+    src: "/story/v-neck-mini-restaurant-mirror.webp",
+    alt: "V-Neck Bodycon Mini Dress in powder blue, mirror photo in a restaurant",
+  },
+  "long-sleeve-zip-one-piece-swimsuit": {
+    src: "/story/zip-swimsuit-boat.webp",
+    alt: "Long Sleeve Zip-Front Swimsuit in palm print on a boat on holiday",
+  },
+  "satin-tie-waist-robe": {
+    src: "/story/satin-robe-hotel-balcony.webp",
+    alt: "Satin Tie-Waist Robe in pink at a hotel balcony door in the morning",
+  },
+  "seamless-sculpt-sports-bra": {
+    src: "/story/sports-bra-pilates.webp",
+    alt: "Seamless Sculpt Sports Bra in cherry red after a pilates class",
+  },
+  "ribbed-short-sleeve-mini-dress": {
+    src: "/story/ribbed-mini-hotel-lift.webp",
+    alt: "Ribbed Short Sleeve Mini Dress in white, mirror photo in a hotel lift",
+  },
 };
