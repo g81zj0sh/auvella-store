@@ -1170,7 +1170,7 @@ function ProductPage() {
         title="We Think You'd Like"
         products={recommendations.length ? recommendations : undefined}
         queryKey={["rail-picks", handle]}
-        queryFn={() => fetchProducts(13, "bra OR bodysuit OR set OR short")}
+        queryFn={() => fetchProducts(30, "bra OR bodysuit OR short OR brief OR thong OR set OR dress OR swim OR bikini OR robe")}
         excludeHandle={handle}
       />
 
@@ -1289,7 +1289,7 @@ function RailCard({ p }: { p: ShopifyProduct }) {
   const garmentUrl = garmentFile ? `https://cdn.shopify.com/s/files/1/0988/0738/2311/files/${garmentFile}` : undefined;
   const garmentBg = tableBackdrop(garmentUrl);
   return (
-    <div className="flex min-w-[70vw] flex-col sm:min-w-[42vw] lg:min-w-0 lg:flex-1">
+    <div className="flex min-w-[70vw] flex-col sm:min-w-[42vw] lg:w-[calc((100%-80px)/6)] lg:min-w-0 lg:flex-none">
       <Link
         to="/product/$handle"
         params={{ handle: p.node.handle }}
@@ -1352,21 +1352,27 @@ function Rail({
 }) {
   const PER_PAGE = 6;
   const [page, setPage] = useState(0);
+  // Always fetch the pool as well: it tops up Shopify's recommendations
+  // (usually ~10) so every page is a full row of six.
   const { data: fetched = [] } = useQuery({
     queryKey,
     queryFn,
-    enabled: !products,
     staleTime: 5 * 60 * 1000,
   });
   const items = useMemo(() => {
-    const src = products ?? fetched;
+    const src = [...(products ?? []), ...fetched];
     const seen = new Set<string>();
-    return src.filter((p) => {
+    const clothing = src.filter((p) => {
       if (p.node.handle === excludeHandle) return false;
       if (seen.has(p.node.id)) return false;
+      // Clothing only: no accessories (body adhesive, sleep mask).
+      if (/accessor/i.test(p.node.productType ?? "") || /adhesive|glue|eye mask|sleep mask/i.test(p.node.title)) return false;
       seen.add(p.node.id);
       return true;
     });
+    // Whole rows only: 6 or 12. Under six, show what there is.
+    const whole = Math.min(12, Math.floor(clothing.length / PER_PAGE) * PER_PAGE);
+    return whole > 0 ? clothing.slice(0, whole) : clothing;
   }, [products, fetched, excludeHandle]);
 
   const pages = Math.max(1, Math.ceil(items.length / PER_PAGE));
