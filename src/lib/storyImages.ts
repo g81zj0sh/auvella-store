@@ -73,4 +73,38 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/ribbed-mini-hotel-lift-v2.webp",
     alt: "Ribbed Short Sleeve Mini Dress in white, mirror photo in a hotel lift",
   },
+  // Batch 2 (30 Sept 2026): influencer mood - posed, flattering light,
+  // styled; mirror shots at real places with different phones.
+  "long-sleeve-sculpt-maxi-dress": {
+    src: "/story/long-sleeve-maxi-wedding-garden.webp",
+    alt: "Long Sleeve Sculpt Maxi Dress in navy, wedding guest in a country-house garden",
+  },
+  "u-neck-slit-maxi-dress": {
+    src: "/story/slit-maxi-seafront-sunset.webp",
+    alt: "U-Neck Slit Maxi Dress in haze blue on a seafront terrace at sunset",
+  },
+  "ribbed-cut-out-one-piece-swimsuit": {
+    src: "/story/cut-out-swimsuit-villa-pool.webp",
+    alt: "Ribbed Cut-Out Swimsuit in red at a villa infinity pool",
+  },
+  "womens-swimwear": {
+    src: "/story/padded-bikini-beach-club.webp",
+    alt: "Padded Bikini Set in sand beige on a beach club lounger",
+  },
+  "satin-long-sleeve-pajama-set": {
+    src: "/story/satin-long-sleeve-pyjamas-breakfast.webp",
+    alt: "Satin Long Sleeve Pyjama Set in champagne, breakfast in bed",
+  },
+  "womens-velvet-jumpsuit-long-sleeve-square-neck": {
+    src: "/story/velvet-hotel-lobby-mirror.webp",
+    alt: "Velvet Square Neck top in black with a satin skirt, hotel lobby mirror photo",
+  },
+  "seamless-sculpting-bodysuit": {
+    src: "/story/open-back-bodysuit-hotel-mirror.webp",
+    alt: "Open-Back Sculpting Bodysuit in black, over-the-shoulder mirror photo in a hotel suite",
+  },
+  "auvella-seamless-comfort-bralette": {
+    src: "/story/comfort-bralette-flower-market.webp",
+    alt: "Seamless Comfort Bralette in black under an open linen shirt at a flower market",
+  },
 };
