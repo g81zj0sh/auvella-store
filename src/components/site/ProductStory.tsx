@@ -224,9 +224,9 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
           Wide on desktop (fills the screen like smooche.com); on phones the
           same three columns shrink to fit the screen - no sideways scroll. */}
       <section className="bg-[#f5f4f2]" aria-labelledby="why-auvella">
-        <div className="mx-auto max-w-[1480px] px-4 py-16 md:px-10 md:py-28">
+        <div className="mx-auto max-w-[1580px] px-4 py-16 md:px-10 md:py-24">
           <h2 id="why-auvella" className="text-center font-serif text-[40px] font-normal text-[#0a0a0a] md:text-[60px]">Why Auvella?</h2>
-          <div className="mt-10 md:mt-16">
+          <div className="mt-10 md:mt-12">
             <table className="w-full table-fixed border-collapse">
               <colgroup>
                 <col className="w-[46%] md:w-[44%]" />
@@ -236,10 +236,10 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
               <thead>
                 <tr>
                   <th className="border-b-2 border-[#0a0a0a]" />
-                  <th className="rounded-t-[14px] border-b-2 border-[#0a0a0a] bg-[#0a0a0a] py-4 font-serif text-[15px] font-normal uppercase tracking-[0.12em] text-white md:rounded-t-[18px] md:py-6 md:text-[26px] md:tracking-[0.2em]">
+                  <th className="rounded-t-[14px] border-b-2 border-[#0a0a0a] bg-[#0a0a0a] py-4 font-serif text-[15px] font-normal uppercase tracking-[0.12em] text-white md:rounded-t-[18px] md:py-5 md:text-[26px] md:tracking-[0.2em]">
                     Auvella
                   </th>
-                  <th className="border-b-2 border-[#0a0a0a] py-4 font-serif text-[15px] font-normal uppercase tracking-[0.12em] text-[#0a0a0a] md:py-6 md:text-[26px] md:tracking-[0.2em]">
+                  <th className="border-b-2 border-[#0a0a0a] py-4 font-serif text-[15px] font-normal uppercase tracking-[0.12em] text-[#0a0a0a] md:py-5 md:text-[26px] md:tracking-[0.2em]">
                     Others
                   </th>
                 </tr>
@@ -249,11 +249,11 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
                   const last = i === rows.length - 1;
                   return (
                     <tr key={r.label} className="border-b border-[#e0ddd8]">
-                      <td className="py-4 pl-2 pr-2 text-[13px] font-medium leading-snug text-[#0a0a0a] md:py-6 md:pl-4 md:text-[18px]">{r.label}</td>
-                      <td className={`bg-[#ebe8e3] py-4 md:py-6 ${last ? "rounded-b-[14px] md:rounded-b-[18px]" : ""}`}>
+                      <td className="py-4 pl-2 pr-2 text-[13px] font-medium leading-snug text-[#0a0a0a] md:py-[18px] md:pl-4 md:text-[18px]">{r.label}</td>
+                      <td className={`bg-[#ebe8e3] py-4 md:py-[18px] ${last ? "rounded-b-[14px] md:rounded-b-[18px]" : ""}`}>
                         <span className="flex justify-center"><span className="scale-[0.85] md:scale-100"><Tick size={26} /></span></span>
                       </td>
-                      <td className="py-4 md:py-6">
+                      <td className="py-4 md:py-[18px]">
                         <span className="flex justify-center"><span className="scale-[0.85] md:scale-100">{r.others === "yes" ? <Tick muted size={26} /> : <NotAlways />}</span></span>
                       </td>
                     </tr>
