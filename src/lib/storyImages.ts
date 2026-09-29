@@ -92,8 +92,8 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     alt: "Padded Bikini Set in sand beige on a beach club lounger",
   },
   "satin-long-sleeve-pajama-set": {
-    src: "/story/satin-long-sleeve-pyjamas-breakfast.webp",
-    alt: "Satin Long Sleeve Pyjama Set in champagne, breakfast in bed",
+    src: "/story/satin-long-sleeve-pyjamas-window.webp",
+    alt: "Satin Long Sleeve Pyjama Set in champagne, drawing the curtains on a bright morning",
   },
   "womens-velvet-jumpsuit-long-sleeve-square-neck": {
     src: "/story/velvet-hotel-lobby-mirror.webp",
