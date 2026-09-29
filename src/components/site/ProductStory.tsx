@@ -42,9 +42,10 @@ function Tick({ muted = false, size = 22 }: { muted?: boolean; size?: number }) 
   );
 }
 function NotAlways() {
+  // Filled grey disc with a white dash: as visible as the tick, reads "not always".
   return (
-    <span className="grid h-[26px] w-[26px] place-items-center rounded-full border-[1.5px] border-[#cfcfcf]" aria-label="Not always">
-      <span className="h-[1.5px] w-2.5 bg-[#b5b5b5]" />
+    <span className="grid h-[26px] w-[26px] place-items-center rounded-full bg-[#cfcccc]" aria-label="Not always">
+      <span className="h-[2px] w-3 rounded-full bg-white" />
     </span>
   );
 }
@@ -224,26 +225,44 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
         <div className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-28">
           <h2 id="why-auvella" className="text-center font-serif text-[44px] font-normal text-[#0a0a0a] md:text-[60px]">Why Auvella?</h2>
           <div className="mt-12 overflow-x-auto md:mt-16">
-            <table className="w-full min-w-[560px] border-collapse">
+            {/* Equal Auvella / Others columns (Joshua, 29 Sept 2026: Others as
+                big as Auvella, like smooche.com); rounded Auvella header. */}
+            <table className="w-full min-w-[560px] table-fixed border-collapse">
+              <colgroup>
+                <col className="w-[44%]" />
+                <col className="w-[28%]" />
+                <col className="w-[28%]" />
+              </colgroup>
               <thead>
                 <tr>
-                  <th className="w-[52%] border-b-2 border-[#0a0a0a]" />
-                  <th className="border-b-2 border-[#0a0a0a] bg-[#0a0a0a] py-6 font-serif text-[22px] font-normal uppercase tracking-[0.2em] text-white md:text-[26px]">Auvella</th>
-                  <th className="border-b-2 border-[#0a0a0a] py-6 text-[13px] font-medium uppercase tracking-[0.18em] text-[#0a0a0a]">Others</th>
+                  <th className="border-b-2 border-[#0a0a0a]" />
+                  <th className="rounded-t-[18px] border-b-2 border-[#0a0a0a] bg-[#0a0a0a] py-6 font-serif text-[22px] font-normal uppercase tracking-[0.2em] text-white md:text-[26px]">
+                    Auvella
+                  </th>
+                  <th className="border-b-2 border-[#0a0a0a] py-6 font-serif text-[22px] font-normal uppercase tracking-[0.2em] text-[#0a0a0a] md:text-[26px]">
+                    Others
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
-                  <tr key={r.label} className="border-b border-[#e0ddd8]">
-                    <td className="py-6 pl-4 text-[16px] font-medium text-[#0a0a0a] md:text-[18px]">{r.label}</td>
-                    <td className="bg-[#ebe8e3] py-6"><span className="flex justify-center"><Tick size={26} /></span></td>
-                    <td className="py-6"><span className="flex justify-center">{r.others === "yes" ? <Tick muted size={26} /> : <NotAlways />}</span></td>
-                  </tr>
-                ))}
+                {rows.map((r, i) => {
+                  const last = i === rows.length - 1;
+                  return (
+                    <tr key={r.label} className="border-b border-[#e0ddd8]">
+                      <td className="py-6 pl-4 text-[16px] font-medium text-[#0a0a0a] md:text-[18px]">{r.label}</td>
+                      <td className={`bg-[#ebe8e3] py-6 ${last ? "rounded-b-[18px]" : ""}`}>
+                        <span className="flex justify-center"><Tick size={26} /></span>
+                      </td>
+                      <td className="py-6">
+                        <span className="flex justify-center">{r.others === "yes" ? <Tick muted size={26} /> : <NotAlways />}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-          <p className="mt-5 text-center text-[12px] text-[#888888]">— not always included</p>
+          <p className="mt-5 flex items-center justify-center gap-2 text-[12px] text-[#888888]"><span className="inline-block origin-center scale-[0.7]"><NotAlways /></span> not always included</p>
         </div>
       </section>
 
