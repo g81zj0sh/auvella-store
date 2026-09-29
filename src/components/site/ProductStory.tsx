@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   introText, fitNote, sizesLine, fabricLine, fabrics, specificPoints, comparisonRows,
-  whyPoints, constructionBullets, actionHeadline,
+  whyPoints, constructionBullets, actionHeadline, beforeYouAsk,
 } from "@/lib/productStory";
 import { GALLERY_INDEX } from "@/lib/galleryIndex";
 import { STORY_IMAGES } from "@/lib/storyImages";
@@ -63,9 +63,10 @@ type Props = {
   country: Country;
   sized?: boolean;
   reviews?: Review[];
+  productType?: string;
 };
 
-export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls, country, sized = true, reviews = [] }: Props) {
+export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls, country, sized = true, reviews = [], productType = "" }: Props) {
   const html = descriptionHtml ?? "";
   const entry = colour ? GALLERY_INDEX[handle]?.[colour] : undefined;
   const model = entry?.m?.length ? entry.m : imageUrls.slice(0, 3);
@@ -85,6 +86,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
   const transit = transitLabel(country);
   const featureA = [...points, ...whyPoints(html, title).slice(points.length)].slice(0, 2).map((p) => p.split(" — ")[0]);
   const built = constructionBullets(html, 3);
+  const worries = beforeYouAsk(html, title, productType);
   const head = actionHeadline(html, title);
   const shareLabel = fab.filter((f) => f.share).map((f) => `${f.share} ${f.name.split(" ")[0].toLowerCase()}`).join(" · ");
   const actionCopy = fab.length
@@ -181,6 +183,21 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
           ) : null}
         </div>
       </section>
+
+      {/* ── Before you ask: the three worries behind most returns ────── */}
+      {worries.length > 0 && (
+        <section className="mx-auto max-w-[1320px] px-5 pb-20 md:px-10 md:pb-28" aria-labelledby="before-you-ask">
+          <h2 id="before-you-ask" className="text-center font-serif text-[44px] font-normal text-[#0a0a0a] md:text-[60px]">Before you ask</h2>
+          <div className="mt-12 grid gap-4 md:mt-16 md:grid-cols-3">
+            {worries.map((w) => (
+              <div key={w.q} className="rounded-[20px] bg-[#f5f4f2] px-8 py-12 md:px-10 md:py-14">
+                <p className="font-serif text-[28px] font-normal leading-tight text-[#0a0a0a] md:text-[32px]">{w.q}</p>
+                <p className="mt-5 text-[16px] leading-[1.8] text-[#555555]">{w.a}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── 3. Real results: counted from this product's reviews ─────────
           Smooche's percentages come from a customer panel; Auvella has

@@ -1161,6 +1161,7 @@ function ProductPage() {
         country={shipCountry}
         sized={!/accessor|mask|adhesive/i.test(`${node.productType ?? ""} ${node.title}`)}
         reviews={judgeme?.reviews ?? []}
+        productType={node.productType ?? ""}
       />
 
       {/* ============ RAIL ============

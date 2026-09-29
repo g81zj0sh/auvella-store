@@ -206,12 +206,53 @@ export function comparisonRows(descriptionHtml: string | null | undefined, title
   return rows.slice(0, 6);
 }
 
-/** Construction facts from Details: not colours, sizes or the fabric line. */
+/*
+ * Feature -> benefit -> result, for the construction ticks. Every rewrite is
+ * mechanical truth about the garment (what the feature does and why that
+ * matters), never a body-change promise. Unmatched bullets pass through.
+ */
+const BENEFITS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
+  [/^high[- ]rise waistband|^high rise, sits above/i, () => "High-rise waistband — it sits above your natural waist, so the edge isn't where your belly folds when you sit"],
+  [/^high rise, smoothing through the tummy/i, () => "High rise with a smoothing front — covers the tummy with nothing cutting in at the middle"],
+  [/^knitted seamless from bust to thigh/i, () => "Knitted seamless from bust to thigh — no waist seam, so there's no line through a fitted dress"],
+  [/^seamless through the body/i, () => "Seamless through the body — no seams or ridges, so nothing prints through fitted clothes"],
+  [/^double-layer panel through the tummy/i, () => "Double-layer tummy panel, lighter through the thigh — hold where you want it, comfort where you don't"],
+  [/^smoothing (panel )?through the (tummy|middle)(, shaped seat)?$/i, (m) => `Smoothing panel through the ${m[2].toLowerCase()} — firmer where you want a smooth line, softer everywhere else${m[3] ? ", with a shaped seat" : ""}`],
+  [/^lifting panel through the seat/i, () => "Shaped seat panel — follows your natural shape instead of flattening it"],
+  [/^soft lace hem/i, () => "Soft lace hem — spreads the edge pressure, so it doesn't dig into your thigh"],
+  [/^thin moulded three-quarter cups?, no wire/i, () => "Thin moulded cups, no wire — light shape with nothing pressing into your ribs"],
+  [/^padded jelly cups/i, () => "Padded jelly cups, wire-free — soft shape and three-quarter coverage, nothing pressing in"],
+  [/^(triangle top, )?padded cups, no (under)?wire/i, (m) => `${m[1] ? "Triangle top with padded" : "Padded"} cups, no wire — shape from soft padding rather than a wire`],
+  [/^wire-free, no steel ring/i, () => "Wire-free, no steel ring — nothing presses into your ribs, however long you wear it"],
+  [/^plastic support strips, no steel/i, () => "Plastic support strips, no steel — structure that flexes when you bend"],
+  [/^front-opening closure/i, () => "Front-opening closure — opens one-handed, no reaching behind your back"],
+  [/^(four|three)-row hook-and-eye back(?: closure)?(, detachable double straps)?/i, (m) => `${m[1][0].toUpperCase() + m[1].slice(1)}-row hook-and-eye back — loosen or tighten the band as the fabric relaxes through the day${m[2] ? "; straps come off" : ""}`],
+  [/^detachable, adjustable double straps/i, () => "Adjustable double straps that detach — set them to your height, or take them off for a strapless look"],
+  [/^adjustable straps$/i, () => "Adjustable straps — set to your height, so they don't slip or dig"],
+  [/^removable straps: strapless, straight, cross-back or halter/i, () => "Removable straps: strapless, straight, cross-back or halter — one bra for four necklines"],
+  [/^no boning, no buttons/i, () => "No boning, no buttons — it flexes when you bend and nothing digs in"],
+  [/^built-in abdominal belt/i, () => "Built-in abdominal belt — firm hold through the middle, no separate belt to fasten"],
+  [/^elasticated waist$/i, () => "Elasticated waist — gives when you sit, no pressure line"],
+  [/^(lightweight, )?(breathable, )?quick-drying(, breathable)?$|^breathable, moisture-wicking$/i, () => "Light, quick-drying fabric that breathes — comfortable through a warm day"],
+  [/^strapless bustier cut, no fastenings/i, () => "Strapless bustier cut, no fastenings — nothing to show under an off-shoulder neckline"],
+  [/^built-in moulded bra pads/i, () => "Built-in moulded bra pads — one layer instead of a top and a bra"],
+];
+
+function benefitLine(b: string): string {
+  for (const [re, fn] of BENEFITS) {
+    const m = b.match(re);
+    if (m) return fn(m);
+  }
+  return b;
+}
+
+/** Construction facts from Details (not colours, sizes or the fabric line),
+ *  written feature -> benefit -> result where a rewrite exists. */
 export function constructionBullets(html: string | null | undefined, max = 3): string[] {
   return detailBullets(html ?? "")
     .filter((b) => !/^colou?rs?\b/i.test(b) && !/^sizes?\b/i.test(b))
     .filter((b) => !FIBRE_WORDS.some((f) => f.re.test(b)) && !/ice[- ]silk/i.test(b))
-    .map((b) => b.charAt(0).toUpperCase() + b.slice(1))
+    .map((b) => benefitLine(b.charAt(0).toUpperCase() + b.slice(1)))
     .slice(0, max);
 }
 
@@ -240,4 +281,83 @@ export function actionHeadline(descriptionHtml: string | null | undefined, title
   };
   const hit = map[first];
   return hit ? { lead: hit[0], hi: hit[1] } : { lead: "Made for", hi: "every day" };
+}
+
+/* ---------------------------------------------------- before you ask -- */
+
+/*
+ * The three worries behind most shapewear and bra returns, answered per
+ * product from its own title, Details and fit note. Only for shapewear and
+ * bras; every answer describes what the construction does, and where a
+ * limit exists (lace texture, adhesive on oily skin) it says so.
+ */
+export function beforeYouAsk(html: string | null | undefined, title = "", productType = ""): Array<{ q: string; a: string }> {
+  const all = title + " · " + detailBullets(html ?? "").join(" · ");
+  const has = (re: RegExp) => re.test(all);
+  // Category from the product type first: sleepwear, loungewear, swim,
+  // underwear, dresses and accessories never get these questions, whatever
+  // words their titles contain ("cami", "waist", "bra").
+  if (/sleep|lounge|swim|underwear|dress|accessor/i.test(productType)) return [];
+  const kind = /^bra$/i.test(productType) || /\bbra\b|bralette/i.test(title)
+    ? "bra"
+    : /^shapewear$/i.test(productType) || /bodysuit|shaping|shaper|compression/i.test(title)
+      ? "shape"
+      : null;
+  if (!kind) return [];
+
+  const seamless = has(/seamless/i);
+  const lace = has(/\blace\b/i);
+  const breathable = has(/cotton|nylon|breathable|mesh|moisture-wicking/i);
+
+  if (kind === "shape") {
+    const bodysuit = /bodysuit/i.test(title);
+    const highRise = has(/high[- ]?(rise|waist)/i);
+    const roll = bodysuit
+      ? "There's no waistband to roll: it's one continuous piece. What keeps it smooth all day is the right size — use the size guide rather than your dress size."
+      : highRise
+        ? "The waistband sits above your natural waist, which is where most roll-down starts. The other cause is a size too small — if you're between sizes, go up."
+        : "Rolling almost always means a size too small. If you're between sizes, go up — the hold comes from the fabric, not from squeezing.";
+    const show = [
+      seamless ? "It's knitted seamless — no side seams or hard edges to print through fitted fabric." : "It's cut to sit flat under everyday clothes.",
+      lace ? "The lace edges lie flat; under very thin, clingy fabric the texture can show, under jeans or a lined dress it won't." : "Under very thin fabric, a colour close to your skin tone shows least.",
+    ].join(" ");
+    const allDay = `At your true size, yes${breathable ? " — the fabric breathes, so it's comfortable for hours" : ""}. Sizing down gives firmer hold, but that's for an evening, not a full day.`;
+    return [
+      { q: "Will it roll down?", a: roll },
+      { q: "Will it show under clothes?", a: show },
+      { q: "Can I wear it all day?", a: allDay },
+    ];
+  }
+
+  // bras
+  const adhesive = has(/strapless, backless|adhesive|two-layer silicone/i) && !has(/silicone band|anti-slip/i);
+  const strapless = has(/strapless/i);
+  const grip = has(/silicone band|anti-slip|non-slip/i);
+  const hooks = has(/hook-and-eye/i); // adjustable fastenings only (a buckle doesn't loosen)
+  const moulded = has(/moulded/i);
+  const wireFree = has(/wire-free|no (under)?wire|no steel/i);
+  const dig = adhesive
+    ? "No band and no wire — it holds by adhesive, so there's nothing to dig in."
+    : wireFree
+      ? `No wire, so nothing presses into your ribs${hooks ? " — and the hook-and-eye back adjusts, so you can loosen the band as the day goes on" : ""}.`
+      : "The band carries the support, so size by your underbust — a band that fits doesn't dig.";
+  const stay = adhesive
+    ? "It holds by adhesive, so it needs clean, dry skin — no lotion or oil. It gives coverage and shape rather than lift."
+    : strapless
+      ? `${grip ? "A silicone grip band holds it in place without straps. " : ""}A strapless bra stays up on its band, so the band size matters most — go by your underbust in the size guide.`
+      : `Size by your band: that's what holds a bra in place.${has(/adjustable|detachable/i) ? " The straps adjust, so they sit where you want them." : ""}`;
+  const show = lace && !seamless
+    ? "The lace is made to be seen — pretty under an open shirt. Under a thin T-shirt, the texture will show."
+    : moulded
+      ? "Smooth, moulded cups with clean edges — nothing to show through a T-shirt."
+      : has(/traceless/i)
+        ? "Traceless edges — no outline under a T-shirt, even a white one."
+        : seamless
+          ? "Seamless, with clean edges — nothing to show through a T-shirt."
+          : "Under very thin fabric, a colour close to your skin tone shows least.";
+  return [
+    { q: "Will it dig in?", a: dig },
+    { q: adhesive || strapless ? "Will it stay up?" : "Will it stay in place?", a: stay },
+    { q: "Will it show?", a: show },
+  ];
 }
