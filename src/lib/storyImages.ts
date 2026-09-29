@@ -107,4 +107,53 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/comfort-bralette-flower-market.webp",
     alt: "Seamless Comfort Bralette in black under an open linen shirt at a flower market",
   },
+  // Batch 3 (30 Sept 2026): influencer mood; mirror shots with new phones.
+  "sleeveless-ribbed-midi-dress": {
+    src: "/story/ribbed-midi-rooftop-bar.webp",
+    alt: "Sleeveless Ribbed Midi Dress in white at a rooftop bar at golden hour",
+  },
+  "womens-lace-long-sleeve-dress": {
+    src: "/story/lace-maxi-gallery-evening.webp",
+    alt: "Lace Long Sleeve Maxi Dress in black at an evening gallery opening",
+  },
+  "long-sleeve-lounge-set-with-built-in-bra": {
+    src: "/story/lounge-set-window-seat.webp",
+    alt: "Long Sleeve Built-In Bra Lounge Set in grey on a window seat at home",
+  },
+  "women-asymmetric-long-sleeve-t-shirt-and-wide-leg-pants-set": {
+    src: "/story/asymmetric-set-city-break.webp",
+    alt: "Asymmetric Top and Wide Leg Trouser Set in black on a city break",
+  },
+  "slim-fit-long-sleeve-top": {
+    src: "/story/long-sleeve-top-fitting-room.webp",
+    alt: "Slim Fit Long Sleeve Top in black with jeans, boutique fitting-room mirror photo",
+  },
+  "womens-tie-side-triangle-bikini-set": {
+    src: "/story/tie-side-bikini-cove.webp",
+    alt: "Tie-Side Triangle Bikini Set in white by a turquoise cove at golden hour",
+  },
+  "womens-high-waisted-ruched-bikini-bottoms": {
+    src: "/story/ruched-bottoms-hotel-pool.webp",
+    alt: "High-Waist Ruched Bikini Bottoms in black by a hotel pool",
+  },
+  "womens-one-piece-diamond-swimsuit": {
+    src: "/story/embellished-swimsuit-yacht.webp",
+    alt: "Embellished Backless Swimsuit in pale pink on a yacht at sunset",
+  },
+  "womens-two-piece-swimsuit": {
+    src: "/story/puff-sleeve-bikini-jetty.webp",
+    alt: "Puff Sleeve Lace-Up Bikini Set in white on a tropical jetty",
+  },
+  "womens-swimwear-1": {
+    src: "/story/two-tone-bikini-cabana.webp",
+    alt: "Two-Tone Bikini Set in black and white on a poolside daybed",
+  },
+  "auvella-long-sleeve-sculpting-bodysuit": {
+    src: "/story/long-sleeve-bodysuit-cocktail-mirror.webp",
+    alt: "Long Sleeve Sculpting Bodysuit in white with a leather skirt, cocktail-bar mirror photo",
+  },
+  "seamless-tummy-control-body-shaper-cami": {
+    src: "/story/cami-terrace-lunch.webp",
+    alt: "Seamless Tummy Control Cami in black with linen trousers at a terrace lunch",
+  },
 };
