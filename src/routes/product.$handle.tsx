@@ -1414,6 +1414,44 @@ function Rail({
     else if (dir === -1 && atStart) el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
     else el.scrollBy({ left: dir * stride * perView, behavior: "smooth" });
   };
+  /* Click-and-hold drag for mouse users (touch and trackpads scroll
+     natively). Snap is paused while dragging, then the strip settles on the
+     nearest card; a drag never counts as a click on the card underneath. */
+  const drag = useRef<{ x: number; left: number; moved: boolean; id: number } | null>(null);
+  const suppressClick = useRef(false);
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse" || e.button !== 0 || !stripRef.current) return;
+    drag.current = { x: e.clientX, left: stripRef.current.scrollLeft, moved: false, id: e.pointerId };
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    const el = stripRef.current;
+    if (!d || !el) return;
+    const dx = e.clientX - d.x;
+    if (!d.moved && Math.abs(dx) > 5) {
+      d.moved = true;
+      el.setPointerCapture(d.id);
+      el.style.scrollSnapType = "none";
+      el.style.cursor = "grabbing";
+    }
+    if (d.moved) el.scrollLeft = d.left - dx;
+  };
+  const endDrag = () => {
+    const d = drag.current;
+    const el = stripRef.current;
+    drag.current = null;
+    if (!d || !el || !d.moved) return;
+    el.style.cursor = "";
+    const { stride } = step();
+    const target = Math.round(el.scrollLeft / stride) * stride;
+    el.scrollTo({ left: target, behavior: "smooth" });
+    // Restore snapping once the glide has settled.
+    window.setTimeout(() => {
+      if (!drag.current) el.style.scrollSnapType = "";
+    }, 450);
+    suppressClick.current = true;
+    window.setTimeout(() => (suppressClick.current = false), 0);
+  };
   if (items.length === 0) return null;
 
   return (
@@ -1439,7 +1477,19 @@ function Rail({
       <div
         ref={stripRef}
         onScroll={measure}
-        className="flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-4 [scrollbar-width:none] md:scroll-px-8 md:gap-4 md:px-8 [&::-webkit-scrollbar]:hidden"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onDragStart={(e) => e.preventDefault()}
+        onClickCapture={(e) => {
+          if (suppressClick.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            suppressClick.current = false;
+          }
+        }}
+        className="flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-4 select-none [scrollbar-width:none] md:cursor-grab md:scroll-px-8 md:gap-4 md:px-8 [&::-webkit-scrollbar]:hidden"
       >
         {items.map((p) => (
           <RailCard key={p.node.id} p={p} />
