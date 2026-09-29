@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { galleryUrls, indexedHex, indexedSwatch } from "@/lib/galleryIndex";
+import { galleryUrls, indexedHex, indexedSwatch, GALLERY_INDEX } from "@/lib/galleryIndex";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
 import { ProductStory } from "@/components/site/ProductStory";
@@ -1271,19 +1271,47 @@ function RailCard({ p }: { p: ShopifyProduct }) {
   const img = p.node.images.edges[0]?.node;
   const price = p.node.priceRange.minVariantPrice;
   const label = inferCollection(p.node.title).label;
+  /* Garment first, model on hover (Joshua, 29 Sept 2026). The gallery index
+     knows which shots are garment ("g") and which are on-model ("m") per
+     colour: take the colour whose model shot is this card's hero image, so
+     the two images are always the same colour. No garment shot -> model only. */
+  const fileOf = (u: string) => u.split("/").pop()!.split("?")[0];
+  const heroFile = img ? fileOf(img.url) : "";
+  const index = GALLERY_INDEX[p.node.handle] ?? {};
+  // 1) the colour whose shots include this card's hero image;
+  // 2) else the colour of the first variant (what the card shows by default);
+  // 3) else no garment - never pair a garment with a model in another colour.
+  const firstColour = p.node.variants?.edges?.[0]?.node.selectedOptions?.find((o) => /colou?r/i.test(o.name))?.value;
+  const match =
+    Object.values(index).find((e) => e.m.includes(heroFile) || e.g.includes(heroFile)) ??
+    (firstColour ? index[firstColour] : undefined);
+  const garmentFile = match?.g[0];
+  const garmentUrl = garmentFile ? `https://cdn.shopify.com/s/files/1/0988/0738/2311/files/${garmentFile}` : undefined;
+  const garmentBg = tableBackdrop(garmentUrl);
   return (
     <div className="flex min-w-[70vw] flex-col sm:min-w-[42vw] lg:min-w-0 lg:flex-1">
       <Link
         to="/product/$handle"
         params={{ handle: p.node.handle }}
-        className="group flex h-52 items-center justify-center overflow-hidden bg-[#F6F3EF] md:h-60"
+        className="group relative flex h-52 items-center justify-center overflow-hidden bg-[#F6F3EF] md:h-60"
+        style={garmentUrl && garmentBg ? { background: backdropCss(garmentBg) } : undefined}
       >
         {img && (
           <img
             src={shopifyImg(img.url, 700)}
             alt={img.altText ?? p.node.title}
             loading="lazy"
-            className="h-full w-full object-cover object-[center_top] transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+            className={`h-full w-full object-cover object-[center_top] transition-[opacity,transform] duration-500 ease-out ${
+              garmentUrl ? "absolute inset-0 opacity-0 group-hover:scale-[1.03] group-hover:opacity-100" : "group-hover:scale-[1.03]"
+            }`}
+          />
+        )}
+        {garmentUrl && (
+          <img
+            src={shopifyImg(garmentUrl, 700)}
+            alt={`${p.node.title} flat`}
+            loading="lazy"
+            className="relative h-full w-full object-contain p-3 transition-opacity duration-500 ease-out group-hover:opacity-0"
           />
         )}
       </Link>
