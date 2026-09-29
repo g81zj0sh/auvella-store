@@ -1293,7 +1293,7 @@ function RailCard({ p }: { p: ShopifyProduct }) {
       <Link
         to="/product/$handle"
         params={{ handle: p.node.handle }}
-        className="group relative flex h-52 items-center justify-center overflow-hidden bg-[#F6F3EF] md:h-60"
+        className="group relative flex h-52 items-center justify-center overflow-hidden rounded-[18px] bg-[#F6F3EF] md:h-60"
         style={garmentUrl && garmentBg ? { background: backdropCss(garmentBg) } : undefined}
       >
         {img && (
@@ -1315,7 +1315,7 @@ function RailCard({ p }: { p: ShopifyProduct }) {
           />
         )}
       </Link>
-      <div className="flex items-start justify-between gap-3 px-4 pb-7 pt-3">
+      <div className="flex items-start justify-between gap-3 px-1 pb-7 pt-3">
         <Link to="/product/$handle" params={{ handle: p.node.handle }} className="block">
           <p className="text-[10px] uppercase tracking-[0.14em] text-[#888888]">{label}</p>
           <p className="mt-1 text-[12px] font-medium uppercase tracking-[0.06em] text-[#0a0a0a]">
@@ -1401,7 +1401,7 @@ function Rail({
           </div>
         )}
       </div>
-      <div className="flex divide-x divide-[#EBEBEB] overflow-x-auto border-y border-[#EBEBEB]">
+      <div className="flex gap-3 overflow-x-auto px-4 pb-4 md:gap-4 md:px-8">
         {visible.map((p) => (
           <RailCard key={p.node.id} p={p} />
         ))}
