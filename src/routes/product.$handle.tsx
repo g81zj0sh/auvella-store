@@ -3,7 +3,7 @@ import { galleryUrls, indexedHex, indexedSwatch, GALLERY_INDEX } from "@/lib/gal
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
 import { ProductStory } from "@/components/site/ProductStory";
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
@@ -1289,7 +1289,7 @@ function RailCard({ p }: { p: ShopifyProduct }) {
   const garmentUrl = garmentFile ? `https://cdn.shopify.com/s/files/1/0988/0738/2311/files/${garmentFile}` : undefined;
   const garmentBg = tableBackdrop(garmentUrl);
   return (
-    <div className="flex min-w-[70vw] flex-col sm:min-w-[42vw] lg:w-[calc((100%-80px)/6)] lg:min-w-0 lg:flex-none">
+    <div className="flex min-w-[70vw] snap-start flex-col sm:min-w-[42vw] lg:w-[calc((100%-80px)/6)] lg:min-w-0 lg:flex-none">
       <Link
         to="/product/$handle"
         params={{ handle: p.node.handle }}
@@ -1351,7 +1351,6 @@ function Rail({
   excludeHandle?: string;
 }) {
   const PER_PAGE = 6;
-  const [page, setPage] = useState(0);
   // Always fetch the pool as well: it tops up Shopify's recommendations
   // (usually ~10) so every page is a full row of six.
   const { data: fetched = [] } = useQuery({
@@ -1375,8 +1374,46 @@ function Rail({
     return whole > 0 ? clothing.slice(0, whole) : clothing;
   }, [products, fetched, excludeHandle]);
 
-  const pages = Math.max(1, Math.ceil(items.length / PER_PAGE));
-  const visible = items.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+  /* One continuous strip: swipe on mobile, trackpad-scroll on desktop, and
+     the arrows scroll a full view at a time. The counter follows the
+     scroll position. (Joshua, 29 Sept 2026: swipe instead of only arrows.) */
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState({ page: 0, pages: 1 });
+  // A "page" is however many cards fit in view: six on desktop, one on a
+  // phone. The counter and arrows both work in those steps.
+  const step = () => {
+    const el = stripRef.current;
+    const first = el?.firstElementChild as HTMLElement | null;
+    if (!el || !first) return { el, stride: 1, perView: 1 };
+    const gap = parseFloat(getComputedStyle(el).columnGap || "0") || 0;
+    const stride = first.offsetWidth + gap;
+    const perView = Math.max(1, Math.round((el.clientWidth + gap) / stride));
+    return { el, stride, perView };
+  };
+  const measure = useCallback(() => {
+    const { el, stride, perView } = step();
+    if (!el) return;
+    const n = el.children.length;
+    const pages = Math.max(1, Math.ceil(n / perView));
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    const page = atEnd ? pages - 1 : Math.min(pages - 1, Math.round(el.scrollLeft / (stride * perView)));
+    setView((v) => (v.page === page && v.pages === pages ? v : { page, pages }));
+  }, []);
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [measure, items.length]);
+  const scrollByView = (dir: 1 | -1) => {
+    const { el, stride, perView } = step();
+    if (!el) return;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    const atStart = el.scrollLeft <= 4;
+    // Wrap around at either end, like the old pager.
+    if (dir === 1 && atEnd) el.scrollTo({ left: 0, behavior: "smooth" });
+    else if (dir === -1 && atStart) el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
+    else el.scrollBy({ left: dir * stride * perView, behavior: "smooth" });
+  };
   if (items.length === 0) return null;
 
   return (
@@ -1385,30 +1422,26 @@ function Rail({
         <h2 className="text-[13px] font-medium uppercase tracking-[0.2em] text-[#0a0a0a]">
           {title}
         </h2>
-        {pages > 1 && (
+        {view.pages > 1 && (
           <div className="absolute right-4 flex items-center gap-3 text-[12px] text-[#0a0a0a] md:right-8">
-            <button
-              aria-label="Previous"
-              onClick={() => setPage((p) => (p - 1 + pages) % pages)}
-              className="transition-opacity hover:opacity-60"
-            >
+            <button aria-label="Previous" onClick={() => scrollByView(-1)} className="transition-opacity hover:opacity-60">
               <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
             </button>
             <span className="tabular-nums text-[#555555]">
-              {page + 1} / {pages}
+              {view.page + 1} / {view.pages}
             </span>
-            <button
-              aria-label="Next"
-              onClick={() => setPage((p) => (p + 1) % pages)}
-              className="transition-opacity hover:opacity-60"
-            >
+            <button aria-label="Next" onClick={() => scrollByView(1)} className="transition-opacity hover:opacity-60">
               <ChevronRight className="h-4 w-4" strokeWidth={1.5} />
             </button>
           </div>
         )}
       </div>
-      <div className="flex gap-3 overflow-x-auto px-4 pb-4 md:gap-4 md:px-8">
-        {visible.map((p) => (
+      <div
+        ref={stripRef}
+        onScroll={measure}
+        className="flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-4 [scrollbar-width:none] md:scroll-px-8 md:gap-4 md:px-8 [&::-webkit-scrollbar]:hidden"
+      >
+        {items.map((p) => (
           <RailCard key={p.node.id} p={p} />
         ))}
       </div>
