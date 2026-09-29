@@ -1,5 +1,5 @@
-import { Star, Loader2, ImagePlus, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Star, Loader2, ImagePlus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { submitJudgemeReview } from "@/lib/judgeme";
 import { uploadReviewPhoto } from "@/lib/reviewPhoto.functions";
 
@@ -16,6 +16,11 @@ export interface Review {
   date?: string;
   /** Customer photos attached to the review, as public URLs. */
   photos?: string[];
+  /** Public reply from the store, if one was posted in Judge.me. */
+  reply?: string;
+  replier?: string;
+  /** Judge.me flags reviews collected from another provider. */
+  imported?: boolean;
 }
 
 function Stars({ rating, size = 3 }: { rating: number; size?: number }) {
@@ -272,6 +277,8 @@ export function Reviews({
   loading?: boolean;
   productGid?: string;
 }) {
+  // On-site photo viewer (photos used to open on Judge.me's image host).
+  const [viewer, setViewer] = useState<{ photos: string[]; index: number; name: string } | null>(null);
   const [writing, setWriting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -406,13 +413,13 @@ export function Reviews({
                     </p>
                     {r.photos && r.photos.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {r.photos.map((src) => (
-                          <a
+                        {r.photos.map((src, pi) => (
+                          <button
+                            type="button"
                             key={src}
-                            href={src}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block h-24 w-24 overflow-hidden border border-[#ebebeb]"
+                            onClick={() => setViewer({ photos: r.photos!, index: pi, name: r.name })}
+                            aria-label={`View photo ${pi + 1} from ${r.name}`}
+                            className="block h-24 w-24 cursor-zoom-in overflow-hidden border border-[#ebebeb]"
                           >
                             <img
                               src={src}
@@ -420,13 +427,24 @@ export function Reviews({
                               loading="lazy"
                               className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                             />
-                          </a>
+                          </button>
                         ))}
                       </div>
                     )}
                     {r.fit && (
                       <div className="mt-4">
                         <FitScale pos={FIT_POS[r.fit] ?? 0.5} compact />
+                      </div>
+                    )}
+                    {/* Public reply from the store. Shown on verified-buyer
+                        reviews: a reply offering help only makes sense to
+                        Auvella's own customers. */}
+                    {r.reply && r.verified && (
+                      <div className="mt-5 max-w-[620px] border-l-2 border-[#0a0a0a] bg-[#f7f6f4] px-5 py-4">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#0a0a0a]">
+                          Reply from {r.replier && !/owner|store/i.test(r.replier) ? r.replier : "Auvella"}
+                        </p>
+                        <p className="mt-2 text-[13px] leading-[1.75] text-[#555555]">{r.reply}</p>
                       </div>
                     )}
                   </div>
@@ -436,6 +454,58 @@ export function Reviews({
           )}
         </div>
       </div>
+      {viewer && <PhotoViewer {...viewer} onClose={() => setViewer(null)} />}
     </section>
+  );
+}
+
+/** Full-screen photo viewer: arrows / swipe-free buttons, Esc to close. */
+function PhotoViewer({ photos, index, name, onClose }: { photos: string[]; index: number; name: string; onClose: () => void }) {
+  const [i, setI] = useState(index);
+  const many = photos.length > 1;
+  const go = (d: number) => setI((x) => (x + d + photos.length) % photos.length);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight" && many) go(1);
+      if (e.key === "ArrowLeft" && many) go(-1);
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [many]);
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Photo from ${name}`}
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/85 p-4"
+      onClick={onClose}
+    >
+      <img
+        src={photos[i]}
+        alt={`Review photo ${i + 1} from ${name}`}
+        className="max-h-[88vh] max-w-[92vw] object-contain"
+        onClick={(e) => e.stopPropagation()}
+      />
+      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-4 top-4 grid h-10 w-10 place-items-center text-white/90 hover:text-white">
+        <X className="h-6 w-6" strokeWidth={1.5} />
+      </button>
+      {many && (
+        <>
+          <button type="button" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); go(-1); }} className="absolute left-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center text-white/90 hover:text-white">
+            <ChevronLeft className="h-7 w-7" strokeWidth={1.5} />
+          </button>
+          <button type="button" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); go(1); }} className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center text-white/90 hover:text-white">
+            <ChevronRight className="h-7 w-7" strokeWidth={1.5} />
+          </button>
+          <p className="absolute bottom-5 left-1/2 -translate-x-1/2 text-[12px] tracking-[0.14em] text-white/80">{i + 1} / {photos.length}</p>
+        </>
+      )}
+    </div>
   );
 }

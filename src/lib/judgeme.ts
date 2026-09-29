@@ -79,7 +79,14 @@ function parseWidgetHtml(html: string): Review[] {
       const url = href && /^https?:/.test(href) ? href : src;
       if (url && !photos.includes(url)) photos.push(url);
     });
+    // Store replies (Judge.me → review → Reply publicly).
+    const reply = text(rev.querySelector(".jdgm-rev__reply-content")) || undefined;
+    const replier = text(rev.querySelector(".jdgm-rev__replier")) || undefined;
+    const imported = !!rev.querySelector('[data-badge-type="review_collected_from_another_provider"]');
     out.push({
+      reply,
+      replier,
+      imported,
       name: text(rev.querySelector(".jdgm-rev__author")) || "Anonymous",
       rating: isNaN(rating) ? 5 : rating,
       title: text(rev.querySelector(".jdgm-rev__title")) || undefined,
