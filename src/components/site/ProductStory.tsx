@@ -177,7 +177,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
                 </span>
               ))}
             </>
-          ) : shareLabel ? (
+          ) : shareLabel && !story ? (
             <span className="absolute bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white/90 px-5 py-2 font-serif text-[22px] text-[#0a0a0a]">
               {shareLabel}
             </span>

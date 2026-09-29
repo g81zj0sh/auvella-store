@@ -29,4 +29,14 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/front-buckle-bra-mirror.webp",
     alt: "Front-Buckle Strapless Bra in nude worn with light-wash jeans, mirror photo",
   },
+  // Situational, posed-for-camera shots (Joshua, 30 Sept 2026: real moments
+  // where the piece belongs, looking into the camera, not mirror selfies).
+  "off-shoulder-sculpt-midi-dress": {
+    src: "/story/off-shoulder-dress-evening.webp",
+    alt: "Off-Shoulder Sculpt Dress in deep wine red, on a city street at dusk before dinner",
+  },
+  "solid-colour-bikini-set": {
+    src: "/story/bikini-beach-holiday.webp",
+    alt: "Solid Colour Bikini Set in hot pink, at the edge of the sea on holiday",
+  },
 };
