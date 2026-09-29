@@ -279,6 +279,15 @@ export function Reviews({
 }) {
   // On-site photo viewer (photos used to open on Judge.me's image host).
   const [viewer, setViewer] = useState<{ photos: string[]; index: number; name: string } | null>(null);
+  // Rating filter: 0 = all.
+  const [starFilter, setStarFilter] = useState(0);
+  const filtered = useMemo(
+    () => (starFilter === 0 ? reviews : reviews.filter((r) => Math.round(r.rating) === starFilter)),
+    [reviews, starFilter],
+  );
+  // Ten at a time; a new filter starts from the top.
+  const [visible, setVisible] = useState(10);
+  useEffect(() => setVisible(10), [starFilter]);
   const [writing, setWriting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -354,10 +363,51 @@ export function Reviews({
             </div>
           )}
 
+          {/* Rating filter */}
+          {hasReviews && (
+            <div className="mt-10 flex flex-wrap items-center gap-2 md:mt-12" role="group" aria-label="Filter reviews by rating">
+              {[0, 5, 4, 3, 2, 1].map((n) => {
+                const count = n === 0 ? reviews.length : reviews.filter((r) => Math.round(r.rating) === n).length;
+                const active = starFilter === n;
+                const empty = n !== 0 && count === 0;
+                if (empty) return null; // only ratings that have reviews
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    disabled={empty}
+                    onClick={() => setStarFilter(n)}
+                    aria-pressed={active}
+                    className={`flex h-9 items-center gap-1.5 border px-3.5 text-[12px] transition-colors ${
+                      active
+                        ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
+                        : empty
+                          ? "cursor-not-allowed border-[#EBEBEB] text-[#c4c4c4]"
+                          : "border-[#DDDDDD] text-[#0a0a0a] hover:border-[#0a0a0a]"
+                    }`}
+                  >
+                    {n === 0 ? (
+                      "All"
+                    ) : (
+                      <>
+                        {n}
+                        <Star className="h-3 w-3" fill="currentColor" strokeWidth={0} />
+                      </>
+                    )}
+                    <span className={active ? "text-white/70" : "text-[#999999]"}>({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Review rows */}
           {hasReviews && (
-            <div className="mt-10 border-t border-[#EBEBEB] md:mt-12">
-              {reviews.map((r, i) => (
+            <div className="mt-6 border-t border-[#EBEBEB]">
+              {filtered.length === 0 && (
+                <p className="py-10 text-[13px] text-[#777777]">No reviews with that rating yet.</p>
+              )}
+              {filtered.slice(0, visible).map((r, i) => (
                 <article
                   key={i}
                   className="grid gap-4 border-b border-[#EBEBEB] py-8 md:grid-cols-[220px_1fr] md:gap-10 md:py-10"
@@ -450,6 +500,17 @@ export function Reviews({
                   </div>
                 </article>
               ))}
+            </div>
+          )}
+          {hasReviews && filtered.length > visible && (
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setVisible((v) => v + 10)}
+                className="h-11 border border-[#0a0a0a] px-8 text-[11px] font-medium uppercase tracking-[0.18em] text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
+              >
+                Show more reviews ({filtered.length - visible})
+              </button>
             </div>
           )}
         </div>

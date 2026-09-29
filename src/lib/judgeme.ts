@@ -114,16 +114,19 @@ export async function fetchJudgemeData(handle: string): Promise<JudgemeData> {
     `api_token=${encodeURIComponent(JUDGEME_PUBLIC_TOKEN)}&shop_domain=${encodeURIComponent(
       JUDGEME_SHOP_DOMAIN,
     )}&handle=${encodeURIComponent(handle)}${extra}`;
-  const [widgetRes, badgeRes] = await Promise.allSettled([
-    fetch(`${API}/widgets/product_review?${params("&per_page=24")}`),
-    fetch(`${API}/widgets/preview_badge?${params("")}`),
-  ]);
+  // Judge.me returns at most 30 reviews per request, so fetch page 1 with the
+  // badge (which carries the total), then any remaining pages in parallel.
+  const PER_PAGE = 30;
+  const MAX_PAGES = 10;
+  const pageUrl = (n: number) => `${API}/widgets/product_review?${params(`&per_page=${PER_PAGE}&page=${n}`)}`;
+  const [widgetRes, badgeRes] = await Promise.allSettled([fetch(pageUrl(1)), fetch(`${API}/widgets/preview_badge?${params("")}`)]);
 
+  const parsePage = async (res: Response) => {
+    const json = await res.json();
+    return typeof json?.widget === "string" ? parseWidgetHtml(json.widget) : [];
+  };
   let reviews: Review[] = [];
-  if (widgetRes.status === "fulfilled" && widgetRes.value.ok) {
-    const json = await widgetRes.value.json();
-    if (typeof json?.widget === "string") reviews = parseWidgetHtml(json.widget);
-  }
+  if (widgetRes.status === "fulfilled" && widgetRes.value.ok) reviews = await parsePage(widgetRes.value);
 
   let average = 0;
   let count = reviews.length;
@@ -136,6 +139,14 @@ export async function fetchJudgemeData(handle: string): Promise<JudgemeData> {
         count = parsed.count;
       }
     }
+  }
+  // Remaining pages, in parallel, when the total says there are more.
+  if (reviews.length === PER_PAGE && count > PER_PAGE) {
+    const pages = Math.min(MAX_PAGES, Math.ceil(count / PER_PAGE));
+    const rest = await Promise.allSettled(
+      Array.from({ length: pages - 1 }, (_, k) => fetch(pageUrl(k + 2)).then((r) => (r.ok ? parsePage(r) : []))),
+    );
+    for (const r of rest) if (r.status === "fulfilled") reviews = reviews.concat(r.value);
   }
   if (!average && reviews.length) {
     average = reviews.reduce((a, r) => a + r.rating, 0) / reviews.length;
