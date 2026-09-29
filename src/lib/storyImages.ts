@@ -18,4 +18,15 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/lace-trim-shorts-mirror.webp",
     alt: "Lace-Trim High-Waist Shaping Shorts worn with a white crop top, mirror photo",
   },
+  // 30 Sept 2026 test pair (Joshua reviews before the rest): Soul 2.0 candid,
+  // garment applied by Seedream from the product photos; checked against the
+  // product shots; bodysuit fabric cleaned in a second Seedream pass.
+  "one-piece-shapewear-bodysuit-with-tummy-control": {
+    src: "/story/tummy-control-bodysuit-mirror.webp",
+    alt: "Tummy Control Sculpting Bodysuit in black, mirror photo in a sunlit bedroom",
+  },
+  "invisible-front-buckle-strapless-bra": {
+    src: "/story/front-buckle-bra-mirror.webp",
+    alt: "Front-Buckle Strapless Bra in nude worn with light-wash jeans, mirror photo",
+  },
 };
