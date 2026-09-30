@@ -156,4 +156,70 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/cami-terrace-lunch.webp",
     alt: "Seamless Tummy Control Cami in black with linen trousers at a terrace lunch",
   },
+  // Batch 4 (30 Sept 2026): shapewear, bras, underwear and accessories in
+  // getting-ready and in-use moments; influencer mood.
+  "strapless-slim-fit-bodysuit": {
+    src: "/story/strapless-bodysuit-wedding-prep.webp",
+    alt: "Strapless Slim-Fit Bodysuit in black, getting ready for a wedding in a hotel room",
+  },
+  "high-waist-body-shaping-shorts": {
+    src: "/story/ice-silk-shorts-getting-dressed.webp",
+    alt: "Ice Silk High-Waist Shaping Shorts in black, getting dressed with a summer dress",
+  },
+  "strapless-tummy-control-body-shaper": {
+    src: "/story/strapless-tummy-bodysuit-boutique-mirror.webp",
+    alt: "Strapless Tummy Control Bodysuit in nude, boutique dressing-room mirror photo",
+  },
+  "women-waist-training-compression-garment": {
+    src: "/story/waist-shaper-bakery-morning.webp",
+    alt: "Compression Waist Shaper in nude worn over a white T-shirt outside a bakery",
+  },
+  "waist-shaping-fitness-body-shaper": {
+    src: "/story/zip-front-shaper-wardrobe.webp",
+    alt: "Zip-Front Waist Shaper in black worn as a corset top in a walk-in wardrobe",
+  },
+  "high-waisted-tummy-control-shaping-pants": {
+    src: "/story/tummy-control-shorts-bedroom.webp",
+    alt: "High-Waist Tummy Control Shaping Shorts in mint, getting dressed by the window",
+  },
+  "maternity-nursing-bra-front-opening-push-up": {
+    src: "/story/nursing-bra-nursery.webp",
+    alt: "Front-Opening Nursing Bra in dusty rose with an open cardigan in a bright nursery",
+  },
+  "lace-scoop-bralette-comfortable-seamless-underwear": {
+    src: "/story/lace-bralette-wine-bar.webp",
+    alt: "Lace Scoop Bralette in pink under a cream blazer at a wine bar",
+  },
+  "womens-bra": {
+    src: "/story/silicone-bra-hotel-mirror.webp",
+    alt: "Silicone Strapless Backless Bra in off-white, hotel mirror photo before a night out",
+  },
+  "seamless-support-bra-with-tummy-control": {
+    src: "/story/tummy-control-bra-vanity.webp",
+    alt: "Seamless Tummy Control Bra in nude at a bright bathroom vanity",
+  },
+  "cotton-lace-brief": {
+    src: "/story/cotton-lace-brief-sunday.webp",
+    alt: "Cotton Lace Brief in black with an oversized tee on a lazy Sunday morning",
+  },
+  "lace-breathable-thong-underwear": {
+    src: "/story/lace-thong-striped-shirt.webp",
+    alt: "Lace Thong in white under an oversized striped shirt, getting dressed",
+  },
+  "womens-high-waisted-breathable-traceless-thong-panties": {
+    src: "/story/ice-silk-thong-bathroom-mirror.webp",
+    alt: "Ice Silk High-Waist Thong in clay with a white tank, bathroom mirror photo",
+  },
+  "womens-menstrual-period-panties": {
+    src: "/story/period-briefs-cosy-sofa.webp",
+    alt: "Leak-Proof Period Briefs in black with a cropped hoodie on a cosy day at home",
+  },
+  "silk-sleep-eye-mask": {
+    src: "/story/silk-eye-mask-hotel-morning.webp",
+    alt: "Silk Eye Mask in light pink, waking up in a hotel bed",
+  },
+  "body-adhesive-glue-for-clothing-security": {
+    src: "/story/body-glue-getting-ready.webp",
+    alt: "Body Adhesive being used to hold the neckline of a strapless dress",
+  },
 };
