@@ -3,6 +3,7 @@ import { galleryUrls, indexedHex, indexedSwatch, GALLERY_INDEX } from "@/lib/gal
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
 import { ProductStory } from "@/components/site/ProductStory";
+import { descriptionParts, fitNote, fabricLine } from "@/lib/productStory";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -203,6 +204,8 @@ function ProductPage() {
   const liked = favHandles.includes(handle);
   const [visualOpen, setVisualOpen] = useState(false);
   const [tab, setTab] = useState<"details" | "fit" | "shipping">("details");
+  const [readMore, setReadMore] = useState(false);
+  useEffect(() => setReadMore(false), [handle]);
   const [sizePulse, setSizePulse] = useState(false);
   const atcRef = useRef<HTMLButtonElement>(null);
   const sizesRef = useRef<HTMLDivElement>(null);
@@ -1107,29 +1110,68 @@ function ProductPage() {
                     /* Structured HTML when the description has it (every page
                        rewritten since September does); plain text otherwise. */
                     const html = safeDescriptionHtml(node.descriptionHtml);
-                    return html && hasStructure(html) ? (
-                      <div
-                        className="[&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-[11px] [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-[0.14em] [&_h3]:text-[#0a0a0a] [&_p]:mt-3 [&_p:first-child]:mt-0 [&_p:first-child]:text-[#0a0a0a] [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-4 [&_li]:marker:text-[#bbbbbb] [&_strong]:font-medium [&_strong]:text-[#0a0a0a]"
-                        dangerouslySetInnerHTML={{ __html: html }}
-                      />
-                    ) : (
+                    if (!(html && hasStructure(html))) return (
                       <p className="whitespace-pre-line">
                         {node.description?.trim() ||
                           "Smooths and supports without digging in — and disappears under whatever you put on top."}
                       </p>
                     );
+                    /* Mobile: long stories (more than hook + one paragraph)
+                       collapse behind "Read more"; the Details bullets always
+                       show. The fit note lives in the Fit & Fabric tab. */
+                    const { intro, introParagraphs, sections } = descriptionParts(html);
+                    const collapsible = introParagraphs > 2;
+                    return (
+                      <div className="[&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-[11px] [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-[0.14em] [&_h3]:text-[#0a0a0a] [&_p]:mt-3 [&_p:first-child]:mt-0 [&_p:first-child]:text-[#0a0a0a] [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-4 [&_li]:marker:text-[#bbbbbb] [&_strong]:font-medium [&_strong]:text-[#0a0a0a]">
+                        <div
+                          className={collapsible && !readMore ? "[&>p:nth-of-type(n+3)]:hidden md:[&>p:nth-of-type(n+3)]:block" : ""}
+                          dangerouslySetInnerHTML={{ __html: intro }}
+                        />
+                        {collapsible && (
+                          <button
+                            type="button"
+                            onClick={() => setReadMore((v) => !v)}
+                            aria-expanded={readMore}
+                            className="mt-3 text-[11px] font-medium uppercase tracking-[0.14em] text-[#0a0a0a] underline underline-offset-4 md:hidden"
+                          >
+                            {readMore ? "Read less" : "Read more"}
+                          </button>
+                        )}
+                        {sections && <div dangerouslySetInnerHTML={{ __html: sections }} />}
+                      </div>
+                    );
                   })()}
                 {tab === "fit" && (
                   <div className="space-y-3">
-                    <p>
-                      Seamless knit with four-way stretch — smooths without squeezing, and
-                      holds its shape through the day.
-                    </p>
-                    <p>
-                      {sizeGuide.guideType !== "none"
-                        ? SIZE_GUIDES[sizeGuide.guideType].fitNote
-                        : "One size — designed to fit all."}
-                    </p>
+                    {/* The product's own fabric and fit note (was one generic
+                        "seamless knit with four-way stretch" line for every
+                        product, which was untrue for satin, cotton, lace, silk). */}
+                    {(() => {
+                      const fabric = fabricLine(node.descriptionHtml);
+                      const note = fitNote(node.descriptionHtml);
+                      return (
+                        <>
+                          {fabric && (
+                            <p>
+                              <span className="font-medium text-[#0a0a0a]">Fabric: </span>
+                              {fabric.charAt(0).toUpperCase() + fabric.slice(1)}.
+                            </p>
+                          )}
+                          <p>
+                            {note && note.heading !== "How to use" ? (
+                              <>
+                                <span className="font-medium text-[#0a0a0a]">Fit: </span>
+                                {note.text}
+                              </>
+                            ) : sizeGuide.guideType !== "none" ? (
+                              SIZE_GUIDES[sizeGuide.guideType].fitNote
+                            ) : (
+                              "One size — designed to fit all."
+                            )}
+                          </p>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
                 {tab === "shipping" && (

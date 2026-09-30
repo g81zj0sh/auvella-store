@@ -458,3 +458,23 @@ function otherQuestions(html: string | null | undefined, title: string, productT
   // Loungewear, sleepwear, robes, sets.
   return pick(fitQ, fabricQ, setQ);
 }
+
+/* ------------------------------------------------ description layout -- */
+
+/**
+ * Splits a (sanitised) description for the product-page tabs:
+ * - intro: everything before the first heading (hook + story paragraphs)
+ * - introParagraphs: how many <p> the intro has (drives mobile "Read more")
+ * - sections: the remaining headed sections, EXCEPT the fit note, which
+ *   belongs in the Fit & Fabric tab
+ */
+export function descriptionParts(html: string): { intro: string; introParagraphs: number; sections: string } {
+  const i = html.search(/<h3>/i);
+  const intro = i < 0 ? html : html.slice(0, i);
+  const rest = i < 0 ? "" : html.slice(i);
+  const sections = rest
+    .split(/(?=<h3>)/i)
+    .filter((sec) => !/^<h3>\s*fit note\s*<\/h3>/i.test(sec))
+    .join("");
+  return { intro, introParagraphs: (intro.match(/<p>/gi) ?? []).length, sections };
+}
