@@ -222,4 +222,8 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/body-glue-getting-ready.webp",
     alt: "Body Adhesive being used to hold the neckline of a strapless dress",
   },
+  "jelly-cup-multi-way-strapless-bra": {
+    src: "/story/jelly-cup-bra-wardrobe.webp",
+    alt: "Jelly Cup Multi-Way Strapless Bra in black with a satin skirt, getting ready at her wardrobe",
+  },
 };
