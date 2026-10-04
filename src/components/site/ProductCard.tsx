@@ -1,3 +1,4 @@
+import { TILE_IMAGES } from "@/lib/tileImages";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
@@ -108,7 +109,10 @@ export function ProductCard({ product, badge }: Props) {
   /* Bras only: the garment reads better than the model at tile size, so the
      layers swap. Driven by Shopify's product type, not the title, so a lounge
      set with a built-in bra isn't caught by a name match. */
-  const ghostFirst = node.productType === "Bra";
+  /* Posed tile shot for the active colour, when one exists: it rests on top
+     and the garment comes up on hover, for every category. */
+  const posed = activeColor ? TILE_IMAGES[node.handle]?.[activeColor] : undefined;
+  const ghostFirst = node.productType === "Bra" && !posed;
   const isIndexed = !!indexedEntry(node.handle, activeColor);
   const staticGhost = indexedGhost(node.handle, activeColor, node.images.edges.map((e) => e.node));
   const [sampledGhost, setSampledGhost] = useState<string | null>(null);
@@ -174,7 +178,7 @@ export function ProductCard({ product, badge }: Props) {
         {/* Resting layer: the garment alone for bras, the model everywhere else. */}
         {(primary || ghost) && (
           <EditorialImage
-            src={ghostFirst && ghost ? ghost : primary.url}
+            src={ghostFirst && ghost ? ghost : (posed ?? primary.url)}
             alt={primary?.altText ?? node.title}
             maxWidth={1000}
           />
