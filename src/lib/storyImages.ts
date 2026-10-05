@@ -226,4 +226,8 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/jelly-cup-bra-wardrobe.webp",
     alt: "Jelly Cup Multi-Way Strapless Bra in black with a satin skirt, getting ready at her wardrobe",
   },
+  "pure-color-tube-top-short-skirt-slim-backless-small-dress-dress": {
+    src: "/story/lace-up-mini-dress-sea-terrace.webp",
+    alt: "Cowl Neck Lace-Up Back Mini Dress in burgundy, showing the open lace-up back on a sea-view terrace at golden hour",
+  },
 };

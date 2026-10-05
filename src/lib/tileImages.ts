@@ -361,4 +361,9 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
   "women-waist-training-compression-garment": {
     "Black": "/tiles/women-waist-training-compression-garment-black.webp",
   },
+  "pure-color-tube-top-short-skirt-slim-backless-small-dress-dress": {
+    "White": "/tiles/cowl-neck-lace-up-mini-dress-white.webp",
+    "Black": "/tiles/cowl-neck-lace-up-mini-dress-black.webp",
+    "Burgundy": "/tiles/cowl-neck-lace-up-mini-dress-burgundy.webp",
+  },
 };

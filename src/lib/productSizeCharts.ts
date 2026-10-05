@@ -4,6 +4,17 @@
 // Cells marked [CHECK: …] are printed values that failed a sanity check — verify with supplier, never guess.
 
 export const PRODUCT_SIZE_CHARTS = {
+  "pure-color-tube-top-short-skirt-slim-backless-small-dress-dress": {
+    guideType: "clothing",
+    regionLabels: false,
+    columns: ["Size", "Clothing Length", "Bust", "Waist Circumference (Flat Lay – Stretch)", "Suitable Weight"],
+    rows: [
+      ["S", "64 cm (25\")", "72 cm (28.5\")", "68.5–96 cm (27–38\")", "40–52.5 kg"],
+      ["M", "65 cm (25.5\")", "76 cm (30\")", "72.5–100 cm (28.5–39.5\")", "52.5–62.5 kg"],
+      ["L", "66.5 cm (26\")", "82 cm (32.5\")", "78.5–106 cm (31–41.5\")", "62.5–70 kg (converted from 125–140 jin)"],
+    ],
+    fitNote: "Garment measurements in centimetres. The waist is shown relaxed – stretched; the bust is relaxed only. The lace-up back adjusts the fit across the back. Weights are in kilograms. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+  },
   "invisible-front-buckle-strapless-bra": {
     guideType: "bra",
     columns: ["Size", "Recommended Weight", "Fits Bra Sizes"],
@@ -673,6 +684,9 @@ export interface ProductChart {
   fitOverride?: string;
   hasUKConversion?: boolean;
   missingChart?: boolean;
+  /** false = show S/M/L without UK/US/EU equivalents (for cuts the
+      standard letter table would mislabel). */
+  regionLabels?: false;
 }
 
 /** The product's REAL supplier chart, or null if none usable. */

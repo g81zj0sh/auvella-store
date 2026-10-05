@@ -78,7 +78,14 @@ export function SizeGuide({
   const overrideNote =
     !productChart && fitOverride ? category?.overrides?.[fitOverride] : undefined;
 
-  const support = detectRegionSupport(guide.columns, guide.rows);
+  /* A chart can opt out of the standard letter-to-UK table when that table
+     would mislabel its cut (e.g. a small-cut dress): S/M/L then show with
+     measurements only, and the region toggle has nothing to convert. */
+  const noRegion = productChart?.regionLabels === false;
+  const detected = detectRegionSupport(guide.columns, guide.rows);
+  const support = noRegion
+    ? { ...detected, letters: [] as typeof detected.letters, supported: detected.hasBraTokens }
+    : detected;
 
   /** Cell display: strip internal notes, then translate the SIZE column in
       place — letter sizes gain their regional number ("S (8–10)"), bra
