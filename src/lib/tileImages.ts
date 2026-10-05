@@ -54,6 +54,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/satin-long-sleeve-pajama-set-black.webp",
   },
   "seamless-sculpt-sports-bra": {
+    "Brown": "/tiles/seamless-sculpt-sports-bra-brown.webp",
     "Black": "/tiles/seamless-sculpt-sports-bra-black.webp",
     "Dark Grey": "/tiles/seamless-sculpt-sports-bra-dark-grey.webp",
     "Navy Blue": "/tiles/seamless-sculpt-sports-bra-navy-blue.webp",
@@ -89,6 +90,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/cotton-lace-brief-black.webp",
   },
   "long-sleeve-zip-one-piece-swimsuit": {
+    "Royal Blue": "/tiles/long-sleeve-zip-one-piece-swimsuit-royal-blue.webp",
     "Wine Red": "/tiles/long-sleeve-zip-one-piece-swimsuit-wine-red.webp",
     "Light Blue": "/tiles/long-sleeve-zip-one-piece-swimsuit-light-blue.webp",
     "Green": "/tiles/long-sleeve-zip-one-piece-swimsuit-green.webp",
@@ -278,6 +280,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/high-waisted-tummy-control-shaping-pants-black.webp",
   },
   "women-asymmetric-long-sleeve-t-shirt-and-wide-leg-pants-set": {
+    "Khaki": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-khaki.webp",
     "Grey": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-grey.webp",
     "Dark Grey": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-dark-grey.webp",
     "Dark Green": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-dark-green.webp",
@@ -285,6 +288,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-black.webp",
   },
   "seamless-tummy-control-body-shaper-cami": {
+    "Blue": "/tiles/seamless-tummy-control-body-shaper-cami-blue.webp",
     "Pink": "/tiles/seamless-tummy-control-body-shaper-cami-pink.webp",
     "Brown": "/tiles/seamless-tummy-control-body-shaper-cami-brown.webp",
     "Nude": "/tiles/seamless-tummy-control-body-shaper-cami-nude.webp",
