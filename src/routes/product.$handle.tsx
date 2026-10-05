@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { LEGACY_PRODUCT_HANDLES } from "@/lib/productHandles";
 import { galleryUrls, indexedHex, indexedSwatch, GALLERY_INDEX } from "@/lib/galleryIndex";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
@@ -35,6 +36,11 @@ import { freeShippingThresholdFmt, useShippingCountry, PROCESSING_LABEL, transit
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
+  /* Renamed products: old links get a permanent redirect to the new handle. */
+  beforeLoad: ({ params }) => {
+    const to = LEGACY_PRODUCT_HANDLES[params.handle];
+    if (to) throw redirect({ to: "/product/$handle", params: { handle: to }, statusCode: 301 });
+  },
   loader: async ({ params, context }) =>
     context.queryClient.ensureQueryData({
       queryKey: ["product", params.handle],

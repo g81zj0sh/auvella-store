@@ -4,7 +4,7 @@
 // Cells marked [CHECK: …] are printed values that failed a sanity check — verify with supplier, never guess.
 
 export const PRODUCT_SIZE_CHARTS = {
-  "pure-color-tube-top-short-skirt-slim-backless-small-dress-dress": {
+  "cowl-neck-lace-up-back-mini-dress": {
     guideType: "clothing",
     regionLabels: false,
     columns: ["Size", "Clothing Length", "Bust", "Waist Circumference (Flat Lay – Stretch)", "Suitable Weight"],
