@@ -148,6 +148,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/u-neck-slit-maxi-dress-black.webp",
   },
   "off-shoulder-sculpt-midi-dress": {
+    "Pink": "/tiles/off-shoulder-sculpt-midi-dress-pink.webp",
     "Sky Blue": "/tiles/off-shoulder-sculpt-midi-dress-sky-blue.webp",
     "Navy Blue": "/tiles/off-shoulder-sculpt-midi-dress-navy-blue.webp",
     "Apricot": "/tiles/off-shoulder-sculpt-midi-dress-apricot.webp",
@@ -155,6 +156,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/off-shoulder-sculpt-midi-dress-black.webp",
   },
   "solid-colour-bikini-set": {
+    "Black": "/tiles/solid-colour-bikini-set-black.webp",
     "Pink": "/tiles/solid-colour-bikini-set-pink.webp",
     "Yellow": "/tiles/solid-colour-bikini-set-yellow.webp",
     "Apricot": "/tiles/solid-colour-bikini-set-apricot.webp",
@@ -174,6 +176,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Grey": "/tiles/long-sleeve-lounge-set-with-built-in-bra-grey.webp",
   },
   "womens-tie-side-triangle-bikini-set": {
+    "Blue": "/tiles/womens-tie-side-triangle-bikini-set-blue.webp",
     "Black": "/tiles/womens-tie-side-triangle-bikini-set-black.webp",
     "Red": "/tiles/womens-tie-side-triangle-bikini-set-red.webp",
     "Yellow": "/tiles/womens-tie-side-triangle-bikini-set-yellow.webp",
