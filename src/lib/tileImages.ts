@@ -15,51 +15,67 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     Brown: "/tiles/tummy-control-bodysuit-brown.webp",
   },
   "invisible-front-buckle-strapless-bra": {
+    "Black": "/tiles/invisible-front-buckle-strapless-bra-black.webp",
     "Nude": "/tiles/invisible-front-buckle-strapless-bra-nude.webp",
   },
   "high-waist-shaping-shorts-with-lace-trim": {
+    "Nude": "/tiles/high-waist-shaping-shorts-with-lace-trim-nude.webp",
     "Black": "/tiles/high-waist-shaping-shorts-with-lace-trim-black.webp",
   },
   "auvella-long-sleeve-sculpting-bodysuit": {
+    "Black": "/tiles/auvella-long-sleeve-sculpting-bodysuit-black.webp",
     "White": "/tiles/auvella-long-sleeve-sculpting-bodysuit-white.webp",
   },
   "auvella-seamless-comfort-bralette": {
+    "Grey": "/tiles/auvella-seamless-comfort-bralette-grey.webp",
     "Brown": "/tiles/auvella-seamless-comfort-bralette-brown.webp",
   },
   "fleece-lined-drawstring-lounge-set": {
+    "Pink": "/tiles/fleece-lined-drawstring-lounge-set-pink.webp",
     "White": "/tiles/fleece-lined-drawstring-lounge-set-white.webp",
   },
   "satin-cami-pajama-set": {
+    "Black": "/tiles/satin-cami-pajama-set-black.webp",
     "Red": "/tiles/satin-cami-pajama-set-red.webp",
   },
   "satin-long-sleeve-pajama-set": {
+    "Navy": "/tiles/satin-long-sleeve-pajama-set-navy.webp",
     "Black": "/tiles/satin-long-sleeve-pajama-set-black.webp",
   },
   "seamless-sculpt-sports-bra": {
+    "Plum Purple": "/tiles/seamless-sculpt-sports-bra-plum-purple.webp",
     "Cherry Red": "/tiles/seamless-sculpt-sports-bra-cherry-red.webp",
   },
   "v-neck-bodycon-mini-dress": {
+    "Black": "/tiles/v-neck-bodycon-mini-dress-black.webp",
     "Blue": "/tiles/v-neck-bodycon-mini-dress-blue.webp",
   },
   "ribbed-short-sleeve-mini-dress": {
+    "Dark Grey": "/tiles/ribbed-short-sleeve-mini-dress-dark-grey.webp",
     "White": "/tiles/ribbed-short-sleeve-mini-dress-white.webp",
   },
   "long-sleeve-sculpt-maxi-dress": {
+    "Black": "/tiles/long-sleeve-sculpt-maxi-dress-black.webp",
     "Navy Blue": "/tiles/long-sleeve-sculpt-maxi-dress-navy-blue.webp",
   },
   "strapless-slim-fit-bodysuit": {
+    "White": "/tiles/strapless-slim-fit-bodysuit-white.webp",
     "Black": "/tiles/strapless-slim-fit-bodysuit-black.webp",
   },
   "cotton-lace-brief": {
+    "White": "/tiles/cotton-lace-brief-white.webp",
     "Black": "/tiles/cotton-lace-brief-black.webp",
   },
   "long-sleeve-zip-one-piece-swimsuit": {
+    "Black": "/tiles/long-sleeve-zip-one-piece-swimsuit-black.webp",
     "Print": "/tiles/long-sleeve-zip-one-piece-swimsuit-print.webp",
   },
   "high-waist-body-shaping-shorts": {
+    "Nude": "/tiles/high-waist-body-shaping-shorts-nude.webp",
     "Black": "/tiles/high-waist-body-shaping-shorts-black.webp",
   },
   "womens-velvet-jumpsuit-long-sleeve-square-neck": {
+    "White": "/tiles/womens-velvet-jumpsuit-long-sleeve-squar-white.webp",
     "Black": "/tiles/womens-velvet-jumpsuit-long-sleeve-squar-black.webp",
   },
   "strapless-tummy-control-body-shaper": {
