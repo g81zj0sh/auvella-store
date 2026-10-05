@@ -47,12 +47,14 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Red": "/tiles/satin-cami-pajama-set-red.webp",
   },
   "satin-long-sleeve-pajama-set": {
+    "White": "/tiles/satin-long-sleeve-pajama-set-white.webp",
     "Champagne": "/tiles/satin-long-sleeve-pajama-set-champagne.webp",
     "Berry Fuchsia": "/tiles/satin-long-sleeve-pajama-set-berry-fuchsia.webp",
     "Navy": "/tiles/satin-long-sleeve-pajama-set-navy.webp",
     "Black": "/tiles/satin-long-sleeve-pajama-set-black.webp",
   },
   "seamless-sculpt-sports-bra": {
+    "Dark Grey": "/tiles/seamless-sculpt-sports-bra-dark-grey.webp",
     "Navy Blue": "/tiles/seamless-sculpt-sports-bra-navy-blue.webp",
     "Clay": "/tiles/seamless-sculpt-sports-bra-clay.webp",
     "Plum Purple": "/tiles/seamless-sculpt-sports-bra-plum-purple.webp",
@@ -86,6 +88,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/cotton-lace-brief-black.webp",
   },
   "long-sleeve-zip-one-piece-swimsuit": {
+    "Light Blue": "/tiles/long-sleeve-zip-one-piece-swimsuit-light-blue.webp",
     "Green": "/tiles/long-sleeve-zip-one-piece-swimsuit-green.webp",
     "Brown": "/tiles/long-sleeve-zip-one-piece-swimsuit-brown.webp",
     "Black": "/tiles/long-sleeve-zip-one-piece-swimsuit-black.webp",
@@ -108,6 +111,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/strapless-tummy-control-body-shaper-black.webp",
   },
   "lace-breathable-thong-underwear": {
+    "Angora Red": "/tiles/lace-breathable-thong-underwear-angora-red.webp",
     "Iris Purple": "/tiles/lace-breathable-thong-underwear-iris-purple.webp",
     "Nude": "/tiles/lace-breathable-thong-underwear-nude.webp",
     "Brown": "/tiles/lace-breathable-thong-underwear-brown.webp",
@@ -119,24 +123,28 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/seamless-sculpting-bodysuit-black.webp",
   },
   "slim-fit-long-sleeve-top": {
+    "Blue": "/tiles/slim-fit-long-sleeve-top-blue.webp",
     "White": "/tiles/slim-fit-long-sleeve-top-white.webp",
     "Light Grey": "/tiles/slim-fit-long-sleeve-top-light-grey.webp",
     "Grey": "/tiles/slim-fit-long-sleeve-top-grey.webp",
     "Black": "/tiles/slim-fit-long-sleeve-top-black.webp",
   },
   "sleeveless-ribbed-midi-dress": {
+    "Black": "/tiles/sleeveless-ribbed-midi-dress-black.webp",
     "Light Blue": "/tiles/sleeveless-ribbed-midi-dress-light-blue.webp",
     "Green": "/tiles/sleeveless-ribbed-midi-dress-green.webp",
     "Khaki": "/tiles/sleeveless-ribbed-midi-dress-khaki.webp",
     "White": "/tiles/sleeveless-ribbed-midi-dress-white.webp",
   },
   "u-neck-slit-maxi-dress": {
+    "White": "/tiles/u-neck-slit-maxi-dress-white.webp",
     "Haze Blue": "/tiles/u-neck-slit-maxi-dress-haze-blue.webp",
     "Baby Pink": "/tiles/u-neck-slit-maxi-dress-baby-pink.webp",
     "Brown": "/tiles/u-neck-slit-maxi-dress-brown.webp",
     "Black": "/tiles/u-neck-slit-maxi-dress-black.webp",
   },
   "off-shoulder-sculpt-midi-dress": {
+    "Sky Blue": "/tiles/off-shoulder-sculpt-midi-dress-sky-blue.webp",
     "Navy Blue": "/tiles/off-shoulder-sculpt-midi-dress-navy-blue.webp",
     "Apricot": "/tiles/off-shoulder-sculpt-midi-dress-apricot.webp",
     "Brown": "/tiles/off-shoulder-sculpt-midi-dress-brown.webp",
@@ -202,6 +210,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Beige": "/tiles/womens-swimwear-beige.webp",
   },
   "lace-scoop-bralette-comfortable-seamless-underwear": {
+    "Chinese Red": "/tiles/lace-scoop-bralette-comfortable-seamless-chinese-red.webp",
     "Dream Blue": "/tiles/lace-scoop-bralette-comfortable-seamless-dream-blue.webp",
     "Pink": "/tiles/lace-scoop-bralette-comfortable-seamless-pink.webp",
   },
@@ -221,11 +230,13 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "White": "/tiles/womens-lace-long-sleeve-dress-white.webp",
   },
   "jelly-cup-multi-way-strapless-bra": {
+    "White": "/tiles/jelly-cup-multi-way-strapless-bra-white.webp",
     "Brown": "/tiles/jelly-cup-multi-way-strapless-bra-brown.webp",
     "Nude": "/tiles/jelly-cup-multi-way-strapless-bra-nude.webp",
     "Black": "/tiles/jelly-cup-multi-way-strapless-bra-black.webp",
   },
   "womens-bra": {
+    "Tan": "/tiles/womens-bra-tan.webp",
     "Green": "/tiles/womens-bra-green.webp",
     "Black": "/tiles/womens-bra-black.webp",
     "Off-White": "/tiles/womens-bra-off-white.webp",
@@ -253,6 +264,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/seamless-tummy-control-body-shaper-cami-black.webp",
   },
   "womens-menstrual-period-panties": {
+    "Apricot": "/tiles/womens-menstrual-period-panties-apricot.webp",
     "Denim Blue": "/tiles/womens-menstrual-period-panties-denim-blue.webp",
     "Watermelon Red": "/tiles/womens-menstrual-period-panties-watermelon-red.webp",
     "Black": "/tiles/womens-menstrual-period-panties-black.webp",
