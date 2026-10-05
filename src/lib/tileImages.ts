@@ -79,90 +79,121 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/womens-velvet-jumpsuit-long-sleeve-squar-black.webp",
   },
   "strapless-tummy-control-body-shaper": {
+    "Nude": "/tiles/strapless-tummy-control-body-shaper-nude.webp",
     "Black": "/tiles/strapless-tummy-control-body-shaper-black.webp",
   },
   "lace-breathable-thong-underwear": {
+    "Brown": "/tiles/lace-breathable-thong-underwear-brown.webp",
     "White": "/tiles/lace-breathable-thong-underwear-white.webp",
   },
   "seamless-sculpting-bodysuit": {
+    "Nude": "/tiles/seamless-sculpting-bodysuit-nude.webp",
     "Black": "/tiles/seamless-sculpting-bodysuit-black.webp",
   },
   "slim-fit-long-sleeve-top": {
+    "Grey": "/tiles/slim-fit-long-sleeve-top-grey.webp",
     "Black": "/tiles/slim-fit-long-sleeve-top-black.webp",
   },
   "sleeveless-ribbed-midi-dress": {
+    "Khaki": "/tiles/sleeveless-ribbed-midi-dress-khaki.webp",
     "White": "/tiles/sleeveless-ribbed-midi-dress-white.webp",
   },
   "u-neck-slit-maxi-dress": {
+    "Brown": "/tiles/u-neck-slit-maxi-dress-brown.webp",
     "Black": "/tiles/u-neck-slit-maxi-dress-black.webp",
   },
   "off-shoulder-sculpt-midi-dress": {
+    "Brown": "/tiles/off-shoulder-sculpt-midi-dress-brown.webp",
     "Black": "/tiles/off-shoulder-sculpt-midi-dress-black.webp",
   },
   "solid-colour-bikini-set": {
+    "Purple": "/tiles/solid-colour-bikini-set-purple.webp",
     "White": "/tiles/solid-colour-bikini-set-white.webp",
   },
   "ribbed-cut-out-one-piece-swimsuit": {
+    "Blue": "/tiles/ribbed-cut-out-one-piece-swimsuit-blue.webp",
     "Black": "/tiles/ribbed-cut-out-one-piece-swimsuit-black.webp",
   },
   "long-sleeve-lounge-set-with-built-in-bra": {
+    "White": "/tiles/long-sleeve-lounge-set-with-built-in-bra-white.webp",
     "Grey": "/tiles/long-sleeve-lounge-set-with-built-in-bra-grey.webp",
   },
   "womens-tie-side-triangle-bikini-set": {
+    "Pink": "/tiles/womens-tie-side-triangle-bikini-set-pink.webp",
     "White": "/tiles/womens-tie-side-triangle-bikini-set-white.webp",
   },
   "womens-high-waisted-ruched-bikini-bottoms": {
+    "Orange": "/tiles/womens-high-waisted-ruched-bikini-bottom-orange.webp",
     "Black": "/tiles/womens-high-waisted-ruched-bikini-bottom-black.webp",
   },
   "satin-tie-waist-robe": {
+    "Sunset Red": "/tiles/satin-tie-waist-robe-sunset-red.webp",
     "Watermelon Red": "/tiles/satin-tie-waist-robe-watermelon-red.webp",
   },
   "seamless-shaping-long-sleeve-bodysuit": {
+    "Nude": "/tiles/seamless-shaping-long-sleeve-bodysuit-nude.webp",
     "Black": "/tiles/seamless-shaping-long-sleeve-bodysuit-black.webp",
   },
   "womens-high-waisted-breathable-traceless-thong-panties": {
+    "White": "/tiles/womens-high-waisted-breathable-traceless-white.webp",
     "Black": "/tiles/womens-high-waisted-breathable-traceless-black.webp",
   },
   "maternity-nursing-bra-front-opening-push-up": {
+    "Nude": "/tiles/maternity-nursing-bra-front-opening-push-nude.webp",
     "Black": "/tiles/maternity-nursing-bra-front-opening-push-black.webp",
   },
   "womens-swimwear": {
+    "Pink": "/tiles/womens-swimwear-pink.webp",
     "Beige": "/tiles/womens-swimwear-beige.webp",
   },
   "lace-scoop-bralette-comfortable-seamless-underwear": {
     "Pink": "/tiles/lace-scoop-bralette-comfortable-seamless-pink.webp",
   },
   "womens-one-piece-diamond-swimsuit": {
+    "Black": "/tiles/womens-one-piece-diamond-swimsuit-black.webp",
     "Pink": "/tiles/womens-one-piece-diamond-swimsuit-pink.webp",
   },
   "womens-two-piece-swimsuit": {
+    "Red": "/tiles/womens-two-piece-swimsuit-red.webp",
     "White": "/tiles/womens-two-piece-swimsuit-white.webp",
   },
   "womens-lace-long-sleeve-dress": {
+    "Black": "/tiles/womens-lace-long-sleeve-dress-black.webp",
     "White": "/tiles/womens-lace-long-sleeve-dress-white.webp",
   },
   "jelly-cup-multi-way-strapless-bra": {
+    "Nude": "/tiles/jelly-cup-multi-way-strapless-bra-nude.webp",
     "Black": "/tiles/jelly-cup-multi-way-strapless-bra-black.webp",
   },
   "womens-bra": {
+    "Black": "/tiles/womens-bra-black.webp",
     "Off-White": "/tiles/womens-bra-off-white.webp",
   },
   "waist-shaping-fitness-body-shaper": {
+    "Pink": "/tiles/waist-shaping-fitness-body-shaper-pink.webp",
     "Black": "/tiles/waist-shaping-fitness-body-shaper-black.webp",
   },
   "high-waisted-tummy-control-shaping-pants": {
+    "Nude": "/tiles/high-waisted-tummy-control-shaping-pants-nude.webp",
     "Black": "/tiles/high-waisted-tummy-control-shaping-pants-black.webp",
   },
   "women-asymmetric-long-sleeve-t-shirt-and-wide-leg-pants-set": {
+    "Brick Red": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-brick-red.webp",
     "Black": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-black.webp",
   },
   "seamless-tummy-control-body-shaper-cami": {
+    "White": "/tiles/seamless-tummy-control-body-shaper-cami-white.webp",
     "Black": "/tiles/seamless-tummy-control-body-shaper-cami-black.webp",
   },
   "womens-menstrual-period-panties": {
+    "Watermelon Red": "/tiles/womens-menstrual-period-panties-watermelon-red.webp",
     "Black": "/tiles/womens-menstrual-period-panties-black.webp",
   },
   "seamless-support-bra-with-tummy-control": {
+    "Light Brown": "/tiles/seamless-support-bra-with-tummy-control-light-brown.webp",
     "Nude": "/tiles/seamless-support-bra-with-tummy-control-nude.webp",
+  },
+  "women-waist-training-compression-garment": {
+    "Black": "/tiles/women-waist-training-compression-garment-black.webp",
   },
 };
