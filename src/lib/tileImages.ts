@@ -86,6 +86,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/cotton-lace-brief-black.webp",
   },
   "long-sleeve-zip-one-piece-swimsuit": {
+    "Green": "/tiles/long-sleeve-zip-one-piece-swimsuit-green.webp",
     "Brown": "/tiles/long-sleeve-zip-one-piece-swimsuit-brown.webp",
     "Black": "/tiles/long-sleeve-zip-one-piece-swimsuit-black.webp",
     "Print": "/tiles/long-sleeve-zip-one-piece-swimsuit-print.webp",
@@ -95,16 +96,19 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/high-waist-body-shaping-shorts-black.webp",
   },
   "womens-velvet-jumpsuit-long-sleeve-square-neck": {
+    "Apricot": "/tiles/womens-velvet-jumpsuit-long-sleeve-squar-apricot.webp",
     "Brown": "/tiles/womens-velvet-jumpsuit-long-sleeve-squar-brown.webp",
     "White": "/tiles/womens-velvet-jumpsuit-long-sleeve-squar-white.webp",
     "Black": "/tiles/womens-velvet-jumpsuit-long-sleeve-squar-black.webp",
   },
   "strapless-tummy-control-body-shaper": {
+    "White": "/tiles/strapless-tummy-control-body-shaper-white.webp",
     "Coffee": "/tiles/strapless-tummy-control-body-shaper-coffee.webp",
     "Nude": "/tiles/strapless-tummy-control-body-shaper-nude.webp",
     "Black": "/tiles/strapless-tummy-control-body-shaper-black.webp",
   },
   "lace-breathable-thong-underwear": {
+    "Iris Purple": "/tiles/lace-breathable-thong-underwear-iris-purple.webp",
     "Nude": "/tiles/lace-breathable-thong-underwear-nude.webp",
     "Brown": "/tiles/lace-breathable-thong-underwear-brown.webp",
     "White": "/tiles/lace-breathable-thong-underwear-white.webp",
