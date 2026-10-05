@@ -119,26 +119,31 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/seamless-sculpting-bodysuit-black.webp",
   },
   "slim-fit-long-sleeve-top": {
+    "White": "/tiles/slim-fit-long-sleeve-top-white.webp",
     "Light Grey": "/tiles/slim-fit-long-sleeve-top-light-grey.webp",
     "Grey": "/tiles/slim-fit-long-sleeve-top-grey.webp",
     "Black": "/tiles/slim-fit-long-sleeve-top-black.webp",
   },
   "sleeveless-ribbed-midi-dress": {
+    "Light Blue": "/tiles/sleeveless-ribbed-midi-dress-light-blue.webp",
     "Green": "/tiles/sleeveless-ribbed-midi-dress-green.webp",
     "Khaki": "/tiles/sleeveless-ribbed-midi-dress-khaki.webp",
     "White": "/tiles/sleeveless-ribbed-midi-dress-white.webp",
   },
   "u-neck-slit-maxi-dress": {
+    "Haze Blue": "/tiles/u-neck-slit-maxi-dress-haze-blue.webp",
     "Baby Pink": "/tiles/u-neck-slit-maxi-dress-baby-pink.webp",
     "Brown": "/tiles/u-neck-slit-maxi-dress-brown.webp",
     "Black": "/tiles/u-neck-slit-maxi-dress-black.webp",
   },
   "off-shoulder-sculpt-midi-dress": {
+    "Navy Blue": "/tiles/off-shoulder-sculpt-midi-dress-navy-blue.webp",
     "Apricot": "/tiles/off-shoulder-sculpt-midi-dress-apricot.webp",
     "Brown": "/tiles/off-shoulder-sculpt-midi-dress-brown.webp",
     "Black": "/tiles/off-shoulder-sculpt-midi-dress-black.webp",
   },
   "solid-colour-bikini-set": {
+    "Yellow": "/tiles/solid-colour-bikini-set-yellow.webp",
     "Apricot": "/tiles/solid-colour-bikini-set-apricot.webp",
     "Purple": "/tiles/solid-colour-bikini-set-purple.webp",
     "White": "/tiles/solid-colour-bikini-set-white.webp",
@@ -149,41 +154,49 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/ribbed-cut-out-one-piece-swimsuit-black.webp",
   },
   "long-sleeve-lounge-set-with-built-in-bra": {
+    "Red": "/tiles/long-sleeve-lounge-set-with-built-in-bra-red.webp",
     "Black": "/tiles/long-sleeve-lounge-set-with-built-in-bra-black.webp",
     "White": "/tiles/long-sleeve-lounge-set-with-built-in-bra-white.webp",
     "Grey": "/tiles/long-sleeve-lounge-set-with-built-in-bra-grey.webp",
   },
   "womens-tie-side-triangle-bikini-set": {
+    "Red": "/tiles/womens-tie-side-triangle-bikini-set-red.webp",
     "Yellow": "/tiles/womens-tie-side-triangle-bikini-set-yellow.webp",
     "Pink": "/tiles/womens-tie-side-triangle-bikini-set-pink.webp",
     "White": "/tiles/womens-tie-side-triangle-bikini-set-white.webp",
   },
   "womens-high-waisted-ruched-bikini-bottoms": {
+    "Deep Red": "/tiles/womens-high-waisted-ruched-bikini-bottom-deep-red.webp",
     "Sky Blue": "/tiles/womens-high-waisted-ruched-bikini-bottom-sky-blue.webp",
     "Orange": "/tiles/womens-high-waisted-ruched-bikini-bottom-orange.webp",
     "Black": "/tiles/womens-high-waisted-ruched-bikini-bottom-black.webp",
   },
   "satin-tie-waist-robe": {
+    "Champagne Gold": "/tiles/satin-tie-waist-robe-champagne-gold.webp",
     "Champagne Yellow": "/tiles/satin-tie-waist-robe-champagne-yellow.webp",
     "Sunset Red": "/tiles/satin-tie-waist-robe-sunset-red.webp",
     "Watermelon Red": "/tiles/satin-tie-waist-robe-watermelon-red.webp",
   },
   "seamless-shaping-long-sleeve-bodysuit": {
+    "Bright Red": "/tiles/seamless-shaping-long-sleeve-bodysuit-bright-red.webp",
     "Brown": "/tiles/seamless-shaping-long-sleeve-bodysuit-brown.webp",
     "Nude": "/tiles/seamless-shaping-long-sleeve-bodysuit-nude.webp",
     "Black": "/tiles/seamless-shaping-long-sleeve-bodysuit-black.webp",
   },
   "womens-high-waisted-breathable-traceless-thong-panties": {
+    "Coffee": "/tiles/womens-high-waisted-breathable-traceless-coffee.webp",
     "Clay": "/tiles/womens-high-waisted-breathable-traceless-clay.webp",
     "White": "/tiles/womens-high-waisted-breathable-traceless-white.webp",
     "Black": "/tiles/womens-high-waisted-breathable-traceless-black.webp",
   },
   "maternity-nursing-bra-front-opening-push-up": {
+    "Dusty Rose": "/tiles/maternity-nursing-bra-front-opening-push-dusty-rose.webp",
     "Grey": "/tiles/maternity-nursing-bra-front-opening-push-grey.webp",
     "Nude": "/tiles/maternity-nursing-bra-front-opening-push-nude.webp",
     "Black": "/tiles/maternity-nursing-bra-front-opening-push-black.webp",
   },
   "womens-swimwear": {
+    "Red": "/tiles/womens-swimwear-red.webp",
     "Yellow": "/tiles/womens-swimwear-yellow.webp",
     "Pink": "/tiles/womens-swimwear-pink.webp",
     "Beige": "/tiles/womens-swimwear-beige.webp",
@@ -197,6 +210,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Pink": "/tiles/womens-one-piece-diamond-swimsuit-pink.webp",
   },
   "womens-two-piece-swimsuit": {
+    "Green": "/tiles/womens-two-piece-swimsuit-green.webp",
     "Black": "/tiles/womens-two-piece-swimsuit-black.webp",
     "Red": "/tiles/womens-two-piece-swimsuit-red.webp",
     "White": "/tiles/womens-two-piece-swimsuit-white.webp",
@@ -227,11 +241,13 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/high-waisted-tummy-control-shaping-pants-black.webp",
   },
   "women-asymmetric-long-sleeve-t-shirt-and-wide-leg-pants-set": {
+    "Dark Grey": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-dark-grey.webp",
     "Dark Green": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-dark-green.webp",
     "Brick Red": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-brick-red.webp",
     "Black": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-black.webp",
   },
   "seamless-tummy-control-body-shaper-cami": {
+    "Brown": "/tiles/seamless-tummy-control-body-shaper-cami-brown.webp",
     "Nude": "/tiles/seamless-tummy-control-body-shaper-cami-nude.webp",
     "White": "/tiles/seamless-tummy-control-body-shaper-cami-white.webp",
     "Black": "/tiles/seamless-tummy-control-body-shaper-cami-black.webp",
@@ -242,6 +258,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/womens-menstrual-period-panties-black.webp",
   },
   "seamless-support-bra-with-tummy-control": {
+    "Enchanted Red": "/tiles/seamless-support-bra-with-tummy-control-enchanted-red.webp",
     "Light Green": "/tiles/seamless-support-bra-with-tummy-control-light-green.webp",
     "Light Brown": "/tiles/seamless-support-bra-with-tummy-control-light-brown.webp",
     "Nude": "/tiles/seamless-support-bra-with-tummy-control-nude.webp",
