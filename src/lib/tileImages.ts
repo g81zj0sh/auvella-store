@@ -151,6 +151,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/off-shoulder-sculpt-midi-dress-black.webp",
   },
   "solid-colour-bikini-set": {
+    "Pink": "/tiles/solid-colour-bikini-set-pink.webp",
     "Yellow": "/tiles/solid-colour-bikini-set-yellow.webp",
     "Apricot": "/tiles/solid-colour-bikini-set-apricot.webp",
     "Purple": "/tiles/solid-colour-bikini-set-purple.webp",
@@ -162,18 +163,21 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/ribbed-cut-out-one-piece-swimsuit-black.webp",
   },
   "long-sleeve-lounge-set-with-built-in-bra": {
+    "Pink": "/tiles/long-sleeve-lounge-set-with-built-in-bra-pink.webp",
     "Red": "/tiles/long-sleeve-lounge-set-with-built-in-bra-red.webp",
     "Black": "/tiles/long-sleeve-lounge-set-with-built-in-bra-black.webp",
     "White": "/tiles/long-sleeve-lounge-set-with-built-in-bra-white.webp",
     "Grey": "/tiles/long-sleeve-lounge-set-with-built-in-bra-grey.webp",
   },
   "womens-tie-side-triangle-bikini-set": {
+    "Black": "/tiles/womens-tie-side-triangle-bikini-set-black.webp",
     "Red": "/tiles/womens-tie-side-triangle-bikini-set-red.webp",
     "Yellow": "/tiles/womens-tie-side-triangle-bikini-set-yellow.webp",
     "Pink": "/tiles/womens-tie-side-triangle-bikini-set-pink.webp",
     "White": "/tiles/womens-tie-side-triangle-bikini-set-white.webp",
   },
   "womens-high-waisted-ruched-bikini-bottoms": {
+    "Army Green": "/tiles/womens-high-waisted-ruched-bikini-bottom-army-green.webp",
     "Deep Red": "/tiles/womens-high-waisted-ruched-bikini-bottom-deep-red.webp",
     "Sky Blue": "/tiles/womens-high-waisted-ruched-bikini-bottom-sky-blue.webp",
     "Orange": "/tiles/womens-high-waisted-ruched-bikini-bottom-orange.webp",
