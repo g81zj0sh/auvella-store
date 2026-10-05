@@ -201,6 +201,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/womens-high-waisted-ruched-bikini-bottom-black.webp",
   },
   "satin-tie-waist-robe": {
+    "Champagne": "/tiles/satin-tie-waist-robe-champagne.webp",
     "Blush Pink": "/tiles/satin-tie-waist-robe-blush-pink.webp",
     "Wine Red": "/tiles/satin-tie-waist-robe-wine-red.webp",
     "Silver Grey": "/tiles/satin-tie-waist-robe-silver-grey.webp",
@@ -234,6 +235,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/maternity-nursing-bra-front-opening-push-black.webp",
   },
   "womens-swimwear": {
+    "Orange": "/tiles/womens-swimwear-orange.webp",
     "Military Green": "/tiles/womens-swimwear-military-green.webp",
     "Black": "/tiles/womens-swimwear-black.webp",
     "Lake Blue": "/tiles/womens-swimwear-lake-blue.webp",
@@ -243,6 +245,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Beige": "/tiles/womens-swimwear-beige.webp",
   },
   "lace-scoop-bralette-comfortable-seamless-underwear": {
+    "Purple": "/tiles/lace-scoop-bralette-comfortable-seamless-purple.webp",
     "Angora Red": "/tiles/lace-scoop-bralette-comfortable-seamless-angora-red.webp",
     "Black": "/tiles/lace-scoop-bralette-comfortable-seamless-black.webp",
     "Brown": "/tiles/lace-scoop-bralette-comfortable-seamless-brown.webp",
