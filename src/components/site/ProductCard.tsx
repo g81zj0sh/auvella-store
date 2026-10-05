@@ -11,7 +11,7 @@ import { EditorialImage } from "@/components/site/EditorialImage";
 import { useMemo, useState, useEffect } from "react";
 import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
 import { findGhostForColor } from "@/lib/imageBackdrop";
-import { indexedEntry, indexedGhost, indexedHex, indexedSwatch } from "@/lib/galleryIndex";
+import { indexedEntry, indexedGhost, indexedHex, indexedRestImage, indexedSwatch } from "@/lib/galleryIndex";
 import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
 import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
 
@@ -100,19 +100,16 @@ export function ProductCard({ product, badge }: Props) {
   const run = (activeColor && colorMap.get(activeColor)) || [];
   const primary = run[0]?.node ?? image;
 
-  /* Garment-only shot for the active colour.
-     Bras lead with the garment on its own and reveal the model on hover; every
-     other category does the reverse. Indexed products resolve the ghost
+  /* Garment-only shot for the active colour, shown on hover. Indexed products resolve the ghost
      synchronously and render both layers from first paint, so the hover is a
      pure opacity flip. Unindexed products fall back to the sampler, run on
      mount rather than on hover so the cost is paid early. */
-  /* Bras only: the garment reads better than the model at tile size, so the
-     layers swap. Driven by Shopify's product type, not the title, so a lounge
-     set with a built-in bra isn't caught by a name match. */
   /* Posed tile shot for the active colour, when one exists: it rests on top
      and the garment comes up on hover, for every category. */
   const posed = activeColor ? TILE_IMAGES[node.handle]?.[activeColor] : undefined;
-  const ghostFirst = node.productType === "Bra" && !posed;
+  /* Every category, bras included, rests on the model (the posed shot where
+     there is one, otherwise that colour's model photo) and shows the garment
+     on hover. Bras used to lead with the garment; Joshua wants the model. */
   const isIndexed = !!indexedEntry(node.handle, activeColor);
   const staticGhost = indexedGhost(node.handle, activeColor, node.images.edges.map((e) => e.node));
   const [sampledGhost, setSampledGhost] = useState<string | null>(null);
@@ -178,7 +175,7 @@ export function ProductCard({ product, badge }: Props) {
         {/* Resting layer: the garment alone for bras, the model everywhere else. */}
         {(primary || ghost) && (
           <EditorialImage
-            src={ghostFirst && ghost ? ghost : (posed ?? primary.url)}
+            src={posed ?? indexedRestImage(node.handle, activeColor, node.images.edges.map((e) => e.node), primary.url)}
             alt={primary?.altText ?? node.title}
             maxWidth={1000}
           />
@@ -186,8 +183,8 @@ export function ProductCard({ product, badge }: Props) {
         {/* Hover layer: whichever of the two isn't resting. */}
         {hoverCapable && ghost && primary && (
           <img
-            src={shopifyImg(ghostFirst ? primary.url : ghost, 800)}
-            srcSet={shopifySrcSet(ghostFirst ? primary.url : ghost, 1000)}
+            src={shopifyImg(ghost, 800)}
+            srcSet={shopifySrcSet(ghost, 1000)}
             sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 50vw"
             alt=""
             aria-hidden="true"

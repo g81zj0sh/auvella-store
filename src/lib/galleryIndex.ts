@@ -429,8 +429,31 @@ export function indexedGhost(handle: string, color: string | null | undefined, i
   const e = indexedEntry(handle, color);
   if (!e || e.g.length === 0) return null;
   for (const im of images) if (fileOf(im.url) === e.g[0]) return im.url;
-  return null;
+  return STORE_FILES + e.g[0];
 }
+
+/** Model photo a collection tile should rest on for a colour. Keeps Shopify's
+    own pick when it is one of that colour's model shots; otherwise uses the
+    colour's first indexed model shot that was fetched. Some colours have no
+    Shopify colour-to-image link, which left the tile showing another colour's
+    photo (e.g. Purple swatch, red bralette). */
+export function indexedRestImage(handle: string, color: string | null | undefined, images: Img[], current: string): string {
+  const e = indexedEntry(handle, color);
+  if (!e || e.m.length === 0) return current;
+  if (e.m.includes(fileOf(current))) return current;
+  const byFile = new Map<string, string>();
+  for (const im of images) byFile.set(fileOf(im.url), im.url);
+  for (const f of e.m) {
+    const u = byFile.get(f);
+    if (u) return u;
+  }
+  // Not in the fetched batch (collection queries only fetch a product's first
+  // images): every indexed file lives in the store's one Files folder.
+  return STORE_FILES + e.m[0];
+}
+
+/** The store's Shopify Files folder; every indexed filename lives here. */
+const STORE_FILES = "https://cdn.shopify.com/s/files/1/0988/0738/2311/files/";
 
 /** Measured swatch colour, or null to fall back to the name map. */
 export function indexedHex(handle: string, color: string | null | undefined): string | null {
