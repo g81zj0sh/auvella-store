@@ -163,6 +163,8 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/off-shoulder-sculpt-midi-dress-black.webp",
   },
   "solid-colour-bikini-set": {
+    "Emerald Green": "/tiles/solid-colour-bikini-set-emerald-green.webp",
+    "Hot Pink": "/tiles/solid-colour-bikini-set-hot-pink.webp",
     "Royal Blue": "/tiles/solid-colour-bikini-set-royal-blue.webp",
     "Blue": "/tiles/solid-colour-bikini-set-blue.webp",
     "Orange": "/tiles/solid-colour-bikini-set-orange.webp",
@@ -231,6 +233,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/womens-high-waisted-breathable-traceless-black.webp",
   },
   "maternity-nursing-bra-front-opening-push-up": {
+    "Chocolate": "/tiles/maternity-nursing-bra-front-opening-push-chocolate.webp",
     "Taupe": "/tiles/maternity-nursing-bra-front-opening-push-taupe.webp",
     "Light Nude": "/tiles/maternity-nursing-bra-front-opening-push-light-nude.webp",
     "Rouge": "/tiles/maternity-nursing-bra-front-opening-push-rouge.webp",
@@ -242,6 +245,7 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/maternity-nursing-bra-front-opening-push-black.webp",
   },
   "womens-swimwear": {
+    "Lotus Pink": "/tiles/womens-swimwear-lotus-pink.webp",
     "Dark Green": "/tiles/womens-swimwear-dark-green.webp",
     "Orange": "/tiles/womens-swimwear-orange.webp",
     "Military Green": "/tiles/womens-swimwear-military-green.webp",
