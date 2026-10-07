@@ -11,11 +11,10 @@ import { usePreferences } from "@/lib/preferences";
 import {
   SIZE_REGIONS,
   detectRegionSupport,
-  letterEquivalent,
-  normalizeLetter,
   convertBraTokens,
   type SizeRegion,
 } from "@/lib/sizeRegions";
+import { hasSizeLabels, sizeLabel } from "@/lib/sizeLabels";
 
 /*
  * Size & Fit Guide modal — same shell and styling as before; the content
@@ -42,6 +41,7 @@ export function SizeGuide({
   guideType,
   fitOverride,
   productChart,
+  handle,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -50,6 +50,8 @@ export function SizeGuide({
   /** Real supplier chart for this product — takes priority over the
       category guide when present. */
   productChart?: ProductChart | null;
+  /** Product handle, for its per-product UK sizes (sizeLabels.ts). */
+  handle?: string;
 }) {
   /* Hooks first: this component is rendered with guideType "none" while the
      product is still loading, and gained a chart once the data arrived. With
@@ -81,7 +83,9 @@ export function SizeGuide({
   /* A chart can opt out of the standard letter-to-UK table when that table
      would mislabel its cut (e.g. a small-cut dress): S/M/L then show with
      measurements only, and the region toggle has nothing to convert. */
-  const noRegion = productChart?.regionLabels === false;
+  /* UK equivalents come only from this product's own chart (sizeLabels.ts);
+     without them, letters show plain and there is nothing to convert. */
+  const noRegion = productChart?.regionLabels === false || !hasSizeLabels(handle);
   const detected = detectRegionSupport(guide.columns, guide.rows);
   const support = noRegion
     ? { ...detected, letters: [] as typeof detected.letters, supported: detected.hasBraTokens }
@@ -104,14 +108,12 @@ export function SizeGuide({
        fits implies dress size decides bra size, which it doesn't. */
     const isBraGuide = (productChart?.guideType ?? guideType) === "bra";
     if (isSizeCol && support.letters.length > 0 && !isBraGuide) {
-      const letter = normalizeLetter(txt);
-      if (letter) {
+      const regional = handle ? sizeLabel(handle, txt, region) : null;
+      if (regional) {
         return (
           <>
             {txt}
-            <span className="ml-1.5 text-cocoa">
-              ({letterEquivalent(letter, region)})
-            </span>
+            <span className="ml-1.5 text-cocoa">({regional})</span>
           </>
         );
       }

@@ -431,7 +431,7 @@ export function CartDrawer() {
                   {isLoading || isSyncing || isCheckingOut ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <>{t("Checkout")} — {display(payable, baseCurrency)}</>
+                    <>{t("Checkout securely")} — {display(payable, baseCurrency)}</>
                   )}
                 </Button>
               </div>

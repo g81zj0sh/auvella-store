@@ -202,6 +202,7 @@ const DICT: Record<string, string[]> = {
   "Your bag is empty": ["Votre panier est vide", "Tu bolsa está vacía", "Dein Warenkorb ist leer", "La tua borsa è vuota", "Je tas is leeg", "A sua sacola está vazia", "حقيبتك فارغة", "您的购物袋是空的", "カートは空です"],
   Subtotal: ["Sous-total", "Subtotal", "Zwischensumme", "Subtotale", "Subtotaal", "Subtotal", "المجموع الفرعي", "小计", "小計"],
   Checkout: ["Paiement", "Pagar", "Zur Kasse", "Pagamento", "Afrekenen", "Finalizar compra", "إتمام الشراء", "结账", "ご購入手続きへ"],
+  "Checkout securely": ["Paiement sécurisé", "Pagar de forma segura", "Sicher zur Kasse", "Pagamento sicuro", "Veilig afrekenen", "Finalizar compra com segurança", "إتمام الشراء بأمان", "安全结账", "安全にご購入手続きへ"],
 
   // Product page
   "Add to Cart": ["Ajouter au panier", "Añadir al carrito", "In den Warenkorb", "Aggiungi al carrello", "In winkelmand", "Adicionar ao carrinho", "أضف إلى السلة", "加入购物袋", "カートに追加"],

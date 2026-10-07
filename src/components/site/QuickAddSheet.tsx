@@ -4,7 +4,8 @@ import { Loader2, Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cartStore";
-import { useDisplayPrice } from "@/lib/preferences";
+import { useDisplayPrice, usePreferences } from "@/lib/preferences";
+import { sizeLabel } from "@/lib/sizeLabels";
 import { colorToHex } from "@/lib/colorMap";
 import { shopifyImg, type ShopifyProduct } from "@/lib/shopify";
 import { SizeGuide } from "@/components/site/SizeGuide";
@@ -44,6 +45,7 @@ export function QuickAddSheet({ product, open, onOpenChange }: Props) {
 
 function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: () => void }) {
   const node = product.node;
+  const sizeRegion = usePreferences((st) => st.sizeRegion);
   const addItem = useCartStore((s) => s.addItem);
   const isSyncing = useCartStore((s) => s.isSyncing);
   const displayPrice = useDisplayPrice();
@@ -232,8 +234,9 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                 </button>
               )}
             </div>
-            <div className="mt-2.5 grid grid-cols-5 gap-1.5">
+            <div className={`mt-2.5 grid gap-1.5 ${sizeOption.values.some((v) => sizeLabel(node.handle, v, sizeRegion)) ? "grid-cols-3" : "grid-cols-5"}`}>
               {sizeOption.values.map((sz) => {
+                const regional = sizeLabel(node.handle, sz, sizeRegion);
                 const active = sz === selSize;
                 const inStock = sizeInStock(sz);
                 return (
@@ -241,7 +244,7 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                     key={sz}
                     disabled={!inStock}
                     onClick={() => setSelSize(sz)}
-                    className={`relative h-10 border text-[11px] uppercase tracking-[0.06em] transition ${
+                    className={`relative h-10 whitespace-nowrap border px-1 text-[11px] uppercase tracking-[0.06em] transition ${
                       active
                         ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                         : inStock
@@ -250,6 +253,7 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                     }`}
                   >
                     {sz}
+                    {regional && <span className="ml-1 normal-case">({regional})</span>}
                   </button>
                 );
               })}
@@ -317,6 +321,7 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
           guideType={guide.guideType}
           fitOverride={guide.fitOverride}
           productChart={productChart}
+          handle={node.handle}
         />
       )}
     </div>

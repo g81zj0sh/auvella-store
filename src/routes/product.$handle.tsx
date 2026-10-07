@@ -1,5 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { LEGACY_PRODUCT_HANDLES } from "@/lib/productHandles";
+import { sizeLabel } from "@/lib/sizeLabels";
 import { galleryUrls, indexedHex, indexedSwatch, GALLERY_INDEX } from "@/lib/galleryIndex";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
@@ -213,6 +214,7 @@ function ProductPage() {
   const [readMore, setReadMore] = useState(false);
   useEffect(() => setReadMore(false), [handle]);
   const [sizePulse, setSizePulse] = useState(false);
+  const sizeRegion = usePreferences((st) => st.sizeRegion);
   const atcRef = useRef<HTMLButtonElement>(null);
   const sizesRef = useRef<HTMLDivElement>(null);
   const addItem = useCartStore((s) => s.addItem);
@@ -536,6 +538,8 @@ function ProductPage() {
 
   const colorOption = node.options.find((o) => /colou?r/i.test(o.name));
   const sizeOption = node.options.find((o) => /size/i.test(o.name));
+  /* Per-product UK size beside each letter ("S (8–10)"), from sizeLabels.ts. */
+  const sizeLabelled = !!sizeOption && sizeOption.values.some((v) => sizeLabel(node.handle, v, sizeRegion));
   const hasSize = !sizeOption || !!currentSelected[sizeOption.name];
   /* Any option that is neither colour nor size — a scent, a version, a pack
      size. Accessories need this; without it such variants were unselectable. */
@@ -933,16 +937,17 @@ function ProductPage() {
                     </button>
                   )}
                 </div>
-                <div className="mt-3 grid grid-cols-5 gap-1.5">
+                <div className={`mt-3 grid gap-1.5 ${sizeLabelled ? "grid-cols-3 sm:grid-cols-4" : "grid-cols-5"}`}>
                   {sizeOption.values.map((v) => {
                     const active = currentSelected[sizeOption.name] === v;
                     const available = sizeAvailable(v);
+                    const regional = sizeLabel(node.handle, v, sizeRegion);
                     return (
                       <button
                         key={v}
                         disabled={!available}
                         onClick={() => setOpt(sizeOption.name, v)}
-                        className={`flex h-10 items-center justify-center border text-[12px] transition-colors ${
+                        className={`flex h-10 items-center justify-center whitespace-nowrap border px-1 text-[12px] transition-colors ${
                           active
                             ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                             : available
@@ -951,6 +956,7 @@ function ProductPage() {
                         }`}
                       >
                         {v}
+                        {regional && <span className="ml-1">({regional})</span>}
                       </button>
                     );
                   })}
@@ -1300,6 +1306,7 @@ function ProductPage() {
           guideType={sizeGuide.guideType}
           fitOverride={sizeGuide.fitOverride}
           productChart={productChart}
+          handle={node.handle}
         />
       )}
     </div>
