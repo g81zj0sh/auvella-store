@@ -177,10 +177,11 @@ export function ShippingPopup() {
           visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.97] opacity-0"
         }`}
       >
-        {/* Urgency bar — REAL offer required: create the matching 20% code in
-            Shopify (with this expiry) before shipping this banner live. */}
+        {/* Seasonal bar. The figure must match the compare-at discount every
+            product actually shows: 40% since 5 Oct 2026 (compare-at = price /
+            0.6; live check: every product 40-43% off). */}
         <div className="-mx-6 bg-[#0a0a0a] py-2 pl-4 pr-10 text-center text-[10px] uppercase tracking-[0.14em] text-white md:-mx-7">
-          20% Off {season.name} · Ends in{" "}
+          40% Off {season.name} · Ends in{" "}
           <span className="font-semibold tabular-nums">{countdown}</span>
         </div>
         <button
