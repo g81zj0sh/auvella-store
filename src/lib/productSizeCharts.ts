@@ -6,7 +6,6 @@
 export const PRODUCT_SIZE_CHARTS = {
   "cowl-neck-lace-up-back-mini-dress": {
     guideType: "clothing",
-    regionLabels: false,
     columns: ["Size", "Clothing Length", "Bust", "Waist Circumference (Flat Lay – Stretch)", "Suitable Weight"],
     rows: [
       ["S", "64 cm (25\")", "72 cm (28.5\")", "68.5–96 cm (27–38\")", "40–52.5 kg"],

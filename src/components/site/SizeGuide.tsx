@@ -14,7 +14,7 @@ import {
   convertBraTokens,
   type SizeRegion,
 } from "@/lib/sizeRegions";
-import { hasSizeLabels, sizeLabel } from "@/lib/sizeLabels";
+import { defaultSizeLabel, sizeLabel } from "@/lib/sizeLabels";
 
 /*
  * Size & Fit Guide modal — same shell and styling as before; the content
@@ -83,9 +83,8 @@ export function SizeGuide({
   /* A chart can opt out of the standard letter-to-UK table when that table
      would mislabel its cut (e.g. a small-cut dress): S/M/L then show with
      measurements only, and the region toggle has nothing to convert. */
-  /* UK equivalents come only from this product's own chart (sizeLabels.ts);
-     without them, letters show plain and there is nothing to convert. */
-  const noRegion = productChart?.regionLabels === false || !hasSizeLabels(handle);
+  /* Labels: the product chart's stated sizes, else the default UK chart (sizeLabels.ts). */
+  const noRegion = productChart?.regionLabels === false;
   const detected = detectRegionSupport(guide.columns, guide.rows);
   const support = noRegion
     ? { ...detected, letters: [] as typeof detected.letters, supported: detected.hasBraTokens }
@@ -108,7 +107,9 @@ export function SizeGuide({
        fits implies dress size decides bra size, which it doesn't. */
     const isBraGuide = (productChart?.guideType ?? guideType) === "bra";
     if (isSizeCol && support.letters.length > 0 && !isBraGuide) {
-      const regional = handle ? sizeLabel(handle, txt, region) : null;
+      const regional = handle
+        ? sizeLabel(handle, txt, region, productChart?.guideType ?? guideType)
+        : defaultSizeLabel(txt, region);
       if (regional) {
         return (
           <>

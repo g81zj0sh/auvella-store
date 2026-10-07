@@ -19,7 +19,7 @@ export const SIZE_REGIONS: { value: SizeRegion; label: string }[] = [
 /* dress-size equivalent. AUS-NZ mirrors UK; US = UK − 4; EU = UK + 28.*/
 /* ------------------------------------------------------------------ */
 
-const LETTER_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL"] as const;
+const LETTER_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"] as const;
 type Letter = (typeof LETTER_ORDER)[number];
 
 const LETTER_MAP: Record<Letter, Record<SizeRegion, string>> = {
@@ -31,13 +31,15 @@ const LETTER_MAP: Record<Letter, Record<SizeRegion, string>> = {
   XL: { UK: "20", US: "16", EU: "48", AUS: "20" },
   "2XL": { UK: "22–24", US: "18–20", EU: "50–52", AUS: "22–24" },
   "3XL": { UK: "26", US: "22", EU: "54", AUS: "26" },
+  "4XL": { UK: "28", US: "24", EU: "56", AUS: "28" },
+  "5XL": { UK: "30", US: "26", EU: "58", AUS: "30" },
 };
 
 /** Normalise a row's size label to a canonical letter, or null.
     Handles "S", "2XL", "XXL", "XXXL", and combined labels like "S/8". */
 export function normalizeLetter(raw: string): Letter | null {
   const t = raw.toUpperCase().split("/")[0].trim();
-  const alias: Record<string, Letter> = { XXL: "2XL", XXXL: "3XL" };
+  const alias: Record<string, Letter> = { XXL: "2XL", XXXL: "3XL", XXXXL: "4XL", XXXXXL: "5XL" };
   const key = (alias[t] ?? t) as Letter;
   return (LETTER_ORDER as readonly string[]).includes(key) ? key : null;
 }

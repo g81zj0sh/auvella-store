@@ -538,8 +538,6 @@ function ProductPage() {
 
   const colorOption = node.options.find((o) => /colou?r/i.test(o.name));
   const sizeOption = node.options.find((o) => /size/i.test(o.name));
-  /* Per-product UK size beside each letter ("S (8–10)"), from sizeLabels.ts. */
-  const sizeLabelled = !!sizeOption && sizeOption.values.some((v) => sizeLabel(node.handle, v, sizeRegion));
   const hasSize = !sizeOption || !!currentSelected[sizeOption.name];
   /* Any option that is neither colour nor size — a scent, a version, a pack
      size. Accessories need this; without it such variants were unselectable. */
@@ -555,6 +553,9 @@ function ProductPage() {
   const bundleDeal = inBundleDeal(node.handle);
   const crumb = inferCollection(node.title);
   const sizeGuide = resolveGuide(node.title);
+  /* UK size beside each letter ("S (8–10)") — see sizeLabels.ts. */
+  const sizeLabelled =
+    !!sizeOption && sizeOption.values.some((v) => sizeLabel(node.handle, v, sizeRegion, sizeGuide.guideType));
   const sizeFitLabel = fitLabel(sizeGuide.guideType, sizeGuide.fitOverride);
   // Real supplier chart (by handle) beats the category guide; the hide list
   // beats everything.
@@ -941,7 +942,7 @@ function ProductPage() {
                   {sizeOption.values.map((v) => {
                     const active = currentSelected[sizeOption.name] === v;
                     const available = sizeAvailable(v);
-                    const regional = sizeLabel(node.handle, v, sizeRegion);
+                    const regional = sizeLabel(node.handle, v, sizeRegion, sizeGuide.guideType);
                     return (
                       <button
                         key={v}

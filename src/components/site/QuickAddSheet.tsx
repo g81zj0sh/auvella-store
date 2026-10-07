@@ -234,9 +234,9 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                 </button>
               )}
             </div>
-            <div className={`mt-2.5 grid gap-1.5 ${sizeOption.values.some((v) => sizeLabel(node.handle, v, sizeRegion)) ? "grid-cols-3" : "grid-cols-5"}`}>
+            <div className={`mt-2.5 grid gap-1.5 ${sizeOption.values.some((v) => sizeLabel(node.handle, v, sizeRegion, guide.guideType)) ? "grid-cols-3" : "grid-cols-5"}`}>
               {sizeOption.values.map((sz) => {
-                const regional = sizeLabel(node.handle, sz, sizeRegion);
+                const regional = sizeLabel(node.handle, sz, sizeRegion, guide.guideType);
                 const active = sz === selSize;
                 const inStock = sizeInStock(sz);
                 return (
