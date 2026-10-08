@@ -109,9 +109,10 @@ const PARENT: Record<string, { handle: string; label: string }> = {
   "midi-dresses": { handle: "dresses", label: "Dresses" },
   "mini-dresses": { handle: "dresses", label: "Dresses" },
   "sleep-accessories": { handle: "loungewear-sleepwear", label: "Lounge & Sleep" },
+  "robes-and-sleep": { handle: "loungewear-sleepwear", label: "Lounge & Sleep" },
 };
 
-const NO_HERO = new Set(["shorts-and-waist", "one-piece", "maxi-dresses", "midi-dresses", "mini-dresses", "sleep-accessories"]);
+const NO_HERO = new Set(["shorts-and-waist", "one-piece", "maxi-dresses", "midi-dresses", "mini-dresses", "sleep-accessories", "robes-and-sleep"]);
 
 const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
   shapewear: { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url },
