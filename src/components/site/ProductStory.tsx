@@ -8,6 +8,7 @@ import { STORY_IMAGES } from "@/lib/storyImages";
 import { COUNTRIES, PROCESSING_LABEL, transitLabel, type Country } from "@/lib/shipping";
 import { inDuoDeal, DUO_DEAL } from "@/lib/duoDeal";
 import { inBundleDeal } from "@/lib/bundleDeal";
+import { isFinalSale } from "@/lib/returnsPolicy";
 import type { Review } from "@/components/site/Reviews";
 
 /*
@@ -83,9 +84,12 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
   const fit = fitNote(html);
   const sizes = sizesLine(html);
   const fabricText = fabricLine(html);
-  const rows = comparisonRows(html, title, { sized });
+  const finalSale = isFinalSale(handle);
+  const rows = comparisonRows(html, title, { sized, finalSale });
   const transit = transitLabel(country);
-  const featureA = [...points, ...whyPoints(html, title).slice(points.length)].slice(0, 2).map((p) => p.split(" — ")[0]);
+  const featureA = [...points, ...whyPoints(html, title, { finalSale }).slice(points.length)]
+    .slice(0, 2)
+    .map((p) => p.split(" — ")[0]);
   const built = constructionBullets(html, 3);
   const worries = beforeYouAsk(html, title, productType);
   const head = actionHeadline(html, title);
@@ -135,7 +139,12 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
     ...(sized ? [{ q: "How do I find my size?", a: "Tap Size Guide next to the sizes at the top of this page: each size is mapped to real measurements. If you're between two, the fit note says which way to go." }] : []),
     { q: "How long does delivery take?", a: `Orders are dispatched within ${PROCESSING_LABEL} business days, then shipping to ${country.name} takes ${transit} business days, tracked.` },
     { q: "Where do you ship to?", a: `We ship to ${COUNTRIES.length} countries, including the UK, the US, Canada, Australia and most of Europe. Choose yours with Ship to in the globe menu.` },
-    { q: "Can I return it?", a: "Yes — within 30 days of delivery. Email us to start a return. Return postage is paid by you unless the item is faulty." },
+    {
+      q: "Can I return it?",
+      a: finalSale
+        ? "For hygiene reasons this is final sale — it can't be returned unless it's faulty or not what you ordered, in which case we'll replace or refund it at no cost to you."
+        : "Yes — within 30 days of delivery. Email us to start a return. Return postage is paid by you unless the item is faulty.",
+    },
     ...(inDuoDeal(handle)
       ? [{ q: "Is there a multi-buy?", a: `Buy two of this product and save ${DUO_DEAL.percent}% — any sizes or colours. The saving is applied automatically in your bag.` }]
       : inBundleDeal(handle)

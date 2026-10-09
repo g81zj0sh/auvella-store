@@ -26,7 +26,8 @@ const more: { label: string; slug?: string; href?: string }[] = [
    it. Dead until real account URLs are supplied. */
 const socials = ["Instagram", "Facebook", "YouTube", "TikTok"] as const;
 
-/* Back-to-top — appears once the page has scrolled, bottom right, SKIMS-style. */
+/* Back-to-top — appears once the page has scrolled, bottom right, SKIMS-style.
+   Lifted by --buy-bar-h (set by the product page) so it sits above the sticky bar. */
 function BackToTop() {
   const [show, setShow] = useState(false);
   useEffect(() => {
@@ -39,7 +40,7 @@ function BackToTop() {
     <button
       aria-label="Back to top"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className={`fixed bottom-5 right-5 z-40 grid h-11 w-11 place-items-center bg-[#0a0a0a] text-white transition-opacity duration-300 ${
+      className={`fixed bottom-[calc(1.25rem+var(--buy-bar-h,0px))] right-5 z-40 grid h-11 w-11 place-items-center bg-[#0a0a0a] text-white transition-[opacity,bottom] duration-300 ${
         show ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
     >

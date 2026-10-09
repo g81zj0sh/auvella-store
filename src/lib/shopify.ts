@@ -451,9 +451,24 @@ function isCartNotFoundError(userErrors: Array<{ field: string[] | null; message
   );
 }
 
-export async function createShopifyCart(item: { variantId: string; quantity: number }) {
+/** Optional cart line attributes (e.g. the multi-buy tier); omitted when there are none. */
+export type CartLineAttributes = Array<{ key: string; value: string }>;
+
+function lineInput(item: { variantId: string; quantity: number; attributes?: CartLineAttributes }) {
+  return {
+    quantity: item.quantity,
+    merchandiseId: item.variantId,
+    ...(item.attributes?.length ? { attributes: item.attributes } : {}),
+  };
+}
+
+export async function createShopifyCart(item: {
+  variantId: string;
+  quantity: number;
+  attributes?: CartLineAttributes;
+}) {
   const data = await storefrontApiRequest(CART_CREATE_MUTATION, {
-    input: { lines: [{ quantity: item.quantity, merchandiseId: item.variantId }], buyerIdentity: buyerIdentity() },
+    input: { lines: [lineInput(item)], buyerIdentity: buyerIdentity() },
   });
   const errs = data?.data?.cartCreate?.userErrors ?? [];
   if (errs.length) {
@@ -472,10 +487,12 @@ export async function createShopifyCart(item: { variantId: string; quantity: num
  * been completed: its checkout URL then 404s, and the shopper has to be given a
  * live cart built from the lines still in their bag.
  */
-export async function recreateShopifyCart(lines: Array<{ variantId: string; quantity: number }>) {
+export async function recreateShopifyCart(
+  lines: Array<{ variantId: string; quantity: number; attributes?: CartLineAttributes }>,
+) {
   if (!lines.length) return null;
   const data = await storefrontApiRequest(CART_CREATE_MUTATION, {
-    input: { lines: lines.map((l) => ({ quantity: l.quantity, merchandiseId: l.variantId })), buyerIdentity: buyerIdentity() },
+    input: { lines: lines.map(lineInput), buyerIdentity: buyerIdentity() },
   });
   const errs = data?.data?.cartCreate?.userErrors ?? [];
   if (errs.length) {
@@ -494,10 +511,13 @@ export async function recreateShopifyCart(lines: Array<{ variantId: string; quan
   return { cartId: cart.id, checkoutUrl: formatCheckoutUrl(cart.checkoutUrl), lineIdByVariant };
 }
 
-export async function addLineToShopifyCart(cartId: string, item: { variantId: string; quantity: number }) {
+export async function addLineToShopifyCart(
+  cartId: string,
+  item: { variantId: string; quantity: number; attributes?: CartLineAttributes },
+) {
   const data = await storefrontApiRequest(CART_LINES_ADD_MUTATION, {
     cartId,
-    lines: [{ quantity: item.quantity, merchandiseId: item.variantId }],
+    lines: [lineInput(item)],
   });
   const errs = data?.data?.cartLinesAdd?.userErrors ?? [];
   if (isCartNotFoundError(errs)) return { success: false, cartNotFound: true } as const;
@@ -507,13 +527,21 @@ export async function addLineToShopifyCart(cartId: string, item: { variantId: st
   }
   const lines = data?.data?.cartLinesAdd?.cart?.lines?.edges ?? [];
   const newLine = lines.find((l: any) => l.node.merchandise.id === item.variantId);
-  return { success: true, lineId: newLine?.node?.id as string | undefined } as const;
+  // No line for the variant means Shopify didn't add it (e.g. it sold out and
+  // came back as a cart warning, not a userError) - don't report success.
+  if (!newLine) return { success: false } as const;
+  return { success: true, lineId: newLine.node.id as string } as const;
 }
 
-export async function updateShopifyCartLine(cartId: string, lineId: string, quantity: number) {
+export async function updateShopifyCartLine(
+  cartId: string,
+  lineId: string,
+  quantity: number,
+  attributes?: CartLineAttributes,
+) {
   const data = await storefrontApiRequest(CART_LINES_UPDATE_MUTATION, {
     cartId,
-    lines: [{ id: lineId, quantity }],
+    lines: [{ id: lineId, quantity, ...(attributes?.length ? { attributes } : {}) }],
   });
   const errs = data?.data?.cartLinesUpdate?.userErrors ?? [];
   if (isCartNotFoundError(errs)) return { success: false, cartNotFound: true } as const;

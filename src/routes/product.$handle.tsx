@@ -3,7 +3,17 @@ import { LEGACY_PRODUCT_HANDLES } from "@/lib/productHandles";
 import { sizeLabel } from "@/lib/sizeLabels";
 import { galleryUrls, indexedHex, indexedSwatch, GALLERY_INDEX } from "@/lib/galleryIndex";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
-import { inDuoDeal, duoPrice, DUO_DEAL } from "@/lib/duoDeal";
+import {
+  inDuoDeal,
+  MULTI_BUY_TIERS,
+  MULTI_BUY_ATTRIBUTE,
+  tierTotal,
+  bestValueTier,
+  type MultiBuyTier,
+} from "@/lib/duoDeal";
+import { MultiBuySelector } from "@/components/site/MultiBuySelector";
+import { TrustBadges } from "@/components/site/TrustBadges";
+import { isFinalSale } from "@/lib/returnsPolicy";
 import { ProductStory } from "@/components/site/ProductStory";
 import { descriptionParts, fitNote, fabricLine } from "@/lib/productStory";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, useCallback } from "react";
@@ -202,8 +212,9 @@ function ProductPage() {
 
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [imageIdx, setImageIdx] = useState(0);
-  /* 1 = Single, 2 = Duo. Only offered where the Shopify rule applies. */
-  const [pack, setPack] = useState<1 | 2>(1);
+  /* Multi-buy tier: 1, 2 or 3 units of this product (MULTI_BUY_TIERS). Only
+     offered where the Shopify rule applies; everywhere else it stays 1. */
+  const [pack, setPack] = useState<MultiBuyTier["quantity"]>(1);
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [barVisible, setBarVisible] = useState(false);
   const favHandles = useFavorites((s) => s.handles);
@@ -219,6 +230,15 @@ function ProductPage() {
   const sizesRef = useRef<HTMLDivElement>(null);
   const addItem = useCartStore((s) => s.addItem);
   const adding = useCartStore((s) => s.isLoading);
+  const resolveCheckoutUrl = useCartStore((s) => s.resolveCheckoutUrl);
+  const getCheckoutUrl = useCartStore((s) => s.getCheckoutUrl);
+  const [buyingNow, setBuyingNow] = useState(false);
+  const bagItems = useCartStore((s) => s.items);
+  /* What the main button last put in the bag (tier + variants), so the sticky
+     bar can go straight to checkout instead of adding the same items again. */
+  const [addedKey, setAddedKey] = useState<string | null>(null);
+  const mobileBarRef = useRef<HTMLDivElement>(null);
+  const desktopBarRef = useRef<HTMLDivElement>(null);
 
   // Record this visit for the Recently Viewed rail (account page etc.).
   const recordViewed = useRecentlyViewed((s) => s.record);
@@ -270,13 +290,33 @@ function ProductPage() {
 
   const priceVariant = variant ?? node?.variants.edges[0]?.node;
 
-  /* Duo item #2: its own colour/size, editable inside the Duo panel. Item #1
-     is the main selection. Starts as a copy of #1 whenever Duo is chosen. */
-  const [duoSecond, setDuoSecond] = useState<Record<string, string>>({});
-  const duoSecondSel = Object.keys(duoSecond).length ? duoSecond : currentSelected;
-  const findVariant = (sel: Record<string, string>) =>
-    node?.variants.edges.find((v) => v.node.selectedOptions.every((o) => sel[o.name] === o.value))?.node;
-  const duoSecondVariant = useMemo(() => findVariant(duoSecondSel), [node, duoSecondSel]);
+  /* Multi-buy items #2 and #3: each has its own colour/size, editable in the
+     panel under the tiers. Item #1 is the main selection. Only the options the
+     shopper changes on a row are stored; the rest follow #1, so "2 of the
+     same" needs no extra clicks and a size picked later on #1 carries over. */
+  const [extraSel, setExtraSel] = useState<Record<string, string>[]>([]);
+  // The route stays mounted between products: each one starts on a single
+  // item with no picks left over from the last.
+  useEffect(() => {
+    setSelected({});
+    setPack(1);
+    setExtraSel([]);
+    setAddedKey(null);
+  }, [handle]);
+  const extraSels = useMemo(
+    () => [0, 1].map((i) => ({ ...currentSelected, ...(extraSel[i] ?? {}) })),
+    [extraSel, currentSelected],
+  );
+  const extraVariants = useMemo(
+    () =>
+      extraSels.map(
+        (sel) =>
+          node?.variants.edges.find((v) =>
+            v.node.selectedOptions.every((o) => sel[o.name] === o.value),
+          )?.node,
+      ),
+    [node, extraSels],
+  );
 
   // Dedupe images by URL (ignore CDN size params) and upscale via Shopify CDN.
   const images = useMemo(() => {
@@ -427,16 +467,44 @@ function ProductPage() {
   const [dragX, setDragX] = useState(0);
   const dragRef = useRef({ active: false, startX: 0, moved: false });
 
-  // Sticky bar appears once the main Add to Bag button leaves the viewport.
+  // Sticky bar appears once the main Add to Bag button has scrolled up past
+  // the top of the screen - not while it is still below the fold on arrival.
+  // The root is stretched far below the viewport, so "intersecting" means "not
+  // yet above the top edge": the state flips exactly when the button crosses
+  // that edge, even on a jump (an anchor link) that skips the viewport.
   useEffect(() => {
     const el = atcRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const obs = new IntersectionObserver(([entry]) => setBarVisible(!entry.isIntersecting), {
+      rootMargin: "0px 0px 100000px 0px",
       threshold: 0,
     });
     obs.observe(el);
     return () => obs.disconnect();
   }, [node?.id]);
+
+  /* While a sticky bar is up, publish its height so fixed corner controls
+     (the footer's back-to-top) can sit above it instead of over its button,
+     and pad scrolling so keyboard focus never lands underneath it (WCAG 2.4.11).
+     Only the bar for this screen size is displayed, so only it has a height;
+     re-measured when the window is resized across the breakpoint. */
+  useEffect(() => {
+    const root = document.documentElement;
+    const apply = () => {
+      const h = barVisible
+        ? mobileBarRef.current?.offsetHeight || desktopBarRef.current?.offsetHeight || 0
+        : 0;
+      root.style.setProperty("--buy-bar-h", `${h}px`);
+      root.style.scrollPaddingBottom = `${h}px`;
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      root.style.removeProperty("--buy-bar-h");
+      root.style.removeProperty("scroll-padding-bottom");
+    };
+  }, [barVisible]);
 
   const display = useDisplayPrice();
   const t = useT();
@@ -582,35 +650,183 @@ function ProductPage() {
     setTimeout(() => setSizePulse(false), 1200);
   };
 
-  const handleAdd = async () => {
+  /* Multi-buy: which tier is chosen, and the units it puts in the bag (#1 is
+     the main selection, #2/#3 their own colour/size). */
+  const multiBuy = inDuoDeal(node.handle);
+  const tier =
+    MULTI_BUY_TIERS.find((t) => t.quantity === (multiBuy ? pack : 1)) ?? MULTI_BUY_TIERS[0];
+  const units = [variant, ...extraVariants].slice(0, tier.quantity);
+  /** Unit prices for a tier: each chosen item's own price, the shown price until it resolves. */
+  const tierUnitPrices = (t: MultiBuyTier) =>
+    [variant, ...extraVariants]
+      .slice(0, t.quantity)
+      .map((u) => (u ? parseFloat(u.price.amount) : unitPrice));
+  const payTotal = tierTotal(tierUnitPrices(tier), tier.percent);
+
+  /* This exact selection (tier + variants) is what the main button last added
+     and it is still in the bag: the sticky bar then just goes to checkout. */
+  const unitsKey = `${tier.quantity}:${units.map((u) => u?.id ?? "").join("|")}`;
+  const inBag =
+    addedKey === unitsKey && units.every((u) => !!u && bagItems.some((i) => i.variantId === u.id));
+
+  const choosePack = (q: MultiBuyTier["quantity"]) => {
+    setPack(q);
+    // Items beyond the new tier are dropped, so a later tier starts as a copy of #1 again.
+    setExtraSel((prev) => prev.slice(0, q - 1));
+  };
+
+  /** Whether some purchasable variant has this option value, given a row's other picks. */
+  const optAvailable = (sel: Record<string, string>, name: string, value: string) =>
+    node.variants.edges.some(
+      ({ node: v }) =>
+        v.availableForSale &&
+        v.selectedOptions.every((o) =>
+          o.name === name ? o.value === value : !sel[o.name] || sel[o.name] === o.value,
+        ),
+    );
+
+  /** What stops a row of the multi-buy panel being added, if anything. */
+  const rowProblem = (i: number): string | null => {
+    const u = units[i];
+    const sel = i === 0 ? currentSelected : extraSels[i - 1];
+    if (sizeOption && !sel[sizeOption.name]) return `Choose a size for item #${i + 1}`;
+    if (!u) return `Item #${i + 1}: that colour and size don't go together — pick another`;
+    if (!u.availableForSale) return `Item #${i + 1} is sold out in that colour and size`;
+    return null;
+  };
+
+  /** Size chosen and every item resolves to a purchasable variant; tells the shopper if not. */
+  const readyToAdd = (): boolean => {
     if (!hasSize) {
       scrollToSizes();
-      return;
+      return false;
     }
-    if (!variant) return;
-    const duo = inDuoDeal(node.handle) && pack === 2;
-    const second = duo ? duoSecondVariant : undefined;
-    if (duo && !second) {
-      toast.error("Choose a size for the second one", { position: "top-center" });
-      return;
+    if (!variant || !variant.availableForSale) {
+      toast.error(
+        variant
+          ? "That colour and size is sold out — choose another."
+          : "That colour and size don't go together — choose another.",
+        { position: "top-center" },
+      );
+      return false;
     }
-    if (duo && second && second.id !== variant.id) {
-      // Two different sizes/colours of the same product: two lines. The
-      // discount counts per product, so both still earn the 15%.
-      for (const v of [variant, second]) {
-        await addItem({ product, variantId: v.id, variantTitle: v.title, price: v.price, quantity: 1, selectedOptions: v.selectedOptions || [] });
-      }
-    } else {
-      await addItem({
+    const problem = units.map((_, i) => rowProblem(i)).find(Boolean);
+    if (problem) {
+      toast.error(problem, { position: "top-center" });
+      return false;
+    }
+    return true;
+  };
+
+  /**
+   * Adds every unit of the chosen tier and reports how far it got. Stops at the
+   * first line Shopify refuses, so a retry never doubles what already went in.
+   */
+  const addUnits = async (): Promise<"all" | "some" | "none"> => {
+    // The bag keeps one line per variant: the same size/colour twice is one
+    // line of 2. Different sizes/colours are separate lines - the Shopify
+    // rule counts units per product, so every one still earns the rate.
+    const lines = new Map<string, { v: NonNullable<typeof variant>; qty: number }>();
+    for (const u of units) {
+      if (!u) return "none";
+      lines.set(u.id, { v: u, qty: (lines.get(u.id)?.qty ?? 0) + 1 });
+    }
+    const attributes = multiBuy
+      ? [{ key: MULTI_BUY_ATTRIBUTE, value: String(tier.quantity) }]
+      : undefined;
+    let done = 0;
+    for (const { v, qty } of lines.values()) {
+      const added = await addItem({
         product,
-        variantId: variant.id,
-        variantTitle: variant.title,
-        price: variant.price,
-        quantity: duo ? 2 : 1,
-        selectedOptions: variant.selectedOptions || [],
+        variantId: v.id,
+        variantTitle: v.title,
+        price: v.price,
+        quantity: qty,
+        selectedOptions: v.selectedOptions || [],
+        attributes,
       });
+      if (!added) return done ? "some" : "none";
+      done++;
     }
-    toast.success(duo ? "Two added to bag — 15% off applies at checkout" : "Added to bag", { position: "top-center" });
+    return "all";
+  };
+
+  const addFailed = (result: "some" | "none") =>
+    toast.error(
+      result === "some"
+        ? "Only some of those went into your bag — please check it before checking out."
+        : "We couldn't add that to your bag. Please try again.",
+      { position: "top-center" },
+    );
+
+  const handleAdd = async () => {
+    if (!readyToAdd()) return;
+    const result = await addUnits();
+    if (result !== "all") {
+      setAddedKey(null);
+      addFailed(result);
+      return;
+    }
+    setAddedKey(unitsKey);
+    toast.success(
+      tier.quantity === 1
+        ? "Added to bag"
+        : tier.percent
+          ? `${tier.quantity} added to bag — ${tier.percent}% off each applies at checkout`
+          : `${tier.quantity} added to bag`,
+      { position: "top-center" },
+    );
+  };
+
+  /*
+   * Sticky bar on phones. "Buy now" adds the chosen tier and goes straight to
+   * checkout; once that selection is already in the bag it reads "Checkout"
+   * and goes there without adding it again. Same new-tab pattern as the bag's
+   * checkout (CartDrawer.handleCheckout): the tab opens synchronously inside
+   * the tap, because mobile Safari blocks window.open after an await, and it
+   * says what it's doing while the bag updates. Checkout shows the whole bag.
+   */
+  const handleBuyNow = async () => {
+    if (buyingNow || !readyToAdd()) return;
+    setBuyingNow(true);
+    const win = window.open("", "_blank");
+    if (win) {
+      try {
+        win.document.title = "Checkout";
+        win.document.body.style.cssText =
+          "font:15px -apple-system,system-ui,sans-serif;padding:32px;color:#0a0a0a";
+        win.document.body.textContent = "Opening checkout…";
+      } catch {
+        // Not our document to write to - the blank tab still works.
+      }
+    }
+    try {
+      if (!inBag) {
+        const result = await addUnits();
+        if (result !== "all") {
+          win?.close();
+          setAddedKey(null);
+          addFailed(result);
+          return;
+        }
+        setAddedKey(unitsKey);
+      }
+      const url = (await resolveCheckoutUrl()) ?? getCheckoutUrl();
+      if (!url) {
+        win?.close();
+        toast.error(
+          "We couldn't open checkout. Your items are in your bag — open it to check out.",
+          { position: "top-center" },
+        );
+        return;
+      }
+      if (win) win.location.href = url;
+      else window.location.href = url;
+    } catch {
+      win?.close();
+    } finally {
+      setBuyingNow(false);
+    }
   };
 
 
@@ -859,7 +1075,11 @@ function ProductPage() {
                 Free shipping on orders {shipThreshold}+
               </p>
               <p>{transitLabel(shipCountry)} business day shipping</p>
-              <p>Easy, tracked 30-day returns</p>
+              <p>
+                {isFinalSale(node.handle)
+                  ? "Final sale for hygiene — faulty or wrong items replaced or refunded"
+                  : "Easy, tracked 30-day returns"}
+              </p>
             </div>
 
             {/* Colour */}
@@ -992,86 +1212,90 @@ function ProductPage() {
             ))}
 
             {/*
-              Single / Duo. True and plain: the Duo price is what checkout
-              charges (Shopify automatic rule), the struck figure is two at
-              full price, and there is no timer, no "deal ends", no second
-              strike-through. "Most Popular" sits on the Duo because that is
-              the one we want chosen.
+              Multi-buy. True and plain: each tier's price is what checkout
+              charges under the Shopify automatic rule (MULTI_BUY_TIERS), the
+              struck figure is the same items at full price, and there is no
+              timer, no "deal ends" and no popularity badge we can't back
+              with order data. "Best value" appears only when one tier saves
+              strictly more than the others.
             */}
-            {inDuoDeal(node.handle) && variant && (() => {
-              const duoSecondUnit = (single: number) => (duoSecondVariant ? parseFloat(duoSecondVariant.price.amount) : single);
-              const duoTotal = (single: number) => duoPrice(single, duoSecondUnit(single));
-              return (
-              <div className="mt-7">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Buy 2, save {DUO_DEAL.percent}%</p>
-                <div className="mt-3 space-y-2">
-                  {([1, 2] as const).map((n) => {
-                    const active = pack === n;
-                    const single = parseFloat(variant.price.amount);
-                    return (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setPack(n)}
-                        aria-pressed={active}
-                        className={`relative flex w-full items-center justify-between border px-4 py-3.5 text-left transition-colors ${
-                          active ? "border-[#0a0a0a] bg-[#faf9f7]" : "border-[#DDDDDD] hover:border-[#0a0a0a]"
-                        }`}
-                      >
-                        {n === 2 && (
-                          <span className="absolute -top-2.5 right-3 bg-[#0a0a0a] px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-white">
-                            Most Popular
-                          </span>
-                        )}
-                        <span className="flex items-center gap-3">
-                          <span className={`grid h-4 w-4 place-items-center rounded-full border ${active ? "border-[#0a0a0a]" : "border-[#bbbbbb]"}`}>
-                            {active && <span className="h-2 w-2 rounded-full bg-[#0a0a0a]" />}
-                          </span>
-                          <span>
-                            <span className="block text-[14px] text-[#0a0a0a]">{n === 1 ? "Single" : "Duo"}</span>
-                            <span className="block text-[11px] text-[#777777]">{n === 1 ? "Standard price" : `You save ${DUO_DEAL.percent}%`}</span>
-                          </span>
-                        </span>
-                        <span className="text-right">
-                          <span className="block text-[15px] text-[#0a0a0a]">{cur(n === 1 ? single : duoTotal(single))}</span>
-                          {n === 2 && <span className="block text-[11px] text-[#999999] line-through">{cur(single + duoSecondUnit(single))}</span>}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {pack === 2 && (
+            {multiBuy && (
+              <div>
+                <MultiBuySelector
+                  name={`multibuy-${node.handle}`}
+                  tiers={MULTI_BUY_TIERS}
+                  value={tier.quantity}
+                  onChange={choosePack}
+                  bestValue={bestValueTier(MULTI_BUY_TIERS)}
+                  price={(t) => {
+                    const prices = tierUnitPrices(t);
+                    const full = prices.reduce((s, p) => s + p, 0);
+                    return {
+                      total: cur(tierTotal(prices, t.percent)),
+                      full: t.percent ? cur(full) : null,
+                    };
+                  }}
+                />
+                {tier.quantity > 1 && (
                   <div className="mt-3 space-y-2 border border-[#e6e4e0] bg-[#faf9f7] p-3">
-                    {([1, 2] as const).map((n) => {
-                      const sel = n === 1 ? currentSelected : duoSecondSel;
+                    {Array.from({ length: tier.quantity }, (_, i) => {
+                      const sel = i === 0 ? currentSelected : extraSels[i - 1];
                       const set = (name: string, value: string) =>
-                        n === 1 ? setOpt(name, value) : setDuoSecond({ ...duoSecondSel, [name]: value });
+                        i === 0
+                          ? setOpt(name, value)
+                          : setExtraSel((prev) => {
+                              const next = [...prev];
+                              next[i - 1] = { ...(prev[i - 1] ?? {}), [name]: value };
+                              return next;
+                            });
                       return (
-                        <div key={n} className="flex flex-wrap items-center gap-2">
-                          <span className="w-6 text-[11px] text-[#888888]">#{n}</span>
-                          {node.options.filter((o) => o.values.length > 1).map((o) => (
-                            <select
-                              key={o.name}
-                              value={sel[o.name] ?? ""}
-                              onChange={(e) => set(o.name, e.target.value)}
-                              aria-label={`${o.name} for item ${n}`}
-                              className="h-9 border border-[#DDDDDD] bg-white px-2 text-[12px] text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none"
-                            >
-                              {o.values.map((v) => (
-                                <option key={v} value={v}>{v}</option>
-                              ))}
-                            </select>
-                          ))}
+                        <div key={i} className="flex flex-wrap items-center gap-2">
+                          <span className="w-6 text-[11px] text-[#666666]">#{i + 1}</span>
+                          {node.options
+                            .filter((o) => o.values.length > 1)
+                            .map((o) => (
+                              <select
+                                key={o.name}
+                                value={sel[o.name] ?? ""}
+                                onChange={(e) => set(o.name, e.target.value)}
+                                aria-label={`${o.name} for item ${i + 1}`}
+                                className="h-9 border border-[#8a8a8a] bg-white px-2 text-[12px] text-[#0a0a0a] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0a0a0a]"
+                              >
+                                {!sel[o.name] && (
+                                  <option value="" disabled>
+                                    {o.name}
+                                  </option>
+                                )}
+                                {o.values.map((v) => {
+                                  const ok = optAvailable(sel, o.name, v);
+                                  return (
+                                    <option key={v} value={v} disabled={!ok}>
+                                      {ok ? v : `${v} — sold out`}
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                            ))}
                         </div>
                       );
                     })}
-                    {!duoSecondVariant && <p className="text-[11px] text-[#b00020]">That combination isn't available for #2 — pick another.</p>}
+                    {hasSize &&
+                      (() => {
+                        const problem = units.map((_, i) => rowProblem(i)).find(Boolean);
+                        return problem ? (
+                          <p role="alert" className="text-[11px] text-[#b00020]">
+                            {problem}
+                          </p>
+                        ) : null;
+                      })()}
                   </div>
                 )}
-                <p className="mt-2 text-[11px] text-[#888888]">Two of this product, in any sizes — the saving applies automatically at checkout.</p>
+                <p className="mt-2 text-[11px] text-[#666666]">
+                  Any sizes or colours of this product — the saving applies automatically at
+                  checkout.
+                </p>
               </div>
-              );
-            })()}
+            )}
 
             {/* Add to bag / Select a size */}
             <button
@@ -1087,12 +1311,21 @@ function ProductPage() {
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : hasSize ? (
-                <>{inDuoDeal(node.handle) && pack === 2 ? <>Add 2 to Bag — {cur(duoPrice(unitPrice, duoSecondVariant ? parseFloat(duoSecondVariant.price.amount) : unitPrice))}</> : <>Add to Bag — {cur(unitPrice)}</>}</>
+                <>
+                  {tier.quantity > 1 ? (
+                    <>
+                      Add {tier.quantity} to Bag — {cur(payTotal)}
+                    </>
+                  ) : (
+                    <>Add to Bag — {cur(unitPrice)}</>
+                  )}
+                </>
               ) : (
                 "Select a Size"
               )}
             </button>
 
+            <TrustBadges handle={node.handle} />
 
             {/* Tabs */}
             <div className="mt-10">
@@ -1195,7 +1428,9 @@ function ProductPage() {
                       {transitLabel(shipCountry)} business days, tracked.
                     </p>
                     <p>
-                      Easy, tracked 30-day returns — items must be unworn with tags attached.
+                      {isFinalSale(node.handle)
+                        ? "For hygiene reasons this is final sale: it can't be returned or exchanged unless it's faulty or not what you ordered."
+                        : "Easy, tracked 30-day returns — items must be unworn with tags attached."}{" "}
                       Duties and taxes are included.
                     </p>
                   </div>
@@ -1239,10 +1474,69 @@ function ProductPage() {
       />
 
       <Footer />
+      {/* Room for the sticky bar, so it never covers the end of the footer. */}
+      <div aria-hidden="true" style={{ height: "var(--buy-bar-h, 0px)" }} />
 
-      {/* Sticky purchase bar */}
+      {/* Sticky buy bar, phones: thumbnail, the price of the chosen tier and
+          straight to checkout. Offscreen it is inert, so it can't take focus. */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#EBEBEB] bg-white transition-transform duration-300 ${
+        ref={mobileBarRef}
+        inert={!barVisible}
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#EBEBEB] bg-white pb-[env(safe-area-inset-bottom)] transition-transform duration-300 md:hidden ${
+          barVisible ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="flex items-center gap-3 px-4 py-2.5">
+          {(variantImageUrl || node.images.edges[0]?.node.url) && (
+            <img
+              src={shopifyImg(variantImageUrl || node.images.edges[0].node.url, 160)}
+              alt=""
+              width={40}
+              height={52}
+              loading="lazy"
+              decoding="async"
+              className="h-[52px] w-10 shrink-0 object-cover object-[center_top]"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[12px] font-medium uppercase tracking-[0.06em] text-[#0a0a0a]">
+              {node.title}
+            </p>
+            <p className="text-[12px] text-[#555555]">
+              {cur(payTotal)}
+              {tier.quantity > 1 ? ` · ${tier.quantity} items` : ""}
+            </p>
+          </div>
+          <button
+            onClick={handleBuyNow}
+            disabled={adding || buyingNow}
+            aria-label={
+              !hasSize
+                ? undefined
+                : inBag
+                  ? "Go to checkout"
+                  : `Buy now: add ${tier.quantity === 1 ? "this item" : `${tier.quantity} items`} to your bag and go to checkout`
+            }
+            className="flex h-11 min-w-[112px] shrink-0 items-center justify-center bg-[#0a0a0a] px-5 text-[11px] font-medium uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#262626] disabled:opacity-60"
+          >
+            {buyingNow ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : !hasSize ? (
+              "Select a Size"
+            ) : inBag ? (
+              "Checkout"
+            ) : (
+              "Buy now"
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Sticky purchase bar, tablet and desktop */}
+      <div
+        ref={desktopBarRef}
+        inert={!barVisible}
+        className={`fixed inset-x-0 bottom-0 z-40 hidden border-t border-[#EBEBEB] bg-white transition-transform duration-300 md:block ${
           barVisible ? "translate-y-0" : "translate-y-full"
         }`}
       >
@@ -1251,7 +1545,10 @@ function ProductPage() {
             <p className="truncate text-[12px] font-medium uppercase tracking-[0.06em] text-[#0a0a0a]">
               {node.title}
             </p>
-            <p className="text-[12px] text-[#555555]">{cur(unitPrice)}</p>
+            <p className="text-[12px] text-[#555555]">
+              {cur(payTotal)}
+              {tier.quantity > 1 ? ` · ${tier.quantity} items` : ""}
+            </p>
           </div>
           <button
             onClick={handleAdd}

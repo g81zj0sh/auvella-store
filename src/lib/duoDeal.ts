@@ -61,10 +61,62 @@ export function inDuoDeal(handle: string | undefined | null): boolean {
  *  penny (GBP19.99 -> GBP2.99 off, not GBP3.00). QA 28 Sept 2026: the page said
  *  GBP33.98 for two while checkout charged GBP34.00. */
 export function duoUnitOff(unit: number): number {
-  return Math.floor(unit * (DUO_DEAL.percent / 100) * 100 + 1e-6) / 100;
+  return unitOffAt(unit, DUO_DEAL.percent);
+}
+
+/** Per-item saving at any rate, rounded DOWN to the penny like the app. */
+export function unitOffAt(unit: number, percent: number): number {
+  return Math.floor(unit * (percent / 100) * 100 + 1e-6) / 100;
 }
 
 /** Price of two once the discount lands, from one or two unit prices. */
 export function duoPrice(unit: number, second: number = unit): number {
   return Math.round((unit - duoUnitOff(unit) + second - duoUnitOff(second)) * 100) / 100;
+}
+
+/*
+ * The product-page multi-buy: 1, 2, or 3+ of this product.
+ *
+ * Each tier must be what checkout charges for that many units of ONE product
+ * under the Shopify rule above. That rule has a single break today - 15% once
+ * 2+ units are in the bag - so 3 units also get 15% each. When the Simple
+ * Discounts rule gains a 3+ break (e.g. 20%), change the 3+ tier's `percent`
+ * here in the same change, after a test checkout confirms the new rate and
+ * its rounding - never before. The page builds its labels, totals and "Best
+ * value" badge from this list, so no saving can be shown that checkout
+ * doesn't give.
+ */
+export interface MultiBuyTier {
+  /** Units of this product the tier puts in the bag. */
+  quantity: 1 | 2 | 3;
+  /** % off each unit at checkout; 0 = full price. */
+  percent: number;
+  /** "3+": more units keep the same rate. */
+  orMore?: boolean;
+}
+
+export const MULTI_BUY_TIERS: MultiBuyTier[] = [
+  { quantity: 1, percent: 0 },
+  { quantity: 2, percent: DUO_DEAL.percent },
+  { quantity: 3, percent: DUO_DEAL.percent, orMore: true },
+];
+
+/*
+ * Cart line attribute recording the tier the shopper picked, so orders can be
+ * counted by tier. The leading underscore keeps it out of the shopper's view
+ * at checkout. It is a label only: the discount comes from the Shopify rule,
+ * which counts units of the product, not attributes.
+ */
+export const MULTI_BUY_ATTRIBUTE = "_multibuy_tier";
+
+/** What checkout charges for these unit prices at a tier's rate. */
+export function tierTotal(units: number[], percent: number): number {
+  return Math.round(units.reduce((s, u) => s + u - unitOffAt(u, percent), 0) * 100) / 100;
+}
+
+/** The one tier with the strictly highest saving, if a single one has it. */
+export function bestValueTier(tiers: MultiBuyTier[]): MultiBuyTier | undefined {
+  const top = Math.max(...tiers.map((t) => t.percent));
+  const atTop = tiers.filter((t) => t.percent === top);
+  return top > 0 && atTop.length === 1 ? atTop[0] : undefined;
 }

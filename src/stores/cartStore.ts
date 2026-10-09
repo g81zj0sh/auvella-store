@@ -15,6 +15,7 @@ import {
   updateShopifyCartCountry,
   fetchCartTotals,
   type CartTotals,
+  type CartLineAttributes,
 } from "@/lib/shopify";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 
@@ -26,6 +27,8 @@ export interface CartItem {
   price: { amount: string; currencyCode: string };
   quantity: number;
   selectedOptions: Array<{ name: string; value: string }>;
+  /** Cart line attributes, e.g. the multi-buy tier picked on the product page. */
+  attributes?: CartLineAttributes;
 }
 
 interface CartStore {
@@ -34,7 +37,8 @@ interface CartStore {
   checkoutUrl: string | null;
   isLoading: boolean;
   isSyncing: boolean;
-  addItem: (item: Omit<CartItem, "lineId">) => Promise<void>;
+  /** Resolves true once Shopify has accepted the line. */
+  addItem: (item: Omit<CartItem, "lineId">) => Promise<boolean>;
   updateQuantity: (variantId: string, quantity: number) => Promise<void>;
   removeItem: (variantId: string) => Promise<void>;
   clearCart: () => void;
@@ -77,7 +81,11 @@ export const useCartStore = create<CartStore>()(
         let added = false;
         try {
           if (!cartId) {
-            const result = await createShopifyCart({ variantId: item.variantId, quantity: item.quantity });
+            const result = await createShopifyCart({
+              variantId: item.variantId,
+              quantity: item.quantity,
+              attributes: item.attributes,
+            });
             if (result) {
               set({
                 cartId: result.cartId,
@@ -88,13 +96,25 @@ export const useCartStore = create<CartStore>()(
             }
           } else if (existing) {
             const newQty = existing.quantity + item.quantity;
-            if (!existing.lineId) return;
-            const result = await updateShopifyCartLine(cartId, existing.lineId, newQty);
+            if (!existing.lineId) return false;
+            // A new attribute (the latest tier picked) replaces the line's old one.
+            const result = await updateShopifyCartLine(
+              cartId,
+              existing.lineId,
+              newQty,
+              item.attributes,
+            );
             if (result.success) {
               const current = get().items;
               set({
                 items: current.map((i) =>
-                  i.variantId === item.variantId ? { ...i, quantity: newQty } : i,
+                  i.variantId === item.variantId
+                    ? {
+                        ...i,
+                        quantity: newQty,
+                        ...(item.attributes ? { attributes: item.attributes } : {}),
+                      }
+                    : i,
                 ),
               });
               added = true;
@@ -105,6 +125,7 @@ export const useCartStore = create<CartStore>()(
             const result = await addLineToShopifyCart(cartId, {
               variantId: item.variantId,
               quantity: item.quantity,
+              attributes: item.attributes,
             });
             if (result.success) {
               const current = get().items;
@@ -127,13 +148,14 @@ export const useCartStore = create<CartStore>()(
             value: unitPrice * item.quantity,
             currency: item.price.currencyCode,
             content_type: "product",
-            content_name: item.product?.title,
+            content_name: item.product?.node?.title,
             content_ids: [contentId],
             contents: [
               { id: contentId, quantity: item.quantity, item_price: unitPrice },
             ],
           });
         }
+        return added;
       },
 
       updateQuantity: async (variantId, quantity) => {
@@ -193,6 +215,28 @@ export const useCartStore = create<CartStore>()(
         }
         set({ isLoading: true });
         try {
+          /*
+           * The new variant already has its own line. Shopify merges two lines
+           * only when their attributes match too, and lines from the product
+           * page carry the multi-buy tier, so a swap could leave two lines for
+           * one variant while the bag shows one. Remove this line and add its
+           * quantity to the existing one instead.
+           */
+          const target = get().items.find((i) => i.variantId === next.variantId);
+          if (target?.lineId) {
+            const removed = await removeLineFromShopifyCart(cartId, item.lineId);
+            if (!removed.success) return;
+            const qty = target.quantity + item.quantity;
+            const updated = await updateShopifyCartLine(cartId, target.lineId, qty);
+            set({
+              items: get()
+                .items.filter((i) => i.variantId !== variantId)
+                .map((i) =>
+                  i.variantId === next.variantId && updated.success ? { ...i, quantity: qty } : i,
+                ),
+            });
+            return;
+          }
           const res = await swapShopifyCartLine(cartId, item.lineId, next.variantId, item.quantity);
           const current = get().items;
           // If the new variant was already in the bag Shopify merged the two
@@ -306,7 +350,11 @@ export const useCartStore = create<CartStore>()(
         if (!items.length) return null;
 
         const rebuilt = await recreateShopifyCart(
-          items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+          items.map((i) => ({
+            variantId: i.variantId,
+            quantity: i.quantity,
+            attributes: i.attributes,
+          })),
         );
         if (!rebuilt) return checkoutUrl;
 

@@ -52,14 +52,20 @@ const SPECIFIC: Array<{ test: RegExp; point: string }> = [
   { test: /long sleeves|long-sleeve|long sleeve/i, point: "Long sleeves for cover and warmth" },
 ];
 
-// True of every product, store-wide.
+// True of every product, store-wide - except returns, which final-sale
+// products (underwear, the eye mask; see returnsPolicy.ts) don't have.
+const RETURNS_POINT = "Tracked delivery and 30-day returns";
 const BRAND: WhyPoint[] = [
   "Honest details on every page — including what it won't do",
-  "Tracked delivery and 30-day returns",
+  RETURNS_POINT,
   "The price you see is the price you pay, in your currency",
 ];
 
-export function whyPoints(descriptionHtml: string | null | undefined, title = ""): WhyPoint[] {
+export function whyPoints(
+  descriptionHtml: string | null | undefined,
+  title = "",
+  opts: { finalSale?: boolean } = {},
+): WhyPoint[] {
   // Only the product's own facts: its title and its Details bullets. The
   // prose and fit notes mention OTHER products ("wear it with a strapless
   // bra"), which produced false points when the whole text was read.
@@ -70,7 +76,10 @@ export function whyPoints(descriptionHtml: string | null | undefined, title = ""
     if (s.test.test(text)) picked.push(s.point);
   }
   // Two specific + two brand points; fewer specific means more brand.
-  return [...picked, ...BRAND].slice(0, 4);
+  const brand = opts.finalSale
+    ? BRAND.map((p) => (p === RETURNS_POINT ? "Tracked delivery" : p))
+    : BRAND;
+  return [...picked, ...brand].slice(0, 4);
 }
 
 /* ------------------------------------------------------------- fabrics -- */
@@ -196,13 +205,20 @@ export type TableRow = { label: string; others: "yes" | "not-always" };
 /** Rows for the Why Auvella? table. Others is ticked only where it's true of
  *  the category (stretch fabric); everything else is "not always" - never a
  *  cross, because other brands' versions often do have these features. */
-export function comparisonRows(descriptionHtml: string | null | undefined, title = "", opts: { sized?: boolean } = {}): TableRow[] {
+export function comparisonRows(
+  descriptionHtml: string | null | undefined,
+  title = "",
+  opts: { sized?: boolean; finalSale?: boolean } = {},
+): TableRow[] {
   const rows: TableRow[] = specificPoints(descriptionHtml, title, 3).map((label) => ({ label, others: "not-always" as const }));
   if (fabrics(descriptionHtml).some((f) => f.tag === "Stretch")) rows.push({ label: "Stretch that springs back", others: "yes" });
   rows.push({ label: "An honest fit note on the page", others: "not-always" });
   if (opts.sized !== false) rows.push({ label: "Sizes mapped to real measurements", others: "not-always" });
   rows.push({ label: "The price you see is the price you pay", others: "not-always" });
-  rows.push({ label: "Tracked delivery, 30-day returns", others: "not-always" });
+  rows.push({
+    label: opts.finalSale ? "Tracked delivery" : "Tracked delivery, 30-day returns",
+    others: "not-always",
+  });
   return rows.slice(0, 6);
 }
 
