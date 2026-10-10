@@ -75,18 +75,15 @@ export function duoPrice(unit: number, second: number = unit): number {
 }
 
 /*
- * The product-page multi-buy: 1 or 2 of this product.
+ * The product-page multi-buy "power cards": Just One / Buy 2 / Buy 3+.
  *
  * Each tier must be what checkout charges for that many units of ONE product
- * under the Shopify rule above: 15% once 2+ units are in the bag. A "Buy 3+"
- * tier ran briefly on 10 Oct 2026; Joshua dropped it the same night as
- * overkill and deleted its Simple Discounts rule, so the page offers Buy 1 /
- * Buy 2, with "Best value" on Buy 2. Three or more of a product still get
- * 15% each at checkout. If a tier is ever added back, change this list in
- * the same change as the Shopify rule, after a test checkout confirms the
- * rate and its rounding - never before. The page builds its labels, totals
- * and "Best value" badge from this list, so no saving can be shown that
- * checkout doesn't give.
+ * under the Shopify rule above: 15% once 2+ units are in the bag, so the 3+
+ * card is 15% too (v158; a 20% 3+ break in Simple Discounts was deleted on
+ * 10 Oct 2026). To offer 20% on 3+, add that break in Simple Discounts, run a
+ * test checkout, then change the 3+ tier's `percent` here in the same change
+ * - never before. The cards build their labels, savings and badges from this
+ * list, so no saving can be shown that checkout doesn't give.
  */
 export interface MultiBuyTier {
   /** Units of this product the tier puts in the bag. */
@@ -100,6 +97,7 @@ export interface MultiBuyTier {
 export const MULTI_BUY_TIERS: MultiBuyTier[] = [
   { quantity: 1, percent: 0 },
   { quantity: 2, percent: DUO_DEAL.percent },
+  { quantity: 3, percent: DUO_DEAL.percent, orMore: true },
 ];
 
 /*

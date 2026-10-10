@@ -1,18 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { PackageCheck, Repeat2, ShieldCheck, Truck, type LucideIcon } from "lucide-react";
-import { PROCESSING_LABEL } from "@/lib/shipping";
+import { PackageCheck, ShieldCheck, Shirt, Truck, type LucideIcon } from "lucide-react";
+import { useShippingCountry } from "@/lib/shipping";
 import { isFinalSale } from "@/lib/returnsPolicy";
 
 /*
- * Delivery and returns reassurance under the Add to Bag button.
+ * "Auvella Guarantee" badges under the Add to Bag button (v158).
  *
  * Every line is a promise the Shipping or Returns policy
  * (routes/pages.$slug.tsx) already makes, and each links to the policy that
- * makes it - if a policy changes, change its line here. The wording stops
- * where the policies stop: nothing is insured (we replace or refund a lost or
- * damaged parcel ourselves), exchanges aren't free or fuss-free (unworn, tags
- * on, by email, subject to stock, and none on final-sale items), and there is
- * no sourcing or sustainability claim we could stand behind.
+ * makes it - if a policy changes, change its line here:
+ * - Try-On Guarantee = the 30-day returns/exchanges (unworn, tags on); final-
+ *   sale items (underwear, eye mask) show their final-sale line instead.
+ * - Direct Shipping days = dispatch (PROCESSING_DAYS) + the courier time for
+ *   the shopper's country, i.e. the same figure the site quotes elsewhere.
+ * - Tracked delivery = lost or damaged parcels replaced or refunded.
+ * No performance promise (e.g. "no-roll") without a wear test behind it, and
+ * no insurance or sustainability claim.
  */
 interface Badge {
   icon: LucideIcon;
@@ -22,13 +25,9 @@ interface Badge {
 }
 
 export function TrustBadges({ handle }: { handle: string }) {
+  const { country } = useShippingCountry();
+  const days = country.days.replace(/\s*–\s*/, "–");
   const badges: Badge[] = [
-    {
-      icon: Truck,
-      title: "Tracked delivery",
-      detail: "Lost or damaged parcels replaced or refunded",
-      slug: "shipping",
-    },
     isFinalSale(handle)
       ? {
           icon: ShieldCheck,
@@ -37,15 +36,21 @@ export function TrustBadges({ handle }: { handle: string }) {
           slug: "returns",
         }
       : {
-          icon: Repeat2,
-          title: "30-day size exchanges",
-          detail: "Unworn with tags on, subject to stock",
+          icon: Shirt,
+          title: "Try-On Guarantee",
+          detail: "30 days to return or exchange, unworn with tags on",
           slug: "returns",
         },
     {
       icon: PackageCheck,
-      title: `Dispatched within ${PROCESSING_LABEL} business days`,
-      detail: "Tracking number emailed on dispatch",
+      title: `${days} Day Direct Shipping`,
+      detail: `Order to delivery, in business days, to ${country.name}`,
+      slug: "shipping",
+    },
+    {
+      icon: Truck,
+      title: "Tracked delivery",
+      detail: "Lost or damaged parcels replaced or refunded",
       slug: "shipping",
     },
   ];

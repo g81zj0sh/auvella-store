@@ -8,10 +8,10 @@ import {
   MULTI_BUY_TIERS,
   MULTI_BUY_ATTRIBUTE,
   tierTotal,
-  bestValueTier,
   type MultiBuyTier,
 } from "@/lib/duoDeal";
 import { MultiBuySelector } from "@/components/site/MultiBuySelector";
+import { FreeShippingProgress } from "@/components/site/FreeShippingProgress";
 import { TrustBadges } from "@/components/site/TrustBadges";
 import { RatingBadge } from "@/components/site/RatingBadge";
 import { isFinalSale } from "@/lib/returnsPolicy";
@@ -44,7 +44,13 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
 import { BUNDLE_DEAL, inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
-import { freeShippingThresholdFmt, useShippingCountry, PROCESSING_LABEL, transitLabel } from "@/lib/shipping";
+import {
+  freeShippingThreshold,
+  freeShippingThresholdFmt,
+  useShippingCountry,
+  PROCESSING_LABEL,
+  transitLabel,
+} from "@/lib/shipping";
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
@@ -663,6 +669,13 @@ function ProductPage() {
       .slice(0, t.quantity)
       .map((u) => (u ? parseFloat(u.price.amount) : unitPrice));
   const payTotal = tierTotal(tierUnitPrices(tier), tier.percent);
+  /* Free-shipping progress: the bag's own rule (pre-discount subtotal against
+     the market threshold, as in CartDrawer) applied to what's in the bag plus
+     this selection, so the two never disagree. */
+  const bagSubtotal = bagItems
+    .filter((i) => i.price.currencyCode === currency)
+    .reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
+  const shippingProjected = bagSubtotal + tierUnitPrices(tier).reduce((s, p) => s + p, 0);
 
   /* This exact selection (tier + variants) is what the main button last added
      and it is still in the bag: the sticky bar then just goes to checkout. */
@@ -1210,12 +1223,12 @@ function ProductPage() {
             ))}
 
             {/*
-              Multi-buy. True and plain: each tier's price is what checkout
-              charges under the Shopify automatic rule (MULTI_BUY_TIERS), the
-              struck figure is the same items at full price, and there is no
-              timer, no "deal ends" and no popularity badge we can't back
-              with order data. "Best value" appears only when one tier saves
-              strictly more than the others.
+              Multi-buy power cards (v158). True and plain: each tier's price
+              is what checkout charges under the Shopify automatic rule
+              (MULTI_BUY_TIERS), the struck figure is the same items at full
+              price, the "Save £X" is the difference, and there is no timer,
+              no "deal ends" and no popularity badge we can't back with order
+              data.
             */}
             {multiBuy && (
               <div>
@@ -1224,13 +1237,14 @@ function ProductPage() {
                   tiers={MULTI_BUY_TIERS}
                   value={tier.quantity}
                   onChange={choosePack}
-                  bestValue={bestValueTier(MULTI_BUY_TIERS)}
                   price={(t) => {
                     const prices = tierUnitPrices(t);
                     const full = prices.reduce((s, p) => s + p, 0);
+                    const total = tierTotal(prices, t.percent);
                     return {
-                      total: cur(tierTotal(prices, t.percent)),
+                      total: cur(total),
                       full: t.percent ? cur(full) : null,
+                      saving: t.percent ? cur(Math.round((full - total) * 100) / 100) : null,
                     };
                   }}
                 />
@@ -1327,9 +1341,18 @@ function ProductPage() {
               </div>
             )}
 
+            {/* Friendly free-shipping progress right above the button (v158). */}
+            <div className="mt-7">
+              <FreeShippingProgress
+                projected={shippingProjected}
+                threshold={freeShippingThreshold(currency)}
+                cur={cur}
+              />
+            </div>
+
             {/* Add to bag / Select a size - the boldest thing on the page:
                 full-width, solid --cta fill in both states. */}
-            <div className="mt-7">
+            <div className="mt-4">
             <button
               ref={atcRef}
               onClick={handleAdd}
