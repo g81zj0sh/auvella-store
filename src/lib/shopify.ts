@@ -304,13 +304,30 @@ export type CartTotals = {
   discounts: Array<{ label: string; amount: number }>;
   linePrices: Record<string, { amount: string; currencyCode: string }>;
   checkoutUrl: string | null;
+  /** The bag these totals were priced for (cartLineKey) and the codes on
+   *  it, upper-cased and sorted: totals for any other bag are stale. */
+  lineKey: string;
+  codes: string[];
 };
+
+/** Units per variant as one stable string: what a bag holds, whatever its
+ *  line order or how Shopify splits a variant across lines. */
+export function cartLineKey(lines: Array<{ variantId: string; quantity: number }>): string {
+  const units = new Map<string, number>();
+  for (const l of lines) units.set(l.variantId, (units.get(l.variantId) ?? 0) + l.quantity);
+  return [...units.entries()]
+    .filter(([, n]) => n > 0)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([id, n]) => `${id}:${n}`)
+    .join("|");
+}
 
 const CART_TOTALS_QUERY = `
   query cartTotals($id: ID!) {
     cart(id: $id) {
       checkoutUrl
       cost { totalAmount { amount currencyCode } }
+      discountCodes { code applicable }
       discountAllocations {
         discountedAmount { amount }
         ... on CartAutomaticDiscountAllocation { title }
@@ -318,6 +335,7 @@ const CART_TOTALS_QUERY = `
       }
       lines(first: 100) {
         edges { node {
+          quantity
           merchandise { ... on ProductVariant { id price { amount currencyCode } } }
           discountAllocations {
             discountedAmount { amount }
@@ -341,9 +359,11 @@ export async function fetchCartTotals(cartId: string): Promise<CartTotals | null
   };
   for (const a of cart.discountAllocations ?? []) add(a);
   const linePrices: CartTotals["linePrices"] = {};
+  const lineUnits: Array<{ variantId: string; quantity: number }> = [];
   for (const e of cart.lines?.edges ?? []) {
     const n = e.node;
     if (n.merchandise?.id && n.merchandise.price) linePrices[n.merchandise.id] = n.merchandise.price;
+    if (n.merchandise?.id) lineUnits.push({ variantId: n.merchandise.id, quantity: n.quantity ?? 0 });
     for (const a of n.discountAllocations ?? []) add(a);
   }
   return {
@@ -352,6 +372,10 @@ export async function fetchCartTotals(cartId: string): Promise<CartTotals | null
     discounts: [...byLabel.entries()].filter(([, v]) => v > 0).map(([label, amount]) => ({ label, amount: Math.round(amount * 100) / 100 })),
     linePrices,
     checkoutUrl: cart.checkoutUrl ? formatCheckoutUrl(cart.checkoutUrl) : null,
+    lineKey: cartLineKey(lineUnits),
+    // Every code on the cart, applicable or not: the total already reflects
+    // which ones apply, so totals stay usable for a code that stopped applying.
+    codes: (cart.discountCodes ?? []).map((c: { code: string }) => c.code.toUpperCase()).sort(),
   };
 }
 

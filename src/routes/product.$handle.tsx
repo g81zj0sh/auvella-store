@@ -12,6 +12,7 @@ import {
 } from "@/lib/duoDeal";
 import { MultiBuySelector } from "@/components/site/MultiBuySelector";
 import { FreeShippingProgress } from "@/components/site/FreeShippingProgress";
+import { bagTotals } from "@/lib/bagTotals";
 import { TrustBadges } from "@/components/site/TrustBadges";
 import { RatingBadge } from "@/components/site/RatingBadge";
 import { isFinalSale } from "@/lib/returnsPolicy";
@@ -45,7 +46,7 @@ import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
 import { BUNDLE_DEAL, inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
 import {
-  freeShippingThreshold,
+  bagFreeShipping,
   freeShippingThresholdFmt,
   useShippingCountry,
   PROCESSING_LABEL,
@@ -229,6 +230,8 @@ function ProductPage() {
   const getCheckoutUrl = useCartStore((s) => s.getCheckoutUrl);
   const [buyingNow, setBuyingNow] = useState(false);
   const bagItems = useCartStore((s) => s.items);
+  const cartTotals = useCartStore((s) => s.totals);
+  const cartCodes = useCartStore((s) => s.discountCodes);
   /* What the main button last put in the bag (tier + variants), so the sticky
      bar can go straight to checkout instead of adding the same items again. */
   const [addedKey, setAddedKey] = useState<string | null>(null);
@@ -669,13 +672,14 @@ function ProductPage() {
       .slice(0, t.quantity)
       .map((u) => (u ? parseFloat(u.price.amount) : unitPrice));
   const payTotal = tierTotal(tierUnitPrices(tier), tier.percent);
-  /* Free-shipping progress: the bag's own rule (pre-discount subtotal against
-     the market threshold, as in CartDrawer) applied to what's in the bag plus
-     this selection, so the two never disagree. */
-  const bagSubtotal = bagItems
-    .filter((i) => i.price.currencyCode === currency)
-    .reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
-  const shippingProjected = bagSubtotal + tierUnitPrices(tier).reduce((s, p) => s + p, 0);
+  /* Free-shipping progress: exactly the bag's standing - its value after
+     discounts (bagTotals) under the drawer's own rule (bagFreeShipping) - so
+     the box and the bag always show the same figure. This selection is NOT
+     added on top: once it is in the bag it counted twice (v158 said
+     "unlocked" while the bag said £27.01 to go). An empty bag quotes in the
+     shopper's currency, as the drawer and header do. */
+  const bag = bagTotals(bagItems, cartTotals, activeCurrency, cartCodes);
+  const bagShipping = bagFreeShipping(bag.payable, bag.baseCurrency);
 
   /* This exact selection (tier + variants) is what the main button last added
      and it is still in the bag: the sticky bar then just goes to checkout. */
@@ -1341,12 +1345,14 @@ function ProductPage() {
               </div>
             )}
 
-            {/* Friendly free-shipping progress right above the button (v158). */}
+            {/* Friendly free-shipping progress right above the button (v158; the
+                bag's own figure since v159). */}
             <div className="mt-7">
               <FreeShippingProgress
-                projected={shippingProjected}
-                threshold={freeShippingThreshold(currency)}
-                cur={cur}
+                value={bag.payable}
+                pending={bag.pending}
+                threshold={bagShipping.threshold}
+                cur={(n) => display(n, bag.baseCurrency)}
               />
             </div>
 
@@ -1377,7 +1383,7 @@ function ProductPage() {
             </button>
             </div>
 
-            <TrustBadges handle={node.handle} />
+            <TrustBadges handle={node.handle} title={node.title} productType={node.productType ?? ""} />
 
             {/* Tabs */}
             <div className="mt-10">

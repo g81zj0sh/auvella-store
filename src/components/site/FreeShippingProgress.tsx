@@ -1,28 +1,32 @@
 /*
  * Friendly free-shipping progress right above Add to Bag (v158).
  *
- * It counts what's already in the bag plus this selection at full price,
- * against the shopper's market threshold (freeShippingThreshold) - the same
- * rule the bag drawer uses, so the two never disagree. "Free Express
- * Delivery" is the Shipping policy's own wording ("free express shipping on
- * all orders of £60 or more"). Unlocked turns the box and bar green.
+ * Shows the bag's own standing - the page passes the bag's value after
+ * discounts (bagTotals) and the threshold from bagFreeShipping(), the same
+ * figures the bag drawer uses - so the box and the bag always agree, and
+ * "unlocked" only shows when checkout will offer the free rate. "Free Express Delivery" is the Shipping
+ * policy's own wording ("free express shipping on all orders of £60 or
+ * more"). Unlocked turns the box and bar green.
  */
 export function FreeShippingProgress({
-  projected,
+  value,
   threshold,
   cur,
+  pending = false,
 }: {
-  /** Bag subtotal plus this selection, in the page's currency. */
-  projected: number;
+  /** The bag's value after discounts (what checkout charges for the goods), in the bag's currency. */
+  value: number;
   /** Free-shipping threshold in the same currency. */
   threshold: number;
-  /** Formats an amount in the page's currency. */
+  /** Formats an amount in that currency. */
   cur: (n: number) => string;
+  /** A discount code is still being priced: no claim either way until then. */
+  pending?: boolean;
 }) {
-  if (!(threshold > 0)) return null;
-  const unlocked = projected >= threshold;
-  const pct = Math.min(100, Math.max(0, (projected / threshold) * 100));
-  const remaining = Math.max(0, threshold - projected);
+  if (pending || !(threshold > 0)) return null;
+  const unlocked = value >= threshold;
+  const pct = Math.min(100, Math.max(0, (value / threshold) * 100));
+  const remaining = Math.max(0, threshold - value);
   return (
     <div
       className={`rounded-[12px] border px-4 py-3 transition-colors duration-500 ${
@@ -58,7 +62,9 @@ export function FreeShippingProgress({
         />
       </div>
       <p className={`mt-1.5 text-[11px] ${unlocked ? "text-[#166534]" : "text-[#555555]"}`}>
-        Your bag + this selection, towards {cur(threshold)}
+        {unlocked
+          ? `Your bag has reached ${cur(threshold)}`
+          : `In your bag: ${cur(value)} of ${cur(threshold)}`}
       </p>
     </div>
   );

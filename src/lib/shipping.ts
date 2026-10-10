@@ -201,6 +201,26 @@ export function freeShippingThreshold(currency: string): number {
   return Math.ceil(raw / step) * step;
 }
 
+/*
+ * The bag's free-shipping standing: ONE rule for the bag drawer and the
+ * product page's progress box, so the two can never disagree. `payable` is
+ * the bag's value after discounts (bagTotals().payable in lib/bagTotals.ts) -
+ * the figure Shopify checks the free rate against - in `currency`, the bag's.
+ * v159: the product page used to add the current selection on top of the
+ * bag, so once that item was in the bag it was counted twice and showed
+ * "unlocked" while the bag said £27.01 to go; and both used the full price,
+ * so a discounted bag could show "unlocked" while checkout charged £4.98.
+ */
+export function bagFreeShipping(payable: number, currency: string) {
+  const threshold = freeShippingThreshold(currency);
+  return {
+    threshold,
+    remaining: Math.max(0, threshold - payable),
+    qualified: payable >= threshold,
+    progress: threshold > 0 ? Math.min(100, (payable / threshold) * 100) : 0,
+  };
+}
+
 export function freeShippingThresholdFmt(currency: string): string {
   return new Intl.NumberFormat("en", {
     style: "currency",

@@ -8,11 +8,12 @@ import { useCartStore, type CartItem } from "@/stores/cartStore";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { useQuickAdd } from "@/stores/quickAddStore";
-import { useDisplayPrice, useT } from "@/lib/preferences";
-import { freeShippingThreshold, useShippingCountry } from "@/lib/shipping";
+import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
+import { bagFreeShipping, useShippingCountry } from "@/lib/shipping";
 import { cartLineImage } from "@/lib/cartImage";
 import { BUNDLE_DEAL, BUNDLE_SHOPIFY_TITLE, bundleLabel, inBundleDeal } from "@/lib/bundleDeal";
-import { DUO_DEAL, inDuoDeal, duoUnitOff } from "@/lib/duoDeal";
+import { DUO_DEAL } from "@/lib/duoDeal";
+import { bagTotals } from "@/lib/bagTotals";
 import { estimateDelivery, DISPATCH_CUTOFF_LONDON } from "@/lib/deliveryEstimate";
 import {
   fetchProductRecommendations,
@@ -32,7 +33,7 @@ import { BagTimer } from "@/components/site/BagTimer";
  * a direct-fine offence; more to the point, this brand's whole position is
  * that it doesn't overstate.
  *
- *   Free-shipping bar   — freeShippingThreshold(), same number as the site
+ *   Free-shipping bar   — bagFreeShipping(), same rule as the product page
  *   "Only N left"       — Storefront quantityAvailable, < 40 only; the query
  *                         is rejected outright until the inventory scope is
  *                         enabled on the headless app, in which case nothing
@@ -59,43 +60,14 @@ export function CartDrawer() {
   const display = useDisplayPrice();
   const t = useT();
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-  const baseCurrency = items[0]?.price.currencyCode ?? "GBP";
-  const totalPrice = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
-  /* "Buy 2, save 15%": mirrors the Simple Discounts quantity break so the bag
-     shows the figure checkout will. Counted PER PRODUCT: units of one product
-     across its sizes, not across the bag. */
-  /* Shopify rounds the 15% per unit, then multiplies (£19.99 → £2.99 off each,
-     not £5.997 → £6.00 on the pair). Match it, or the bag and checkout
-     disagree by pennies (QA re-check, 27 Sept 2026). */
-  const perProduct = new Map<string, { qty: number; saving: number }>();
-  for (const i of items) {
-    const h = i.product.node.handle;
-    if (!inDuoDeal(h)) continue;
-    const cur = perProduct.get(h) ?? { qty: 0, saving: 0 };
-    const unitOff = duoUnitOff(parseFloat(i.price.amount));
-    cur.qty += i.quantity;
-    cur.saving += unitOff * i.quantity;
-    perProduct.set(h, cur);
-  }
-  let duoSaving = 0;
-  let duoOneShort = 0;
-  for (const v of perProduct.values()) {
-    if (v.qty >= DUO_DEAL.minQuantity) duoSaving += v.saving;
-    else duoOneShort += 1;
-  }
-  duoSaving = Math.round(duoSaving * 100) / 100;
-  /* "3 for £30": Shopify's rule is £2.99 off EVERY eligible item once 3+ eligible
-     items are in the bag (3 × £12.99 → £30.00). The bag showed the nudge but
-     never the saving (QA, 27 Sept 2026). Mirrored in the bag's base currency. */
-  const bundleItems = items.filter((i) => inBundleDeal(i.product.node.handle));
-  const bundleUnits = bundleItems.reduce((s, i) => s + i.quantity, 0);
-  const bundlePerUnitOff = 2.99;
-  const bundleSaving =
-    bundleUnits >= BUNDLE_DEAL.minQuantity ? Math.round(bundleUnits * bundlePerUnitOff * 100) / 100 : 0;
-  /* Shopify's own numbers win whenever they're in the bag's currency; the
-     local mirrors above only cover the moment before they arrive. */
+  /* The bag's arithmetic (full price, the mirrored Buy 2 and 3-for-£30 savings,
+     Shopify's own totals once they're in) lives in lib/bagTotals.ts, so the
+     product page's free-shipping box uses exactly the same figures. An empty
+     bag quotes in the shopper's currency, like the header. */
+  const displayCurrency = usePreferences((s) => s.currency);
   const totals = useCartStore((s) => s.totals);
-  const shopifyTotals = totals && totals.currency === baseCurrency && items.length > 0 ? totals : null;
+  const { baseCurrency, duoSaving, duoOneShort, bundleSaving, shopifyTotals, payable, pending } =
+    bagTotals(items, totals, displayCurrency, discountCodes);
   const savingLines: Array<{ label: string; amount: number }> = shopifyTotals
     ? shopifyTotals.discounts.map((d) =>
         d.label.toLowerCase() === BUNDLE_SHOPIFY_TITLE.toLowerCase() ? { ...d, label: bundleLabel(baseCurrency) } : d,
@@ -104,13 +76,12 @@ export function CartDrawer() {
         ...(bundleSaving > 0 ? [{ label: bundleLabel(baseCurrency), amount: bundleSaving }] : []),
         ...(duoSaving > 0 ? [{ label: `Buy 2, save ${DUO_DEAL.percent}%`, amount: duoSaving }] : []),
       ];
-  const payable = shopifyTotals ? shopifyTotals.total : totalPrice - duoSaving - bundleSaving;
 
   const { country } = useShippingCountry();
-  const threshold = freeShippingThreshold(baseCurrency);
-  const remaining = Math.max(0, threshold - totalPrice);
-  const qualified = totalPrice >= threshold;
-  const progress = threshold > 0 ? Math.min(100, (totalPrice / threshold) * 100) : 0;
+  /* Judged on what checkout charges (after discounts), with the same rule as
+     the product page's progress box (lib/shipping.ts). While a code is still
+     being priced (pending) the bar is left out rather than guess. */
+  const { threshold, remaining, qualified, progress } = bagFreeShipping(payable, baseCurrency);
 
   useEffect(() => {
     if (open) syncCart();
@@ -248,6 +219,7 @@ export function CartDrawer() {
                   progress point. Once free shipping is unlocked the badge
                   sits at the end and takes the timer's light green. The bar
                   is inset by half the badge so the badge never clips. */}
+              {!pending && (
               <div className="px-6 pt-3 pb-3.5 border-b border-border">
                 <p className="text-[13px] leading-snug text-cocoa">
                   {qualified ? (
@@ -287,6 +259,7 @@ export function CartDrawer() {
                   </span>
                 </div>
               </div>
+              )}
 
               <div className="flex-1 overflow-y-auto min-h-0">
                 {/* ── Lines ───────────────────────────────────────────── */}

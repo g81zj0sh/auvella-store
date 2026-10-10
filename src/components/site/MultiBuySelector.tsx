@@ -8,8 +8,9 @@ import type { MultiBuyTier } from "@/lib/duoDeal";
  *
  * Every rate, price and saving comes in from MULTI_BUY_TIERS (lib/duoDeal.ts)
  * via the page, and the badges are built from those rates, so a card can only
- * promise what checkout gives. No popularity badge: there is no order data to
- * back "most popular" yet.
+ * promise what checkout gives. The 3+ card is badged "Best value" (owner's
+ * call, 10 Oct 2026; it carries the largest saving in pounds). No popularity
+ * badge: there is no order data to back "most popular" yet.
  */
 interface Props {
   tiers: MultiBuyTier[];
@@ -31,7 +32,7 @@ const NAMES: Record<MultiBuyTier["quantity"], { title: string; sub?: string }> =
 
 function badgeFor(t: MultiBuyTier): string | null {
   if (!t.percent) return null;
-  return t.quantity >= 3 ? `🔥 Stock up · Save ${t.percent}%` : `Save ${t.percent}%`;
+  return t.quantity >= 3 ? `🔥 Best value · Save ${t.percent}%` : `Save ${t.percent}%`;
 }
 
 export function MultiBuySelector({ tiers, value, onChange, price, name }: Props) {
