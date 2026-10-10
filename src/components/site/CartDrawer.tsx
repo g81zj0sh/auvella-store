@@ -22,7 +22,7 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { CartEditSheet } from "@/components/site/CartEditSheet";
-
+import { BagTimer } from "@/components/site/BagTimer";
 /*
  * Bag drawer.
  *
@@ -204,7 +204,7 @@ export function CartDrawer() {
             </SheetTitle>
             <SheetDescription className="sr-only">Items in your bag</SheetDescription>
           </SheetHeader>
-
+          {items.length > 0 && <BagTimer />}
           {items.length === 0 ? (
             /*
              * Empty bag. An empty drawer is still a shopper who opened the bag,
