@@ -25,7 +25,7 @@ export function BagTimer() {
       role="timer"
       className="mx-6 mt-4 rounded-control bg-[#15703a] px-4 py-2.5 text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-white"
     >
-      YOUR ORDER IS RESERVED FOR 10:00 <span className="tabular-nums">{fmt(left)}</span>
+      YOUR ORDER IS RESERVED FOR  <span className="tabular-nums">{fmt(left)}</span>
     </div>
   );
 }
