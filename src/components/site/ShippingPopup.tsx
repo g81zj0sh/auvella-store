@@ -7,7 +7,9 @@ import { landedOnHome } from "@/lib/landing";
 /*
  * ShippingPopup — SKIMS-style shipping-location modal.
  *  - Auto-detects country (ipapi.co, browser-locale fallback)
- *  - Hemisphere-aware seasonal urgency bar with live countdown
+ *  - Hemisphere-aware seasonal offer bar: "40% Off Autumn · Limited time 🔥🔥".
+ *    No countdown since v149 - Joshua found the ticking timer too big, and a
+ *    clock that restarts every season reads as false urgency.
  *  - Fades in on open, fades out on dismiss
  *  - Shows once per session (sessionStorage)
  *  - Only for visitors whose session STARTED on the home page. Someone who
@@ -41,47 +43,15 @@ function inCooldown(): boolean {
 }
 
 
-/** Meteorological season + end DATE, hemisphere-aware (AU/NZ southern). */
-function seasonInfo(code: string): { name: string; endDate: Date } {
+/** Meteorological season name, hemisphere-aware (AU/NZ southern). */
+function seasonName(code: string): string {
   const southern = ["AU", "NZ"].includes((code ?? "").toUpperCase());
   const m = new Date().getMonth(); // 0-11
   const northName =
     m >= 2 && m <= 4 ? "Spring" : m >= 5 && m <= 7 ? "Summer" : m >= 8 && m <= 10 ? "Autumn" : "Winter";
   const southName =
     m >= 2 && m <= 4 ? "Autumn" : m >= 5 && m <= 7 ? "Winter" : m >= 8 && m <= 10 ? "Spring" : "Summer";
-  // Season boundaries: May 31, Aug 31, Nov 30, Feb 28 (both hemispheres share dates)
-  const [endMonth, endDay] =
-    m >= 2 && m <= 4 ? [4, 31] : m >= 5 && m <= 7 ? [7, 31] : m >= 8 && m <= 10 ? [10, 30] : [1, 28];
-  const now = new Date();
-  let endDate = new Date(now.getFullYear(), endMonth, endDay, 23, 59, 59);
-  if (endDate.getTime() < now.getTime()) {
-    endDate = new Date(now.getFullYear() + 1, endMonth, endDay, 23, 59, 59);
-  }
-  return { name: southern ? southName : northName, endDate };
-}
-
-function pad(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-/** Live "Xd hh:mm:ss" countdown to a target date. */
-function useCountdown(target: Date, active: boolean) {
-  const [left, setLeft] = useState("");
-  useEffect(() => {
-    if (!active) return;
-    const tick = () => {
-      const ms = Math.max(0, target.getTime() - Date.now());
-      const d = Math.floor(ms / 86_400_000);
-      const h = Math.floor((ms % 86_400_000) / 3_600_000);
-      const mi = Math.floor((ms % 3_600_000) / 60_000);
-      const s = Math.floor((ms % 60_000) / 1000);
-      setLeft(`${d}d ${pad(h)}:${pad(mi)}:${pad(s)}`);
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [target.getTime(), active]);
-  return left;
+  return southern ? southName : northName;
 }
 
 export function ShippingPopup() {
@@ -127,8 +97,7 @@ export function ShippingPopup() {
     };
   }, [render]);
 
-  const season = seasonInfo(country.code);
-  const countdown = useCountdown(season.endDate, render);
+  const season = seasonName(country.code);
 
   const dismiss = () => {
     setVisible(false); // fade out…
@@ -181,8 +150,7 @@ export function ShippingPopup() {
             product actually shows: 40% since 5 Oct 2026 (compare-at = price /
             0.6; live check: every product 40-43% off). */}
         <div className="-mx-6 bg-[#0a0a0a] py-2 pl-4 pr-10 text-center text-[10px] uppercase tracking-[0.14em] text-white md:-mx-7">
-          40% Off {season.name} · Ends in{" "}
-          <span className="font-semibold tabular-nums">{countdown}</span>
+          40% Off {season} · Limited time <span aria-hidden="true">🔥🔥</span>
         </div>
         <button
           aria-label="Close"
