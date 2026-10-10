@@ -1,4 +1,4 @@
-import { PROCESSING_LABEL, COUNTRIES, transitLabel } from "@/lib/shipping";
+import { PROCESSING_LABEL, COUNTRIES, transitLabel, FREE_SHIPPING_GBP } from "@/lib/shipping";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
@@ -6,8 +6,8 @@ import { Footer } from "@/components/site/Footer";
 /* ------------------------------------------------------------------ */
 /* Store information & policy pages.                                   */
 /* Content is specific to Auvella's real setup: email-only support     */
-/* (support@auvellawear.com), USD store, US free shipping ≥ $70,       */
-/* international free ≥ $95 USD-equivalent, 30-day returns.           */
+/* (support@auvellawear.com), GBP store, free shipping on orders of    */
+/* £60+ everywhere (FREE_SHIPPING_GBP), 30-day returns.                */
 /* Keep these in sync with the Shopify Settings → Policies documents. */
 /* ------------------------------------------------------------------ */
 
@@ -182,9 +182,9 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
     body: (
       <>
         <P>
-          All prices on auvellawear.com are set in US Dollars (USD) and displayed in your
-          local currency at current exchange rates. Shipping is calculated at checkout in
-          the same way.
+          All prices on auvellawear.com are set in British pounds (GBP) and displayed in
+          your local currency at current exchange rates. Shipping is calculated at checkout
+          in the same way.
         </P>
         <H2>Processing time</H2>
         <P>
@@ -199,15 +199,15 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
         </P>
         <ul className="mt-2 list-disc pl-5">
           <LI>
-            <strong>United States and international</strong> — $6.74 flat rate
+            <strong>United Kingdom, United States and international</strong> — £4.98 flat rate
           </LI>
           <LI>
-            <strong>Australia</strong> — $9.99 flat rate
+            <strong>Australia</strong> — £7.38 flat rate
           </LI>
           <LI>
-            <strong>Free express shipping on all orders over $95 USD</strong>{" "}
-            (approximately £75 / €85, converted automatically at checkout) — this applies
-            everywhere we ship, including Australia
+            <strong>Free express shipping on all orders of £{FREE_SHIPPING_GBP} or more</strong>{" "}
+            — this applies everywhere we ship, including Australia. If you pay in another
+            currency, the £{FREE_SHIPPING_GBP} is converted automatically at checkout.
           </LI>
         </ul>
         <H2>Delivery times</H2>

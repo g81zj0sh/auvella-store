@@ -66,7 +66,37 @@ export function transitLabel(c: Country): string {
 
 /** Processing as "1 – 3", for copy that quotes dispatch time. */
 export const PROCESSING_LABEL = `${PROCESSING_DAYS[0]} – ${PROCESSING_DAYS[1]}`;
-const FREE_SHIPPING_GBP = 75;
+
+/*
+ * Free shipping: orders of £60 or more, everywhere we ship (Joshua, 10 Oct
+ * 2026 - was £75). In Shopify it is the General profile's free rate in each
+ * zone (Australia, Domestic, International), condition TOTAL_PRICE >= 60 GBP.
+ * Change both together.
+ *
+ * Shopify converts the £60 into each market's currency at its own exchange
+ * rate, which drifts and is not RATES_TO_GBP: on 10 Oct 2026 test carts went
+ * free at $80, €70.90 and C$114, while converting with the static table gave
+ * $75, €70 and C$105 - figures checkout would not honour. So every live
+ * checkout currency has an explicit figure, set from test carts that day
+ * ("free at" below) and rounded UP to a clean step after ~4% headroom for
+ * exchange-rate drift. The site may only ever quote a figure at or above what
+ * checkout needs. Re-run the test carts whenever the GBP figure changes.
+ */
+export const FREE_SHIPPING_GBP = 60;
+const FREE_SHIPPING_LOCAL: Record<string, number> = {
+  GBP: FREE_SHIPPING_GBP,
+  USD: 85, // free at $80
+  EUR: 75, // free at €70.90
+  AUD: 120, // free at A$114
+  CAD: 120, // free at C$114
+  CHF: 70, // free at CHF 66
+  SEK: 850, // free at 797 kr
+  DKK: 575, // free at 532 kr
+  AED: 305, // free at AED 293
+  NZD: 150, // free at NZ$142
+  SGD: 110, // free at S$102
+  PLN: 330, // free at 313 zł
+};
 
 /*
  * Country → display currency.
@@ -158,11 +188,17 @@ export async function detectCountry(): Promise<Country> {
   return COUNTRIES[0];
 }
 
-/** £75 base converted via the store's rate table, rounded to a clean figure. */
+/**
+ * The free-shipping figure to quote in a currency: the measured table above,
+ * else (a display-only currency checkout doesn't use) the £60 converted with
+ * 10% headroom and rounded UP, so it never undercuts checkout.
+ */
 export function freeShippingThreshold(currency: string): number {
-  const raw = convertPrice(FREE_SHIPPING_GBP, "GBP", currency);
+  const known = FREE_SHIPPING_LOCAL[currency.toUpperCase()];
+  if (known) return known;
+  const raw = convertPrice(FREE_SHIPPING_GBP, "GBP", currency) * 1.1;
   const step = raw >= 500 ? 25 : 5;
-  return Math.round(raw / step) * step;
+  return Math.ceil(raw / step) * step;
 }
 
 export function freeShippingThresholdFmt(currency: string): string {

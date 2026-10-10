@@ -193,7 +193,7 @@ const DICT: Record<string, string[]> = {
 
   // Benefits marquee
   "Easy, Tracked 30 Day Returns": ["Retours faciles et suivis sous 30 jours", "Devoluciones fáciles y rastreadas en 30 días", "Einfache, getrackte 30-Tage-Rückgabe", "Resi facili e tracciati entro 30 giorni", "Eenvoudige retour binnen 30 dagen met tracking", "Devoluções fáceis e rastreadas em 30 dias", "إرجاع سهل ومتتبَّع خلال 30 يوماً", "30天轻松追踪退货", "簡単・追跡可能な30日間返品"],
-  "Free Shipping On Orders £75+": ["Livraison offerte dès 75 £", "Envío gratis en pedidos superiores a £75", "Kostenloser Versand ab £75", "Spedizione gratuita per ordini oltre 75 £", "Gratis verzending vanaf £75", "Frete grátis em pedidos acima de £75", "شحن مجاني للطلبات فوق 75£", "订单满£75免运费", "£75以上のご注文で送料無料"],
+  "Free Shipping On Orders £60+": ["Livraison offerte dès 60 £", "Envío gratis en pedidos superiores a £60", "Kostenloser Versand ab £60", "Spedizione gratuita per ordini oltre 60 £", "Gratis verzending vanaf £60", "Frete grátis em pedidos acima de £60", "شحن مجاني للطلبات فوق 60£", "订单满£60免运费", "£60以上のご注文で送料無料"],
   "Receive Your Order In 3–5 Business Days": ["Recevez votre commande en 3 à 5 jours ouvrés", "Recibe tu pedido en 3–5 días hábiles", "Erhalte deine Bestellung in 3–5 Werktagen", "Ricevi il tuo ordine in 3–5 giorni lavorativi", "Ontvang je bestelling binnen 3–5 werkdagen", "Receba seu pedido em 3–5 dias úteis", "استلم طلبك خلال 3–5 أيام عمل", "3–5个工作日内收到您的订单", "3〜5営業日でお届け"],
   "Premium Sculpting Comfort": ["Confort sculptant premium", "Comodidad modeladora premium", "Premium-Shaping-Komfort", "Comfort modellante premium", "Premium modellerend comfort", "Conforto modelador premium", "راحة منحوتة فاخرة", "高级塑形舒适", "プレミアムな引き締めコンフォート"],
 
