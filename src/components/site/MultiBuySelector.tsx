@@ -25,7 +25,9 @@ export function MultiBuySelector({ tiers, value, onChange, price, bestValue, nam
       <legend className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
         Multi-buy
       </legend>
-      <div className="mt-3 grid grid-cols-1 gap-2">
+      {/* gap-3 leaves room for the "Best value" sticker, which sits across
+          its card's top edge, so it never touches the card above. */}
+      <div className="mt-4 grid grid-cols-1 gap-3">
         {tiers.map((t) => {
           const active = value === t.quantity;
           const { total, full } = price(t);
