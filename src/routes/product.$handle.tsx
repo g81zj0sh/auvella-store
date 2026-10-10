@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { LEGACY_PRODUCT_HANDLES } from "@/lib/productHandles";
 import { sizeLabel } from "@/lib/sizeLabels";
-import { galleryUrls, indexedHex, indexedSwatch, GALLERY_INDEX } from "@/lib/galleryIndex";
+import { galleryUrls, indexedGhost, indexedHex, indexedSwatch, GALLERY_INDEX } from "@/lib/galleryIndex";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import {
   inDuoDeal,
@@ -295,12 +295,18 @@ function ProductPage() {
      shopper changes on a row are stored; the rest follow #1, so "2 of the
      same" needs no extra clicks and a size picked later on #1 carries over. */
   const [extraSel, setExtraSel] = useState<Record<string, string>[]>([]);
+  /* Colour the gallery previews after the shopper changes item #2 or #3, so
+     picking Nude for #2 shows Nude instead of #1's colour (Joshua, 10 Oct
+     2026). Any change to #1 - the main selection - or to the tier hands the
+     gallery back to #1. */
+  const [previewColour, setPreviewColour] = useState<string | undefined>(undefined);
   // The route stays mounted between products: each one starts on a single
   // item with no picks left over from the last.
   useEffect(() => {
     setSelected({});
     setPack(1);
     setExtraSel([]);
+    setPreviewColour(undefined);
     setAddedKey(null);
   }, [handle]);
   const extraSels = useMemo(
@@ -344,6 +350,8 @@ function ProductPage() {
     [node],
   );
   const activeColour = colorOptName ? currentSelected[colorOptName] : undefined;
+  /** What the gallery shows: the multi-buy row last touched, else #1. */
+  const galleryColour = previewColour ?? activeColour;
 
   /**
    * Images grouped per colour: the variant's featured image(s) first, then any
@@ -437,17 +445,17 @@ function ProductPage() {
   }, [node, colorOptName, images]);
 
   const activeImages = useMemo(() => {
-    if (!activeColour) return images;
-    const set = colorImageMap.get(activeColour);
+    if (!galleryColour) return images;
+    const set = colorImageMap.get(galleryColour);
     return set && set.length > 0 ? set : images;
-  }, [images, colorImageMap, activeColour]);
+  }, [images, colorImageMap, galleryColour]);
 
   // Colour change: reset to that colour's first image, everywhere.
   const mobileGalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     setImageIdx(0);
     mobileGalRef.current?.scrollTo({ left: 0 });
-  }, [activeColour]);
+  }, [galleryColour]);
 
   /* Non-colour options (the Body Adhesive's Type, say) never changed the
      photo, so every variant looked like the first one. When the chosen
@@ -642,6 +650,7 @@ function ProductPage() {
 
   const setOpt = (name: string, value: string) => {
     setSelected({ ...currentSelected, [name]: value });
+    setPreviewColour(undefined);
   };
 
   const scrollToSizes = () => {
@@ -673,6 +682,7 @@ function ProductPage() {
     setPack(q);
     // Items beyond the new tier are dropped, so a later tier starts as a copy of #1 again.
     setExtraSel((prev) => prev.slice(0, q - 1));
+    setPreviewColour(undefined);
   };
 
   /** Whether some purchasable variant has this option value, given a row's other picks. */
@@ -1240,17 +1250,49 @@ function ProductPage() {
                   <div className="mt-3 space-y-2 border border-[#e6e4e0] bg-[#faf9f7] p-3">
                     {Array.from({ length: tier.quantity }, (_, i) => {
                       const sel = i === 0 ? currentSelected : extraSels[i - 1];
-                      const set = (name: string, value: string) =>
-                        i === 0
-                          ? setOpt(name, value)
-                          : setExtraSel((prev) => {
-                              const next = [...prev];
-                              next[i - 1] = { ...(prev[i - 1] ?? {}), [name]: value };
-                              return next;
-                            });
+                      const set = (name: string, value: string) => {
+                        if (i === 0) {
+                          setOpt(name, value);
+                          return;
+                        }
+                        setExtraSel((prev) => {
+                          const next = [...prev];
+                          next[i - 1] = { ...(prev[i - 1] ?? {}), [name]: value };
+                          return next;
+                        });
+                        // Show this item's colour in the gallery (#1's when they match).
+                        const rowColour = colorOptName
+                          ? { ...sel, [name]: value }[colorOptName]
+                          : undefined;
+                        setPreviewColour(rowColour && rowColour !== activeColour ? rowColour : undefined);
+                      };
+                      /* Small picture of this item in its colour, so the choice
+                         shows right beside the picker on phones too (where the
+                         gallery is scrolled out of view). Garment shot first:
+                         it reads more clearly than a model at this size. */
+                      const rowColour = colorOption && colorOption.values.length > 1
+                        ? sel[colorOption.name]
+                        : undefined;
+                      const rowThumb = rowColour
+                        ? indexedGhost(node.handle, rowColour, images.map((im) => im.node)) ??
+                          colorImageMap.get(rowColour)?.[0]?.node.url
+                        : undefined;
                       return (
                         <div key={i} className="flex flex-wrap items-center gap-2">
                           <span className="w-6 text-[11px] text-[#666666]">#{i + 1}</span>
+                          {rowThumb && (
+                            <img
+                              src={shopifyImg(rowThumb, 120)}
+                              alt=""
+                              aria-hidden="true"
+                              width={36}
+                              height={36}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-9 w-9 shrink-0 object-contain"
+                              style={{ background: backdropCss(tableBackdrop(rowThumb)) }}
+                            />
+                          )}
                           {node.options
                             .filter((o) => o.values.length > 1)
                             .map((o) => (
