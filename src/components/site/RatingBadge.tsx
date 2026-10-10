@@ -7,9 +7,7 @@ import { Star } from "lucide-react";
  * It shows the product's own Judge.me average and review count exactly as
  * published - the figures the reviews section uses - and nothing when there
  * are none. No rounding up, no averages borrowed from other products, no
- * claims about who the reviewers are. Reviews Judge.me collected from another
- * provider are labelled as imported, here and on each review: presenting
- * other retailers' reviews as your own is misleading under the DMCC Act 2024.
+ * claims about who the reviewers are.
  */
 function StarRow({ rating }: { rating: number }) {
   const pct = `${Math.max(0, Math.min(100, (rating / 5) * 100))}%`;
@@ -30,24 +28,14 @@ function StarRow({ rating }: { rating: number }) {
 export function RatingBadge({
   average,
   count,
-  imported = 0,
   className = "",
 }: {
   average: number;
   count: number;
-  /** How many of the reviews were imported from another provider. */
-  imported?: number;
   className?: string;
 }) {
   if (!(count > 0) || !(average > 0)) return null;
   const avg = (Math.round(average * 10) / 10).toFixed(1);
-  const reviews = count === 1 ? "review" : "reviews";
-  const label =
-    imported >= count
-      ? `${count} imported ${reviews}`
-      : imported > 0
-        ? `${count} ${reviews}, ${imported} imported`
-        : `${count} ${reviews}`;
   return (
     <a
       href="#reviews"
@@ -59,7 +47,9 @@ export function RatingBadge({
         <span aria-hidden="true">/5</span>
         <span className="sr-only"> out of 5 stars,</span>
       </span>
-      <span className="text-[12px] text-[#0a0a0a] underline underline-offset-4">{label}</span>
+      <span className="text-[12px] text-[#0a0a0a] underline underline-offset-4">
+        {count} {count === 1 ? "review" : "reviews"}
+      </span>
     </a>
   );
 }

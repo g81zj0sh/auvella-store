@@ -13,12 +13,11 @@ import {
 } from "@/lib/duoDeal";
 import { MultiBuySelector } from "@/components/site/MultiBuySelector";
 import { TrustBadges } from "@/components/site/TrustBadges";
-import { BenefitsGrid } from "@/components/site/BenefitsGrid";
 import { RatingBadge } from "@/components/site/RatingBadge";
 import { DeliveryPulse } from "@/components/site/DeliveryPulse";
 import { isFinalSale } from "@/lib/returnsPolicy";
 import { ProductStory } from "@/components/site/ProductStory";
-import { descriptionParts, fitNote, fabricLine, benefitTiles } from "@/lib/productStory";
+import { descriptionParts, fitNote, fabricLine } from "@/lib/productStory";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -619,10 +618,8 @@ function ProductPage() {
   const onSale = !!compareAt && parseFloat(compareAt.amount) > unitPrice;
   const bundleDeal = inBundleDeal(node.handle);
   /* Rating badge: only when the reviews themselves loaded (the section it
-     links to needs them too), and imported reviews counted so the badge can
-     say so. */
+     links to needs them too). */
   const badgeCount = judgeme?.reviews.length ? reviewCount : 0;
-  const importedCount = judgeme?.reviews.filter((r) => r.imported).length ?? 0;
   const crumb = inferCollection(node.title);
   const sizeGuide = resolveGuide(node.title);
   /* UK size beside each letter ("S (8–10)") — see sizeLabels.ts. */
@@ -635,7 +632,6 @@ function ProductPage() {
   const guideHidden = isGuideHidden(handle);
   const showSizeGuide =
     !guideHidden && (productChart != null || sizeGuide.guideType !== "none");
-  const tiles = benefitTiles(node.descriptionHtml, node.title, { sizeGuide: showSizeGuide });
 
   /** True if any purchasable variant carries this size value. */
   const sizeAvailable = (size: string) =>
@@ -864,8 +860,8 @@ function ProductPage() {
       <Header />
 
       <main className="lg:grid lg:grid-cols-[1.3fr_1fr]">
-        {/* Mobile: title block above the gallery, then the benefits zone,
-            then the selectors (v154 put the benefits between them). */}
+        {/* Mobile: title block above the gallery — selectors then sit
+            directly under the image, SKIMS-style */}
         <div className="px-5 pb-4 pt-6 lg:hidden">
           {/* Breadcrumb and rating share one fixed-height line directly
               above the title, so the badge arriving after the reviews load
@@ -878,7 +874,7 @@ function ProductPage() {
             >
               {crumb.label}
             </Link>
-            <RatingBadge average={reviewAvg} count={badgeCount} imported={importedCount} />
+            <RatingBadge average={reviewAvg} count={badgeCount} />
           </div>
           <h1 className="mt-2 text-[18px] font-semibold uppercase leading-snug tracking-[0.06em] text-[#0a0a0a]">
             {node.title}
@@ -1028,9 +1024,6 @@ function ProductPage() {
           )}
         </section>
 
-        {/* Phones: the benefits zone sits straight under the gallery. */}
-        <BenefitsGrid tiles={tiles} className="border-t border-[#e0ddd8] lg:hidden" />
-
         {/* ============ INFO — disciplined hierarchy ============ */}
         <section className="px-5 pb-14 pt-4 lg:px-14 lg:pb-20 lg:pt-12 xl:px-20">
           <div className="mx-auto w-full max-w-[480px] lg:mx-0">
@@ -1045,7 +1038,7 @@ function ProductPage() {
               >
                 {crumb.label}
               </Link>
-              <RatingBadge average={reviewAvg} count={badgeCount} imported={importedCount} />
+              <RatingBadge average={reviewAvg} count={badgeCount} />
             </div>
 
             <h1 className="mt-2 text-[20px] font-semibold uppercase leading-snug tracking-[0.06em] text-[#0a0a0a] md:text-[22px]">
@@ -1498,9 +1491,6 @@ function ProductPage() {
           </div>
         </section>
       </main>
-
-      {/* Desktop: the benefits zone runs full width under the gallery and info. */}
-      <BenefitsGrid tiles={tiles} className="hidden lg:block" />
 
       {/* ============ PRODUCT STORY (Smooche-style long form) ============ */}
       <ProductStory

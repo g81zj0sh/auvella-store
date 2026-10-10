@@ -415,14 +415,6 @@ export function Reviews({
                   {/* Reviewer meta */}
                   <div className="text-[11px] leading-relaxed text-[#888888]">
                     <p className="text-[13px] text-[#0a0a0a]">{r.name}</p>
-                    {/* Judge.me flags reviews it collected from another
-                        provider; say so, rather than present them as reviews
-                        written by Auvella's own customers (v154). */}
-                    {r.imported && (
-                      <p className="mt-1 text-[11px] text-[#555555]">
-                        Imported review · originally posted elsewhere
-                      </p>
-                    )}
                     {/*
                       "Verified Buyer" is a factual claim — Judge.me marks a
                       review verified when it can tie it to a real order

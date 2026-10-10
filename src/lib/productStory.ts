@@ -34,100 +34,22 @@ function detailBullets(html: string): string[] {
 /* ---------------------------------------------------------------- why -- */
 
 // Product-specific points, in priority order: first match wins a slot.
-// `icon` and `tile` (title, detail) drive the benefits grid
-// (components/site/BenefitsGrid.tsx); `point` is the sentence used elsewhere.
-type Specific = { test: RegExp; point: string; icon: string; tile: [string, string] };
-const SPECIFIC: Specific[] = [
-  {
-    test: /front[- ]opening|opens at the front|fastens at the front|front[- ]buckle|front closure/i,
-    point: "Fastens at the front — no reaching behind your back",
-    icon: "front",
-    tile: ["Front fastening", "No reaching behind your back"],
-  },
-  {
-    test: /hidden (front )?buttons|button closure/i,
-    point: "Buttons at the front — nothing to pull over your head",
-    icon: "front",
-    tile: ["Front buttons", "Nothing to pull over your head"],
-  },
-  {
-    test: /zip[- ]front|front zip/i,
-    point: "Zips at the front for easy on and off",
-    icon: "zip",
-    tile: ["Front zip", "Easy on and off"],
-  },
-  {
-    test: /\bseamless\b/i,
-    point: "Seamless — no lines under fitted clothes",
-    icon: "seamless",
-    tile: ["Seamless", "No lines under fitted clothes"],
-  },
-  {
-    test: /wire-free|no underwire|no wire\b/i,
-    point: "Wire-free — nothing to dig in",
-    icon: "soft",
-    tile: ["Wire-free", "Nothing to dig in"],
-  },
-  {
-    test: /\bstrapless\b/i,
-    point: "Strapless — made for off-shoulder and bandeau necklines",
-    icon: "strapless",
-    tile: ["Strapless", "For off-shoulder and bandeau necklines"],
-  },
-  {
-    test: /backless|open[- ]back|low u-back|\bu-back/i,
-    point: "Low, open back",
-    icon: "back",
-    tile: ["Open back", "A low back that stays hidden"],
-  },
-  {
-    test: /no boning/i,
-    point: "No boning — it flexes when you bend",
-    icon: "soft",
-    tile: ["No boning", "Flexes when you bend"],
-  },
-  {
-    test: /fleece-lined|fleece lined/i,
-    point: "Fleece-lined — warm the moment it's on",
-    icon: "warm",
-    tile: ["Fleece-lined", "Warm the moment it's on"],
-  },
-  {
-    test: /high waist|high-waist|high rise|high-rise/i,
-    point: "High waist that sits above the waistline",
-    icon: "rise",
-    tile: ["High waist", "Sits above the waistline"],
-  },
-  {
-    test: /drawstring|tie waist|tie-waist|tie-side|lace-up/i,
-    point: "Ties you set yourself, for your own fit",
-    icon: "adjust",
-    tile: ["Adjustable ties", "Set your own fit"],
-  },
-  {
-    test: /adjustable straps|straps adjust|detachable/i,
-    point: "Straps that adjust or come off",
-    icon: "adjust",
-    tile: ["Adjustable straps", "They adjust or come off"],
-  },
-  {
-    test: /padded cups/i,
-    point: "Soft padded cups for shape",
-    icon: "cups",
-    tile: ["Padded cups", "Soft, for shape"],
-  },
-  {
-    test: /quick-dry|quick dry|dries fast|dries quickly/i,
-    point: "Dries fast",
-    icon: "dry",
-    tile: ["Quick-dry", "Dries fast"],
-  },
-  {
-    test: /long sleeves|long-sleeve|long sleeve/i,
-    point: "Long sleeves for cover and warmth",
-    icon: "sleeves",
-    tile: ["Long sleeves", "For cover and warmth"],
-  },
+const SPECIFIC: Array<{ test: RegExp; point: string }> = [
+  { test: /front[- ]opening|opens at the front|fastens at the front|front[- ]buckle|front closure/i, point: "Fastens at the front — no reaching behind your back" },
+  { test: /hidden (front )?buttons|button closure/i, point: "Buttons at the front — nothing to pull over your head" },
+  { test: /zip[- ]front|front zip/i, point: "Zips at the front for easy on and off" },
+  { test: /\bseamless\b/i, point: "Seamless — no lines under fitted clothes" },
+  { test: /wire-free|no underwire|no wire\b/i, point: "Wire-free — nothing to dig in" },
+  { test: /\bstrapless\b/i, point: "Strapless — made for off-shoulder and bandeau necklines" },
+  { test: /backless|open[- ]back|low u-back|\bu-back/i, point: "Low, open back" },
+  { test: /no boning/i, point: "No boning — it flexes when you bend" },
+  { test: /fleece-lined|fleece lined/i, point: "Fleece-lined — warm the moment it's on" },
+  { test: /high waist|high-waist|high rise|high-rise/i, point: "High waist that sits above the waistline" },
+  { test: /drawstring|tie waist|tie-waist|tie-side|lace-up/i, point: "Ties you set yourself, for your own fit" },
+  { test: /adjustable straps|straps adjust|detachable/i, point: "Straps that adjust or come off" },
+  { test: /padded cups/i, point: "Soft padded cups for shape" },
+  { test: /quick-dry|quick dry|dries fast|dries quickly/i, point: "Dries fast" },
+  { test: /long sleeves|long-sleeve|long sleeve/i, point: "Long sleeves for cover and warmth" },
 ];
 
 // True of every product, store-wide - except returns, which final-sale
@@ -158,58 +80,6 @@ export function whyPoints(
     ? BRAND.map((p) => (p === RETURNS_POINT ? "Tracked delivery" : p))
     : BRAND;
   return [...picked, ...brand].slice(0, 4);
-}
-
-/* ------------------------------------------------------------ benefits -- */
-
-export type BenefitTile = { icon: string; title: string; detail?: string };
-
-/**
- * Up to four tiles for the benefits grid under the gallery, all from the
- * product's own listing: construction facts first (its title and Details
- * bullets, by the same rules as whyPoints), then its main fabric, then its
- * size range. Nothing store-wide: delivery and returns already have their own
- * badges under the Add to Bag button, so repeating them here would only pad
- * the grid. No claim the listing doesn't make (no "anti-roll"; "breathable"
- * only if the fabric line says so). The grid copes with 1-3 tiles.
- */
-export function benefitTiles(
-  descriptionHtml: string | null | undefined,
-  title = "",
-  opts: { sizeGuide?: boolean } = {},
-): BenefitTile[] {
-  const text = title + " · " + detailBullets(descriptionHtml ?? "").join(" · ");
-  const out: BenefitTile[] = [];
-  const seenIcons = new Set<string>();
-  for (const s of SPECIFIC) {
-    if (out.length === 4) break;
-    if (!s.test.test(text) || seenIcons.has(s.icon)) continue;
-    out.push({ icon: s.icon, title: s.tile[0], detail: s.tile[1] });
-    seenIcons.add(s.icon);
-  }
-  // The main fabric: the largest named share, but never the stretch fibre on
-  // its own when the garment is mostly something else.
-  const all = fabrics(descriptionHtml);
-  const fab =
-    all.find((f) => f.share && f.tag !== "Stretch") ??
-    all.find((f) => f.tag !== "Stretch") ??
-    all[0];
-  if (out.length < 4 && fab) {
-    out.push({
-      icon: "fabric",
-      title: fab.share ? `${fab.share} ${fab.name}` : fab.name,
-      detail: fab.line,
-    });
-  }
-  const sizes = sizesLine(descriptionHtml);
-  if (out.length < 4 && sizes && !/one size/i.test(sizes)) {
-    out.push({
-      icon: "sizes",
-      title: sizes.replace(/\s*\(.*\)$/, ""),
-      detail: opts.sizeGuide ? "Size guide beside the size buttons" : undefined,
-    });
-  }
-  return out;
 }
 
 /* ------------------------------------------------------------- fabrics -- */
