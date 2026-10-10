@@ -32,7 +32,7 @@ const img = (fileOrUrl: string, w: number) =>
 function Tick({ muted = false, size = 22 }: { muted?: boolean; size?: number }) {
   return (
     <span
-      className={`grid shrink-0 place-items-center rounded-full ${muted ? "bg-[#cfcfcf]" : "bg-[#0a0a0a]"}`}
+      className={`grid shrink-0 place-items-center rounded-full ${muted ? "bg-[#767676]" : "bg-[#0a0a0a]"}`}
       style={{ width: size, height: size }}
       aria-hidden
     >
@@ -45,7 +45,7 @@ function Tick({ muted = false, size = 22 }: { muted?: boolean; size?: number }) 
 function NotAlways() {
   // Filled grey disc with a white dash: as visible as the tick, reads "not always".
   return (
-    <span className="grid h-[26px] w-[26px] place-items-center rounded-full bg-[#cfcccc]" aria-label="Not always">
+    <span className="grid h-[26px] w-[26px] place-items-center rounded-full bg-[#767676]" aria-hidden>
       <span className="h-[2px] w-3 rounded-full bg-white" />
     </span>
   );
@@ -152,10 +152,28 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
         : []),
   ];
 
+  /* Shading alternates by the sections this product actually shows (v154):
+     "How it acts" is white, the next shaded, and so on, so two grey blocks
+     never sit together when "Before you ask" or "Real results" is missing.
+     Cards and table columns flip to stay visible on either background. */
+  const order = [
+    "how",
+    worries.length ? "before" : "",
+    results.length ? "results" : "",
+    "why",
+    "faq",
+  ].filter(Boolean);
+  const shaded = (k: string) => order.indexOf(k) % 2 === 1;
+  const sectionBg = (k: string) => (shaded(k) ? "bg-zone" : "bg-white");
+  const surface = (k: string) => (shaded(k) ? "bg-white" : "bg-zone");
+
   return (
     <div className="bg-white">
+      {/* Sections alternate white and zone (v154) so the page reads as
+          distinct content blocks, not one white wall, and the vertical
+          padding is tighter than before for a denser page. */}
       {/* ── 2. How it acts: story left, image right ─────────────────────── */}
-      <section className="mx-auto grid max-w-[1320px] items-center gap-10 px-5 pb-16 pt-24 md:grid-cols-2 md:gap-20 md:px-10 md:pb-28 md:pt-40">
+      <section className="mx-auto grid max-w-[1320px] items-center gap-8 px-5 pb-14 pt-14 md:grid-cols-2 md:gap-16 md:px-10 md:pb-20 md:pt-20">
         <div className="order-2 md:order-1">
           <h2 className={H2}>
             {head.lead} <Highlight>{head.hi}</Highlight>
@@ -196,15 +214,20 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
 
       {/* ── Before you ask: the three worries behind most returns ────── */}
       {worries.length > 0 && (
-        <section className="mx-auto max-w-[1320px] px-5 pb-20 md:px-10 md:pb-28" aria-labelledby="before-you-ask">
-          <h2 id="before-you-ask" className="text-center font-serif text-[44px] font-normal text-[#0a0a0a] md:text-[60px]">Before you ask</h2>
-          <div className={`mt-12 grid gap-4 md:mt-16 ${worries.length >= 3 ? "md:grid-cols-3" : "mx-auto max-w-[880px] md:grid-cols-2"}`}>
-            {worries.map((w) => (
-              <div key={w.q} className="rounded-[20px] bg-[#f5f4f2] px-8 py-12 transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:px-10 md:py-14">
-                <p className="font-serif text-[28px] font-normal leading-tight text-[#0a0a0a] md:text-[32px]">{w.q}</p>
-                <p className="mt-5 text-[16px] leading-[1.8] text-[#555555]">{w.a}</p>
-              </div>
-            ))}
+        <section className={sectionBg("before")} aria-labelledby="before-you-ask">
+          <div className="mx-auto max-w-[1320px] px-5 py-14 md:px-10 md:py-20">
+            <h2 id="before-you-ask" className="text-center font-serif text-[40px] font-normal text-[#0a0a0a] md:text-[56px]">Before you ask</h2>
+            <div className={`mt-10 grid gap-3 md:mt-12 md:gap-4 ${worries.length >= 3 ? "md:grid-cols-3" : "mx-auto max-w-[880px] md:grid-cols-2"}`}>
+              {worries.map((w) => (
+                <div
+                  key={w.q}
+                  className={`rounded-[20px] px-7 py-9 transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:px-9 md:py-11 ${surface("before")}`}
+                >
+                  <p className="font-serif text-[26px] font-normal leading-tight text-[#0a0a0a] md:text-[30px]">{w.q}</p>
+                  <p className="mt-4 text-[16px] leading-[1.75] text-[#555555]">{w.a}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -215,16 +238,21 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
           (DMCC Act). Every number is counted from verified-buyer reviews,
           with the count shown; the section appears with 5+ of them. */}
       {results.length > 0 && (
-        <section className="mx-auto max-w-[1320px] px-5 pb-20 md:px-10 md:pb-28" aria-labelledby="real-results">
-          <h2 id="real-results" className="text-center font-serif text-[44px] font-normal text-[#0a0a0a] md:text-[60px]">Real results</h2>
+        <section className={sectionBg("results")} aria-labelledby="real-results">
+          <div className="mx-auto max-w-[1320px] px-5 py-14 md:px-10 md:py-20">
+          <h2 id="real-results" className="text-center font-serif text-[40px] font-normal text-[#0a0a0a] md:text-[56px]">Real results</h2>
           <div className={`mt-12 grid gap-4 md:mt-16 ${results.length >= 3 ? "md:grid-cols-3" : results.length === 2 ? "md:grid-cols-2" : "mx-auto max-w-[440px]"}`}>
             {results.map((r) => (
-              <div key={r.label} className="rounded-[20px] bg-[#f5f4f2] px-8 py-14 text-center transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:py-16">
+              <div
+                key={r.label}
+                className={`rounded-[20px] px-8 py-14 text-center transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:py-16 ${surface("results")}`}
+              >
                 <p className="font-serif text-[88px] font-normal leading-none text-[#0a0a0a] md:text-[112px]">{r.value}</p>
                 <p className="mx-auto mt-6 max-w-[300px] text-[18px] font-medium leading-snug text-[#0a0a0a]">{r.label}</p>
-                <p className="mt-3 text-[13px] text-[#888888]">{r.basis}</p>
+                <p className="mt-3 text-[13px] text-[#555555]">{r.basis}</p>
               </div>
             ))}
+          </div>
           </div>
         </section>
       )}
@@ -232,8 +260,8 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
       {/* ── 4. Why Auvella? ────────────────────────────────────────────
           Wide on desktop (fills the screen like smooche.com); on phones the
           same three columns shrink to fit the screen - no sideways scroll. */}
-      <section className="bg-[#f5f4f2]" aria-labelledby="why-auvella">
-        <div className="mx-auto max-w-[1580px] px-4 py-16 md:px-10 md:py-24">
+      <section className={sectionBg("why")} aria-labelledby="why-auvella">
+        <div className="mx-auto max-w-[1580px] px-4 py-14 md:px-10 md:py-20">
           <h2 id="why-auvella" className="text-center font-serif text-[40px] font-normal text-[#0a0a0a] md:text-[60px]">Why Auvella?</h2>
           <div className="mt-10 md:mt-12">
             <table className="w-full table-fixed border-collapse">
@@ -257,13 +285,17 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
                 {rows.map((r, i) => {
                   const last = i === rows.length - 1;
                   return (
-                    <tr key={r.label} className="border-b border-[#e0ddd8]">
+                    <tr key={r.label} className="border-b border-black/10">
                       <td className="py-4 pl-2 pr-2 text-[13px] font-medium leading-snug text-[#0a0a0a] md:py-[18px] md:pl-4 md:text-[18px]">{r.label}</td>
-                      <td className={`bg-[#ebe8e3] py-4 md:py-[18px] ${last ? "rounded-b-[14px] md:rounded-b-[18px]" : ""}`}>
+                      <td
+                        className={`py-4 md:py-[18px] ${surface("why")} ${last ? "rounded-b-[14px] md:rounded-b-[18px]" : ""}`}
+                      >
                         <span className="flex justify-center"><span className="scale-[0.85] md:scale-100"><Tick size={26} /></span></span>
+                        <span className="sr-only">Yes</span>
                       </td>
                       <td className="py-4 md:py-[18px]">
                         <span className="flex justify-center"><span className="scale-[0.85] md:scale-100">{r.others === "yes" ? <Tick muted size={26} /> : <NotAlways />}</span></span>
+                        <span className="sr-only">{r.others === "yes" ? "Yes" : "Not always"}</span>
                       </td>
                     </tr>
                   );
@@ -271,31 +303,33 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
               </tbody>
             </table>
           </div>
-          <p className="mt-5 flex items-center justify-center gap-2 text-[12px] text-[#888888]"><span className="inline-block origin-center scale-[0.7]"><NotAlways /></span> not always included</p>
+          <p className="mt-5 flex items-center justify-center gap-2 text-[12px] text-[#555555]"><span className="inline-block origin-center scale-[0.7]"><NotAlways /></span> not always included</p>
         </div>
       </section>
 
       {/* ── 5. FAQ ─────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-[1320px] px-5 py-20 md:px-10 md:py-28" aria-labelledby="product-faq">
+      <section className={sectionBg("faq")} aria-labelledby="product-faq">
+        <div className="mx-auto max-w-[1320px] px-5 py-14 md:px-10 md:py-20">
         <h2 id="product-faq" className="text-center font-serif text-[40px] font-normal text-[#0a0a0a] md:text-[52px]">Frequently asked questions</h2>
         <div className="mt-12 grid gap-4 md:grid-cols-2">
           {[faqs.filter((_, i) => i % 2 === 0), faqs.filter((_, i) => i % 2 === 1)].map((col, ci) => (
             <div key={ci} className="space-y-4">
               {col.map((f) => (
-                <Faq key={f.q} q={f.q} a={f.a} />
+                <Faq key={f.q} q={f.q} a={f.a} surface={surface("faq")} />
               ))}
             </div>
           ))}
+        </div>
         </div>
       </section>
     </div>
   );
 }
 
-function Faq({ q, a }: { q: string; a: string }) {
+function Faq({ q, a, surface = "bg-zone" }: { q: string; a: string; surface?: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-[#f5f4f2]">
+    <div className={surface}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

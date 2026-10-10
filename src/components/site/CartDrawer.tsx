@@ -425,7 +425,7 @@ export function CartDrawer() {
                 </div>
                 <Button
                   onClick={handleCheckout}
-                  className="w-full bg-ink text-cream hover:bg-cocoa uppercase tracking-[0.2em] text-[11px] py-6 rounded-none"
+                  className="w-full bg-cta text-cream hover:bg-cta-hover uppercase tracking-[0.2em] text-[11px] py-6 rounded-none"
                   disabled={items.length === 0 || isLoading || isSyncing || isCheckingOut}
                 >
                   {isLoading || isSyncing || isCheckingOut ? (

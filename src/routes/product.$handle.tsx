@@ -13,9 +13,12 @@ import {
 } from "@/lib/duoDeal";
 import { MultiBuySelector } from "@/components/site/MultiBuySelector";
 import { TrustBadges } from "@/components/site/TrustBadges";
+import { BenefitsGrid } from "@/components/site/BenefitsGrid";
+import { RatingBadge } from "@/components/site/RatingBadge";
+import { DeliveryPulse } from "@/components/site/DeliveryPulse";
 import { isFinalSale } from "@/lib/returnsPolicy";
 import { ProductStory } from "@/components/site/ProductStory";
-import { descriptionParts, fitNote, fabricLine } from "@/lib/productStory";
+import { descriptionParts, fitNote, fabricLine, benefitTiles } from "@/lib/productStory";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
@@ -38,7 +41,7 @@ import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, type Backdrop } from "@/lib/imageBackdrop";
-import { Loader2, Star, Heart, ChevronLeft, ChevronRight, ScanSearch } from "lucide-react";
+import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
@@ -177,18 +180,6 @@ function inferCollection(title: string): { handle: string; label: string; query:
   return { handle: "new-in", label: "Shop", query: "" };
 }
 
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="inline-flex" aria-label={`${rating} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={`h-3 w-3 ${i < Math.round(rating) ? "fill-[#0a0a0a] text-[#0a0a0a]" : "fill-[#0a0a0a]/10 text-[#0a0a0a]/10"}`}
-        />
-      ))}
-    </span>
-  );
-}
 
 function ProductPage() {
   const { handle } = Route.useParams();
@@ -627,6 +618,11 @@ function ProductPage() {
   const compareAt = priceVariant?.compareAtPrice;
   const onSale = !!compareAt && parseFloat(compareAt.amount) > unitPrice;
   const bundleDeal = inBundleDeal(node.handle);
+  /* Rating badge: only when the reviews themselves loaded (the section it
+     links to needs them too), and imported reviews counted so the badge can
+     say so. */
+  const badgeCount = judgeme?.reviews.length ? reviewCount : 0;
+  const importedCount = judgeme?.reviews.filter((r) => r.imported).length ?? 0;
   const crumb = inferCollection(node.title);
   const sizeGuide = resolveGuide(node.title);
   /* UK size beside each letter ("S (8–10)") — see sizeLabels.ts. */
@@ -639,6 +635,7 @@ function ProductPage() {
   const guideHidden = isGuideHidden(handle);
   const showSizeGuide =
     !guideHidden && (productChart != null || sizeGuide.guideType !== "none");
+  const tiles = benefitTiles(node.descriptionHtml, node.title, { sizeGuide: showSizeGuide });
 
   /** True if any purchasable variant carries this size value. */
   const sizeAvailable = (size: string) =>
@@ -867,37 +864,35 @@ function ProductPage() {
       <Header />
 
       <main className="lg:grid lg:grid-cols-[1.3fr_1fr]">
-        {/* Mobile: title block above the gallery — selectors then sit
-            directly under the image, SKIMS-style */}
+        {/* Mobile: title block above the gallery, then the benefits zone,
+            then the selectors (v154 put the benefits between them). */}
         <div className="px-5 pb-4 pt-6 lg:hidden">
-          <Link
-            to="/collections/$handle"
-            params={{ handle: crumb.handle }}
-            className="text-[10px] uppercase tracking-[0.2em] text-[#888888]"
-          >
-            {crumb.label}
-          </Link>
-          <h1 className="mt-2 text-[17px] font-medium uppercase leading-snug tracking-[0.06em] text-[#0a0a0a]">
+          {/* Breadcrumb and rating share one fixed-height line directly
+              above the title, so the badge arriving after the reviews load
+              doesn't push the page down. */}
+          <div className="flex min-h-[28px] items-center justify-between gap-3">
+            <Link
+              to="/collections/$handle"
+              params={{ handle: crumb.handle }}
+              className="text-[10px] uppercase tracking-[0.2em] text-[#888888]"
+            >
+              {crumb.label}
+            </Link>
+            <RatingBadge average={reviewAvg} count={badgeCount} imported={importedCount} />
+          </div>
+          <h1 className="mt-2 text-[18px] font-semibold uppercase leading-snug tracking-[0.06em] text-[#0a0a0a]">
             {node.title}
           </h1>
-          <div className="mt-1.5 flex items-center gap-3">
-            <p className="text-[14px] text-[#0a0a0a]">
-              {cur(unitPrice)}
-              {onSale && compareAt && (
-                <span className="ml-2 text-[12px] text-[#888888] line-through">
-                  {cur(parseFloat(compareAt.amount))}
-                </span>
-              )}
-            </p>
-            {reviewCount > 0 && (
-              <a href="#reviews" className="inline-flex items-center gap-1.5">
-                <Stars rating={reviewAvg} />
-                <span className="text-[10px] text-[#555555] underline underline-offset-4">
-                  {reviewCount} {reviewCount === 1 ? "Review" : "Reviews"}
-                </span>
-              </a>
+          <p className="mt-1.5 text-[22px] font-semibold leading-tight text-[#0a0a0a]">
+            {onSale && compareAt && <span className="sr-only">Now </span>}
+            {cur(unitPrice)}
+            {onSale && compareAt && (
+              <span className="ml-2 text-[14px] font-normal text-[#6b6b6b] line-through">
+                <span className="sr-only">Was </span>
+                {cur(parseFloat(compareAt.amount))}
+              </span>
             )}
-          </div>
+          </p>
           {bundleDeal && (
             <div className="mt-2.5">
               <span className="inline-block border border-[#0a0a0a] px-2 py-[3px] text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
@@ -1033,39 +1028,40 @@ function ProductPage() {
           )}
         </section>
 
+        {/* Phones: the benefits zone sits straight under the gallery. */}
+        <BenefitsGrid tiles={tiles} className="border-t border-[#e0ddd8] lg:hidden" />
+
         {/* ============ INFO — disciplined hierarchy ============ */}
         <section className="px-5 pb-14 pt-4 lg:px-14 lg:pb-20 lg:pt-12 xl:px-20">
           <div className="mx-auto w-full max-w-[480px] lg:mx-0">
             <div className="hidden lg:block">
-            <Link
-              to="/collections/$handle"
-              params={{ handle: crumb.handle }}
-              className="text-[10px] uppercase tracking-[0.2em] text-[#888888] underline-offset-4 transition-colors hover:text-[#0a0a0a] hover:underline"
-            >
-              {crumb.label}
-            </Link>
+            {/* Breadcrumb and rating on one fixed-height line directly above
+                the title (no jump when the reviews load). */}
+            <div className="flex min-h-[28px] items-center justify-between gap-4">
+              <Link
+                to="/collections/$handle"
+                params={{ handle: crumb.handle }}
+                className="text-[10px] uppercase tracking-[0.2em] text-[#888888] underline-offset-4 transition-colors hover:text-[#0a0a0a] hover:underline"
+              >
+                {crumb.label}
+              </Link>
+              <RatingBadge average={reviewAvg} count={badgeCount} imported={importedCount} />
+            </div>
 
-            <h1 className="mt-3 text-[19px] font-medium uppercase leading-snug tracking-[0.06em] text-[#0a0a0a] md:text-[21px]">
+            <h1 className="mt-2 text-[20px] font-semibold uppercase leading-snug tracking-[0.06em] text-[#0a0a0a] md:text-[22px]">
               {node.title}
             </h1>
 
-            <p className="mt-2 text-[15px] text-[#0a0a0a]">
+            <p className="mt-2 text-[26px] font-semibold leading-tight text-[#0a0a0a]">
+              {onSale && compareAt && <span className="sr-only">Now </span>}
               {cur(unitPrice)}
               {onSale && compareAt && (
-                <span className="ml-2 text-[13px] text-[#888888] line-through">
+                <span className="ml-2.5 text-[15px] font-normal text-[#6b6b6b] line-through">
+                  <span className="sr-only">Was </span>
                   {cur(parseFloat(compareAt.amount))}
                 </span>
               )}
             </p>
-
-            {reviewCount > 0 && (
-              <a href="#reviews" className="mt-3 inline-flex items-center gap-2">
-                <Stars rating={reviewAvg} />
-                <span className="text-[11px] text-[#555555] underline underline-offset-4">
-                  {reviewCount} {reviewCount === 1 ? "Review" : "Reviews"}
-                </span>
-              </a>
-            )}
 
             {bundleDeal && (
               <div className="mt-3">
@@ -1339,16 +1335,24 @@ function ProductPage() {
               </div>
             )}
 
-            {/* Add to bag / Select a size */}
+            {/* Estimated delivery (pulsing) right above the button, with
+                fixed spacing whether or not the line shows. */}
+            <div className="mt-7 space-y-3">
+            <DeliveryPulse
+              available={
+                variant
+                  ? variant.availableForSale
+                  : node.variants.edges.some((v) => v.node.availableForSale)
+              }
+            />
+
+            {/* Add to bag / Select a size - the boldest thing on the page:
+                full-width, solid --cta fill in both states. */}
             <button
               ref={atcRef}
               onClick={handleAdd}
               disabled={adding}
-              className={`mt-7 flex h-12 w-full items-center justify-center text-[12px] font-medium uppercase tracking-[0.18em] transition-colors disabled:opacity-60 ${
-                hasSize
-                  ? "bg-[#0a0a0a] text-white hover:bg-[#262626]"
-                  : "border border-[#0a0a0a] bg-white text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white"
-              }`}
+              className="flex h-14 w-full items-center justify-center bg-cta text-[13px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_24px_-12px_rgba(0,0,0,0.55)] transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
             >
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1366,6 +1370,7 @@ function ProductPage() {
                 "Select a Size"
               )}
             </button>
+            </div>
 
             <TrustBadges handle={node.handle} />
 
@@ -1425,7 +1430,18 @@ function ProductPage() {
                             {readMore ? "Read less" : "Read more"}
                           </button>
                         )}
-                        {sections && <div dangerouslySetInnerHTML={{ __html: sections }} />}
+                        {/* Details bullets as a ticked checklist on a shaded
+                            panel (.ticklist in styles.css). role="list" is
+                            added to the already-sanitised markup so Safari
+                            still announces a list once the bullets are gone. */}
+                        {sections && (
+                          <div
+                            className="ticklist mt-6 bg-zone px-5 py-4 [&_h3:first-child]:mt-0 [&_ul]:space-y-1.5"
+                            dangerouslySetInnerHTML={{
+                              __html: sections.replace(/<ul>/g, '<ul role="list">'),
+                            }}
+                          />
+                        )}
                       </div>
                     );
                   })()}
@@ -1482,6 +1498,9 @@ function ProductPage() {
           </div>
         </section>
       </main>
+
+      {/* Desktop: the benefits zone runs full width under the gallery and info. */}
+      <BenefitsGrid tiles={tiles} className="hidden lg:block" />
 
       {/* ============ PRODUCT STORY (Smooche-style long form) ============ */}
       <ProductStory
@@ -1544,9 +1563,14 @@ function ProductPage() {
             <p className="truncate text-[12px] font-medium uppercase tracking-[0.06em] text-[#0a0a0a]">
               {node.title}
             </p>
-            <p className="text-[12px] text-[#555555]">
+            <p className="text-[15px] font-semibold leading-tight text-[#0a0a0a]">
               {cur(payTotal)}
-              {tier.quantity > 1 ? ` · ${tier.quantity} items` : ""}
+              {tier.quantity > 1 && (
+                <span className="text-[12px] font-normal text-[#555555]">
+                  {" "}
+                  · {tier.quantity} items
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -1559,7 +1583,7 @@ function ProductPage() {
                   ? "Go to checkout"
                   : `Buy now: add ${tier.quantity === 1 ? "this item" : `${tier.quantity} items`} to your bag and go to checkout`
             }
-            className="flex h-11 min-w-[112px] shrink-0 items-center justify-center bg-[#0a0a0a] px-5 text-[11px] font-medium uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#262626] disabled:opacity-60"
+            className="flex h-12 min-w-[120px] shrink-0 items-center justify-center bg-cta px-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
           >
             {buyingNow ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1587,15 +1611,20 @@ function ProductPage() {
             <p className="truncate text-[12px] font-medium uppercase tracking-[0.06em] text-[#0a0a0a]">
               {node.title}
             </p>
-            <p className="text-[12px] text-[#555555]">
+            <p className="text-[15px] font-semibold leading-tight text-[#0a0a0a]">
               {cur(payTotal)}
-              {tier.quantity > 1 ? ` · ${tier.quantity} items` : ""}
+              {tier.quantity > 1 && (
+                <span className="text-[12px] font-normal text-[#555555]">
+                  {" "}
+                  · {tier.quantity} items
+                </span>
+              )}
             </p>
           </div>
           <button
             onClick={handleAdd}
             disabled={adding}
-            className="flex h-10 shrink-0 items-center justify-center bg-[#0a0a0a] px-6 text-[11px] font-medium uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#262626] disabled:opacity-60"
+            className="flex h-12 shrink-0 items-center justify-center bg-cta px-8 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
           >
             {hasSize ? "Add to Bag" : "Select a Size"}
           </button>
