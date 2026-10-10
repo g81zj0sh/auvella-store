@@ -61,7 +61,10 @@ const SheetContent = React.forwardRef<
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-      <SheetPrimitive.Close className="absolute right-2 top-2 rounded-sm p-2.5 opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+      {/* Ring on keyboard focus only (v157): the sheet focuses this button
+          when it opens, and a ring there for mouse and touch users drew a
+          box around the X. */}
+      <SheetPrimitive.Close className="absolute right-2 top-2 rounded-sm p-2.5 opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
         <X className="h-6 w-6" strokeWidth={1.5} />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>

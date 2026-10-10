@@ -198,8 +198,10 @@ export function CartDrawer() {
         </SheetTrigger>
 
         <SheetContent className="w-full sm:max-w-[440px] bg-cream p-0 flex flex-col">
-          <SheetHeader className="px-6 pt-6 pb-0">
-            <SheetTitle className="font-serif text-[22px] font-light text-ink">
+          {/* Compact header (v157): less space above and under the title so
+              the bag's contents sit higher. */}
+          <SheetHeader className="px-6 pt-5 pb-0 text-left">
+            <SheetTitle className="font-serif text-[22px] font-light leading-tight text-ink">
               {t("Your Bag")} {totalItems > 0 && <span className="text-cocoa">({totalItems})</span>}
             </SheetTitle>
             <SheetDescription className="sr-only">Items in your bag</SheetDescription>
@@ -241,23 +243,48 @@ export function CartDrawer() {
             </div>
           ) : (
             <>
-              {/* ── Free shipping — top of the drawer ─────────────────── */}
-              <div className="px-6 pt-4 pb-4 border-b border-border">
-                <p className="text-[12px] leading-relaxed text-cocoa text-center">
+              {/* ── Free shipping — top of the drawer ─────────────────────
+                  v157: a 6px rounded bar with a 🚚 badge riding at the
+                  progress point. Once free shipping is unlocked the badge
+                  sits at the end and takes the timer's light green. The bar
+                  is inset by half the badge so the badge never clips. */}
+              <div className="px-6 pt-3 pb-3.5 border-b border-border">
+                <p className="text-[13px] leading-snug text-cocoa">
                   {qualified ? (
                     <>
-                      <span className="font-medium text-ink">Free shipping unlocked</span>
-                      {country?.name ? ` to ${country.name}` : ""}.
+                      <span className="font-semibold text-ink">Free shipping unlocked</span>
+                      {country?.name ? ` to ${country.name}` : ""}
                     </>
                   ) : (
                     <>
-                      You're <span className="font-medium text-ink">{display(remaining, baseCurrency)}</span> away from free shipping
-                      {country?.name ? ` to ${country.name}` : ""}.
+                      You're <span className="font-semibold text-ink">{display(remaining, baseCurrency)}</span> away from free shipping
+                      {country?.name ? ` to ${country.name}` : ""}
                     </>
                   )}
                 </p>
-                <div className="mt-2 h-[3px] w-full overflow-hidden rounded-pill bg-beige" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)} aria-label="Progress towards free shipping">
-                  <div className="h-full bg-ink transition-[width] duration-500 ease-out" style={{ width: `${progress}%` }} />
+                <div className="relative mx-3.5 mt-1.5 h-7">
+                  <div
+                    className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-pill bg-sand"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(progress)}
+                    aria-label="Progress towards free shipping"
+                  >
+                    <div
+                      className="h-full rounded-pill bg-ink transition-[width] duration-500 ease-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <span
+                    aria-hidden="true"
+                    className={`absolute top-1/2 grid h-7 w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border text-[14px] leading-none shadow-[0_2px_6px_rgba(0,0,0,0.12)] transition-[left,background-color,border-color] duration-500 ease-out ${
+                      qualified ? "border-[#94E374] bg-[#DCFFD3]" : "border-ink bg-white"
+                    }`}
+                    style={{ left: `${progress}%` }}
+                  >
+                    🚚
+                  </span>
                 </div>
               </div>
 
