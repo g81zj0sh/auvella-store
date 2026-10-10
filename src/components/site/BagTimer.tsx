@@ -23,7 +23,7 @@ export function BagTimer() {
   return (
     <div
       role="timer"
-      className="mx-6 mt-4 rounded-control bg-[#15703a] px-4 py-2.5 text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-white"
+      className="mx-auto mt-4 w-[calc((100%-3rem)*0.8)] rounded-control border border-[#94E374] bg-[#DCFFD3] px-4 py-[9px] text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-[#166534]"
     >
       YOUR ORDER IS RESERVED FOR  <span className="tabular-nums">{fmt(left)}</span>
     </div>
