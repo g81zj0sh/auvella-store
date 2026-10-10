@@ -7,7 +7,7 @@ import { landedOnHome } from "@/lib/landing";
 /*
  * ShippingPopup — SKIMS-style shipping-location modal.
  *  - Auto-detects country (ipapi.co, browser-locale fallback)
- *  - Hemisphere-aware seasonal offer bar: "40% Off Autumn · Limited time 🔥🔥".
+ *  - Hemisphere-aware seasonal offer bar: "40% Off Autumn · Ending soon 🔥🔥".
  *    No countdown since v149 - Joshua found the ticking timer too big, and a
  *    clock that restarts every season reads as false urgency.
  *  - Fades in on open, fades out on dismiss
@@ -150,7 +150,7 @@ export function ShippingPopup() {
             product actually shows: 40% since 5 Oct 2026 (compare-at = price /
             0.6; live check: every product 40-43% off). */}
         <div className="-mx-6 bg-[#0a0a0a] py-2 pl-4 pr-10 text-center text-[10px] uppercase tracking-[0.14em] text-white md:-mx-7">
-          40% Off {season} · Limited time <span aria-hidden="true">🔥🔥</span>
+          40% Off {season} · Ending soon <span aria-hidden="true">🔥🔥</span>
         </div>
         <button
           aria-label="Close"
