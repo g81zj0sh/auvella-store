@@ -96,7 +96,7 @@ function NotReady() {
       <Link
         to="/collections/$handle"
         params={{ handle: "everyday-support-edit" }}
-        className="mt-8 inline-flex h-11 items-center bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        className="mt-8 inline-flex h-11 items-center rounded-control bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
       >
         Continue Shopping
       </Link>
@@ -116,7 +116,7 @@ function SignedOut() {
       </p>
       <button
         onClick={() => startLogin()}
-        className="mt-8 inline-flex h-11 items-center bg-[#0a0a0a] px-10 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        className="mt-8 inline-flex h-11 items-center rounded-control bg-[#0a0a0a] px-10 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
       >
         Sign In / Create Account
       </button>
@@ -197,7 +197,7 @@ function AboutYou() {
           <input
             value={firstName}
             onChange={(e) => { setFirstName(e.target.value); setDirty(true); }}
-            className="mt-1.5 h-11 w-full border border-[#EBEBEB] bg-white px-3 text-[14px] text-[#0a0a0a] outline-none transition-colors focus:border-[#0a0a0a]"
+            className="mt-1.5 h-11 w-full rounded-control border border-[#EBEBEB] bg-white px-3 text-[14px] text-[#0a0a0a] outline-none transition-colors focus:border-[#0a0a0a]"
           />
         </label>
         <label className="block">
@@ -205,7 +205,7 @@ function AboutYou() {
           <input
             value={lastName}
             onChange={(e) => { setLastName(e.target.value); setDirty(true); }}
-            className="mt-1.5 h-11 w-full border border-[#EBEBEB] bg-white px-3 text-[14px] text-[#0a0a0a] outline-none transition-colors focus:border-[#0a0a0a]"
+            className="mt-1.5 h-11 w-full rounded-control border border-[#EBEBEB] bg-white px-3 text-[14px] text-[#0a0a0a] outline-none transition-colors focus:border-[#0a0a0a]"
           />
         </label>
         <label className="block sm:col-span-2">
@@ -213,7 +213,7 @@ function AboutYou() {
           <input
             value={profile?.email ?? ""}
             disabled
-            className="mt-1.5 h-11 w-full border border-[#EBEBEB] bg-[#FAFAF8] px-3 text-[14px] text-[#888888]"
+            className="mt-1.5 h-11 w-full rounded-control border border-[#EBEBEB] bg-[#FAFAF8] px-3 text-[14px] text-[#888888]"
           />
         </label>
       </div>
@@ -221,7 +221,7 @@ function AboutYou() {
       <button
         onClick={onSave}
         disabled={!dirty || saving}
-        className={`mt-6 inline-flex h-11 items-center px-8 text-[11px] uppercase tracking-[0.18em] transition ${
+        className={`mt-6 inline-flex h-11 items-center rounded-control px-8 text-[11px] uppercase tracking-[0.18em] transition ${
           dirty && !saving
             ? "bg-[#0a0a0a] text-white hover:opacity-90"
             : "cursor-not-allowed border border-[#EBEBEB] text-[#bbbbbb]"
@@ -247,7 +247,7 @@ function AboutYou() {
           <button
             onClick={onSubscribe}
             disabled={subscribing}
-            className="mt-4 inline-flex h-11 items-center border border-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-[#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-white"
+            className="mt-4 inline-flex h-11 items-center rounded-control border border-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-[#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-white"
           >
             {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign Me Up"}
           </button>
@@ -284,7 +284,7 @@ function OrderHistory() {
           <Link
             to="/collections/$handle"
             params={{ handle: "everyday-support-edit" }}
-            className="mt-6 inline-flex h-11 items-center bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+            className="mt-6 inline-flex h-11 items-center rounded-control bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
           >
             Shop Best Sellers
           </Link>
@@ -292,7 +292,7 @@ function OrderHistory() {
       ) : (
         <div className="mt-8 space-y-6">
           {orders.map((o) => (
-            <div key={o.id} className="border border-[#EBEBEB] p-5">
+            <div key={o.id} className="rounded-card border border-[#EBEBEB] p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#0a0a0a]">
                   Order {o.name}

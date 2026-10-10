@@ -136,7 +136,7 @@ export function SizeGuide({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl rounded-none border-border bg-cream p-0">
+      <DialogContent className="max-w-2xl overflow-hidden rounded-none border-border bg-cream p-0 sm:rounded-card">
         <div className="max-h-[85vh] overflow-y-auto">
           <DialogHeader className="border-b border-border px-6 py-5 md:px-8">
             <DialogTitle className="flex items-center gap-2 font-serif text-2xl text-ink">
@@ -152,7 +152,7 @@ export function SizeGuide({
                   <button
                     key={r.value}
                     onClick={() => setRegion(r.value as SizeRegion)}
-                    className={`h-8 border px-3 text-[11px] uppercase tracking-[0.1em] transition-colors ${
+                    className={`h-8 rounded-control border px-3 text-[11px] uppercase tracking-[0.1em] transition-colors ${
                       region === r.value
                         ? "border-ink bg-ink text-cream"
                         : "border-ink/20 text-cocoa hover:border-ink"
@@ -165,13 +165,13 @@ export function SizeGuide({
             )}
 
             {/* Fit note — the single most reassuring line */}
-            <div className="mb-4 border border-ink/15 bg-beige/50 p-4">
+            <div className="mb-4 rounded-card border border-ink/15 bg-beige/50 p-4">
               <p className="text-sm leading-relaxed text-cocoa">{displayText(guide.fitNote)}</p>
             </div>
 
             {/* Product-specific override note */}
             {overrideNote && (
-              <div className="mb-6 border border-ink/40 bg-beige/50 p-4">
+              <div className="mb-6 rounded-card border border-ink/40 bg-beige/50 p-4">
                 <p className="text-sm font-medium leading-relaxed text-ink">{overrideNote}</p>
               </div>
             )}
@@ -219,7 +219,7 @@ export function SizeGuide({
 
             {/* Bra-only cup helper */}
             {guide.cupHelper && (
-              <details className="mt-5 border border-ink/15 bg-beige/50 p-4">
+              <details className="mt-5 rounded-card border border-ink/15 bg-beige/50 p-4">
                 <summary className="cursor-pointer text-sm font-medium text-ink">
                   Find your cup
                 </summary>

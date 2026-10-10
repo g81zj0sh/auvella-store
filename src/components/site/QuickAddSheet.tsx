@@ -206,12 +206,12 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                     onClick={() => onPickColor(c)}
                     aria-label={c}
                     title={c}
-                    className={`h-7 w-7 rounded-sm border-2 p-[2px] transition ${
+                    className={`h-7 w-7 rounded-full border-2 p-[2px] transition ${
                       active ? "border-[#0a0a0a]" : "border-transparent hover:border-[#bbbbbb]"
                     }`}
                   >
                     <span
-                      className="block h-full w-full rounded-[2px] border border-[#0a0a0a]/10"
+                      className="block h-full w-full rounded-full border border-[#0a0a0a]/10"
                       style={{ background: hex }}
                     />
                   </button>
@@ -244,7 +244,7 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                     key={sz}
                     disabled={!inStock}
                     onClick={() => setSelSize(sz)}
-                    className={`relative h-10 whitespace-nowrap border px-1 text-[11px] uppercase tracking-[0.06em] transition ${
+                    className={`relative h-10 whitespace-nowrap rounded-control border px-1 text-[11px] uppercase tracking-[0.06em] transition ${
                       active
                         ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                         : inStock
@@ -263,7 +263,7 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
 
         <div className="mt-6">
           <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Quantity</p>
-          <div className="mt-2.5 inline-flex h-10 items-center border border-[#EBEBEB]">
+          <div className="mt-2.5 inline-flex h-10 items-center rounded-control border border-[#EBEBEB]">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               className="grid h-full w-10 place-items-center transition-opacity hover:opacity-60"
@@ -288,7 +288,7 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
         <button
           onClick={onAdd}
           disabled={!canAdd}
-          className={`flex h-12 w-full items-center justify-center gap-2 text-[11px] uppercase tracking-[0.18em] transition ${
+          className={`flex h-12 w-full items-center justify-center gap-2 rounded-control text-[11px] uppercase tracking-[0.18em] transition ${
             canAdd
               ? "bg-[#0a0a0a] text-white hover:opacity-90"
               : "cursor-not-allowed border border-[#0a0a0a] bg-white text-[#0a0a0a]"

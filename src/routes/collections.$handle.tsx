@@ -609,7 +609,7 @@ function FilterButton({
       {/* Desktop floating panel; on mobile the parent renders the panel
           as a strip below the bar instead (this one stays hidden) */}
       <div
-        className={`absolute left-0 top-full z-50 hidden w-64 border border-[#EBEBEB] bg-white p-5 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.18)] ${
+        className={`absolute left-0 top-full z-50 hidden w-64 rounded-card border border-[#EBEBEB] bg-white p-5 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.18)] ${
           open ? "md:block" : ""
         }`}
       >
@@ -739,7 +739,7 @@ function CollectionPage() {
                     <button
                       key={s}
                       onClick={() => toggleStr(selSizes, s, setSelSizes)}
-                      className={`h-9 border text-[11px] uppercase tracking-[0.06em] transition ${
+                      className={`h-9 rounded-control border text-[11px] uppercase tracking-[0.06em] transition ${
                         active
                           ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                           : "border-[#EBEBEB] text-[#0a0a0a] hover:border-[#0a0a0a]"
@@ -958,7 +958,7 @@ function CollectionPage() {
             {palette && (
               <button
                 onClick={() => setPalette(undefined)}
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border border-[#0a0a0a] px-2.5 py-1 text-[11px] uppercase tracking-[0.1em] text-[#0a0a0a] transition-opacity hover:opacity-60"
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-pill border border-[#0a0a0a] px-3 py-1 text-[11px] uppercase tracking-[0.1em] text-[#0a0a0a] transition-opacity hover:opacity-60"
               >
                 Colour: {palette} ✕
               </button>
@@ -1024,7 +1024,7 @@ function CollectionPage() {
               <div className="mt-6 flex justify-center">
                 <button
                   onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                  className="inline-flex h-12 w-[200px] items-center justify-center border border-[#0a0a0a] bg-transparent text-[11px] uppercase tracking-[0.16em] text-[#0a0a0a] transition-colors duration-[250ms] hover:bg-[#0a0a0a] hover:text-white"
+                  className="inline-flex h-12 w-[200px] items-center justify-center rounded-control border border-[#0a0a0a] bg-transparent text-[11px] uppercase tracking-[0.16em] text-[#0a0a0a] transition-colors duration-[250ms] hover:bg-[#0a0a0a] hover:text-white"
                 >
                   Load More
                 </button>

@@ -36,10 +36,25 @@ export function RatingBadge({
 }) {
   if (!(count > 0) || !(average > 0)) return null;
   const avg = (Math.round(average * 10) / 10).toFixed(1);
+  /* Glide down to the reviews rather than jump (v156); an instant jump for
+     anyone who has asked for reduced motion. Focus moves to the reviews too,
+     as the plain anchor jump would have done for keyboard users. The URL hash
+     is left alone: changing it makes the router jump straight to #reviews,
+     cutting the glide short. */
+  const scrollToReviews = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const target = document.getElementById("reviews");
+    if (!target) return;
+    e.preventDefault();
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+  };
   return (
     <a
       href="#reviews"
-      className={`flex w-fit items-center gap-2 bg-zone px-2.5 py-1 transition-colors hover:bg-zone-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] ${className}`}
+      onClick={scrollToReviews}
+      className={`flex w-fit items-center gap-2 rounded-pill bg-zone px-3 py-1 transition-colors hover:bg-zone-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] ${className}`}
     >
       <StarRow rating={average} />
       <span className="text-[13px] font-semibold tabular-nums text-[#0a0a0a]">

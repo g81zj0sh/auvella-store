@@ -363,10 +363,10 @@ function Index() {
             Shapewear, bras and lounge built to hold where it helps and stay put all day.
           </p>
           <div className="mt-6 flex flex-wrap justify-end gap-3">
-            <a href="#bestsellers" className="inline-flex items-center justify-center bg-cream text-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-white transition-colors">
+            <a href="#bestsellers" className="inline-flex items-center justify-center rounded-control bg-cream text-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-white transition-colors">
               Shop Best Sellers
             </a>
-            <a href="#sleep" className="inline-flex items-center justify-center bg-transparent text-cream border border-cream/40 px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-cream/10 transition-colors">
+            <a href="#sleep" className="inline-flex items-center justify-center rounded-control bg-transparent text-cream border border-cream/40 px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-cream/10 transition-colors">
               Explore Sleep &amp; Lounge
             </a>
           </div>
@@ -421,7 +421,7 @@ function Index() {
           <Link
             to="/collections/$handle"
             params={{ handle: "shapewear" }}
-            className="mt-7 inline-flex h-12 w-40 items-center justify-center border border-white bg-transparent text-[11px] uppercase tracking-[0.16em] text-white transition-colors duration-[250ms] hover:bg-white hover:text-[#0a0a0a]"
+            className="mt-7 inline-flex h-12 w-40 items-center justify-center rounded-control border border-white bg-transparent text-[11px] uppercase tracking-[0.16em] text-white transition-colors duration-[250ms] hover:bg-white hover:text-[#0a0a0a]"
           >
             Shop Now
           </Link>

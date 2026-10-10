@@ -36,7 +36,7 @@ export function MultiBuySelector({ tiers, value, onChange, price, bestValue, nam
             <label
               key={t.quantity}
               htmlFor={id}
-              className={`relative flex cursor-pointer items-center justify-between border px-4 py-3.5 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#0a0a0a] ${
+              className={`relative flex cursor-pointer items-center justify-between rounded-card border px-4 py-3.5 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#0a0a0a] ${
                 active
                   ? "border-[#0a0a0a] bg-[#faf9f7] ring-1 ring-inset ring-[#0a0a0a]"
                   : "border-[#8a8a8a] bg-white hover:border-[#0a0a0a]"
@@ -52,7 +52,7 @@ export function MultiBuySelector({ tiers, value, onChange, price, bestValue, nam
                 className="sr-only"
               />
               {bestValue === t && (
-                <span className="absolute -top-2.5 right-3 bg-[#0a0a0a] px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-white">
+                <span className="absolute -top-2.5 right-3 rounded-pill bg-[#0a0a0a] px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-white">
                   Best value
                 </span>
               )}

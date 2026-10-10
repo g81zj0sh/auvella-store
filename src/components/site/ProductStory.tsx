@@ -221,7 +221,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
               {worries.map((w) => (
                 <div
                   key={w.q}
-                  className={`rounded-[20px] px-7 py-9 transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:px-9 md:py-11 ${surface("before")}`}
+                  className={`rounded-card px-7 py-9 transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:px-9 md:py-11 ${surface("before")}`}
                 >
                   <p className="font-serif text-[26px] font-normal leading-tight text-[#0a0a0a] md:text-[30px]">{w.q}</p>
                   <p className="mt-4 text-[16px] leading-[1.75] text-[#555555]">{w.a}</p>
@@ -245,7 +245,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
             {results.map((r) => (
               <div
                 key={r.label}
-                className={`rounded-[20px] px-8 py-14 text-center transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:py-16 ${surface("results")}`}
+                className={`rounded-card px-8 py-14 text-center transition-[transform,box-shadow] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:shadow-[0_14px_34px_-10px_rgba(0,0,0,0.16)] md:py-16 ${surface("results")}`}
               >
                 <p className="font-serif text-[88px] font-normal leading-none text-[#0a0a0a] md:text-[112px]">{r.value}</p>
                 <p className="mx-auto mt-6 max-w-[300px] text-[18px] font-medium leading-snug text-[#0a0a0a]">{r.label}</p>
@@ -329,7 +329,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
 function Faq({ q, a, surface = "bg-zone" }: { q: string; a: string; surface?: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className={surface}>
+    <div className={`rounded-card ${surface}`}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

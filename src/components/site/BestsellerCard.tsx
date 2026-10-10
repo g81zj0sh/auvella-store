@@ -71,7 +71,7 @@ export function BestsellerCard({ product, badge }: Props) {
             />
           )}
           {badge && (
-            <span className="absolute top-3 left-3 bg-[#b8312f] text-white text-[10px] uppercase tracking-[0.16em] px-2 py-0.5 font-semibold">
+            <span className="absolute top-3 left-3 rounded-pill bg-[#b8312f] text-white text-[10px] uppercase tracking-[0.16em] px-2 py-0.5 font-semibold">
               {badge}
             </span>
           )}

@@ -142,7 +142,7 @@ export function ShippingPopup() {
         role="dialog"
         aria-modal="true"
         aria-label="Shipping information"
-        className={`relative w-full max-w-[350px] bg-white px-6 pb-6 pt-0 transition-all duration-300 ease-out md:max-w-[380px] md:px-7 md:pb-7 ${
+        className={`relative w-full max-w-[350px] overflow-hidden rounded-card bg-white px-6 pb-6 pt-0 transition-all duration-300 ease-out md:max-w-[380px] md:px-7 md:pb-7 ${
           visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.97] opacity-0"
         }`}
       >
@@ -207,7 +207,7 @@ export function ShippingPopup() {
 
             <button
               onClick={dismiss}
-              className="mt-5 flex h-10 w-full items-center justify-center bg-[#0a0a0a] text-[11px] font-medium uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#262626]"
+              className="mt-5 flex h-10 w-full items-center justify-center rounded-control bg-[#0a0a0a] text-[11px] font-medium uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#262626]"
             >
               Continue Shopping
             </button>

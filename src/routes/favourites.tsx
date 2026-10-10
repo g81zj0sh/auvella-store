@@ -118,7 +118,7 @@ function OwnView() {
             <Link
               to="/collections/$handle"
               params={{ handle: "everyday-support-edit" }}
-              className="mt-8 inline-flex h-11 items-center bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+              className="mt-8 inline-flex h-11 items-center rounded-control bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
             >
               Shop Best Sellers
             </Link>
@@ -178,7 +178,7 @@ function SharedView({ sharedParam }: { sharedParam: string }) {
           </p>
           <button
             onClick={saveAll}
-            className="mt-5 inline-flex h-10 items-center whitespace-nowrap border border-[#0a0a0a] px-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-white"
+            className="mt-5 inline-flex h-10 items-center whitespace-nowrap rounded-control border border-[#0a0a0a] px-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-white"
           >
             Save All To My Favourites
           </button>

@@ -99,7 +99,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 }
 
 const inputCls =
-  "w-full border border-[#DDDDDD] bg-white px-3 py-2.5 text-[16px] md:text-[13px] text-[#0a0a0a] placeholder:text-[#AAAAAA] focus:border-[#0a0a0a] focus:outline-none";
+  "w-full rounded-control border border-[#DDDDDD] bg-white px-3 py-2.5 text-[16px] md:text-[13px] text-[#0a0a0a] placeholder:text-[#AAAAAA] focus:border-[#0a0a0a] focus:outline-none";
 
 function WriteReviewForm({ productGid, onDone }: { productGid: string; onDone: () => void }) {
   const [name, setName] = useState("");
@@ -170,7 +170,7 @@ function WriteReviewForm({ productGid, onDone }: { productGid: string; onDone: (
       </p>
       <div className="flex flex-wrap items-center gap-3">
         {photos.map((p, i) => (
-          <div key={p.url} className="relative h-20 w-20 overflow-hidden border border-[#ebebeb]">
+          <div key={p.url} className="relative h-20 w-20 overflow-hidden rounded-control border border-[#ebebeb]">
             <img src={p.preview} alt="" className="h-full w-full object-cover" />
             <button
               type="button"
@@ -184,7 +184,7 @@ function WriteReviewForm({ productGid, onDone }: { productGid: string; onDone: (
         ))}
         {photos.length < MAX_PHOTOS && (
           <label
-            className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-[#d4d4d4] text-[#8a8a8a] transition-colors hover:border-[#0a0a0a] hover:text-[#0a0a0a] ${
+            className={`flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-control border border-dashed border-[#d4d4d4] text-[#8a8a8a] transition-colors hover:border-[#0a0a0a] hover:text-[#0a0a0a] ${
               uploading ? "pointer-events-none opacity-60" : ""
             }`}
           >
@@ -250,7 +250,7 @@ function WriteReviewForm({ productGid, onDone }: { productGid: string; onDone: (
         type="button"
         onClick={submit}
         disabled={!valid || state === "sending"}
-        className="inline-flex h-11 items-center justify-center gap-2 bg-[#0a0a0a] px-8 text-[11px] font-medium uppercase tracking-[0.16em] text-white transition-opacity disabled:opacity-40"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-control bg-[#0a0a0a] px-8 text-[11px] font-medium uppercase tracking-[0.16em] text-white transition-opacity disabled:opacity-40"
       >
         {state === "sending" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         Submit review
@@ -335,7 +335,7 @@ export function Reviews({
               <button
                 type="button"
                 onClick={() => setWriting(true)}
-                className="inline-flex h-11 items-center justify-center border border-[#0a0a0a] px-7 text-[11px] font-medium uppercase tracking-[0.16em] text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
+                className="inline-flex h-11 items-center justify-center rounded-control border border-[#0a0a0a] px-7 text-[11px] font-medium uppercase tracking-[0.16em] text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
               >
                 Write a review
               </button>
@@ -378,7 +378,7 @@ export function Reviews({
                     disabled={empty}
                     onClick={() => setStarFilter(n)}
                     aria-pressed={active}
-                    className={`flex h-9 items-center gap-1.5 border px-3.5 text-[12px] transition-colors ${
+                    className={`flex h-9 items-center gap-1.5 rounded-control border px-3.5 text-[12px] transition-colors ${
                       active
                         ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                         : empty
@@ -469,7 +469,7 @@ export function Reviews({
                             key={src}
                             onClick={() => setViewer({ photos: r.photos!, index: pi, name: r.name })}
                             aria-label={`View photo ${pi + 1} from ${r.name}`}
-                            className="block h-24 w-24 cursor-zoom-in overflow-hidden border border-[#ebebeb]"
+                            className="block h-24 w-24 cursor-zoom-in overflow-hidden rounded-control border border-[#ebebeb]"
                           >
                             <img
                               src={src}
@@ -490,7 +490,7 @@ export function Reviews({
                         reviews: a reply offering help only makes sense to
                         Auvella's own customers. */}
                     {r.reply && r.verified && (
-                      <div className="mt-5 max-w-[620px] border-l-2 border-[#0a0a0a] bg-[#f7f6f4] px-5 py-4">
+                      <div className="mt-5 max-w-[620px] rounded-r-card border-l-2 border-[#0a0a0a] bg-[#f7f6f4] px-5 py-4">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#0a0a0a]">
                           Reply from {r.replier && !/owner|store/i.test(r.replier) ? r.replier : "Auvella"}
                         </p>
@@ -507,7 +507,7 @@ export function Reviews({
               <button
                 type="button"
                 onClick={() => setVisible((v) => v + 10)}
-                className="h-11 border border-[#0a0a0a] px-8 text-[11px] font-medium uppercase tracking-[0.18em] text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
+                className="h-11 rounded-control border border-[#0a0a0a] px-8 text-[11px] font-medium uppercase tracking-[0.18em] text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
               >
                 Show more reviews ({filtered.length - visible})
               </button>

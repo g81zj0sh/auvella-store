@@ -67,14 +67,14 @@ export function CookieConsent() {
             <button
               type="button"
               onClick={() => choose("declined")}
-              className="h-11 flex-1 border border-[#0a0a0a] px-7 text-[11px] font-medium uppercase tracking-[0.18em] text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-[#faf9f7] md:flex-none"
+              className="h-11 flex-1 rounded-control border border-[#0a0a0a] px-7 text-[11px] font-medium uppercase tracking-[0.18em] text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-[#faf9f7] md:flex-none"
             >
               Decline
             </button>
             <button
               type="button"
               onClick={() => choose("accepted")}
-              className="h-11 flex-1 border border-[#0a0a0a] bg-[#0a0a0a] px-7 text-[11px] font-medium uppercase tracking-[0.18em] text-[#faf9f7] transition-colors hover:bg-[#555555] hover:border-[#555555] md:flex-none"
+              className="h-11 flex-1 rounded-control border border-[#0a0a0a] bg-[#0a0a0a] px-7 text-[11px] font-medium uppercase tracking-[0.18em] text-[#faf9f7] transition-colors hover:bg-[#555555] hover:border-[#555555] md:flex-none"
             >
               Accept
             </button>

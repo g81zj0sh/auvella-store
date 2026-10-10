@@ -156,11 +156,11 @@ function EditBody({ item, onDone }: { item: CartItem; onDone: () => void }) {
                     onClick={() => onPickColor(c)}
                     aria-label={c}
                     title={c}
-                    className={`h-7 w-7 rounded-sm border-2 p-[2px] transition ${
+                    className={`h-7 w-7 rounded-full border-2 p-[2px] transition ${
                       active ? "border-ink" : "border-transparent hover:border-[#bbbbbb]"
                     }`}
                   >
-                    <span className="block h-full w-full rounded-[2px] border border-ink/10" style={{ background: hex }} />
+                    <span className="block h-full w-full rounded-full border border-ink/10" style={{ background: hex }} />
                   </button>
                 );
               })}
@@ -184,7 +184,7 @@ function EditBody({ item, onDone }: { item: CartItem; onDone: () => void }) {
                     type="button"
                     disabled={!inStock}
                     onClick={() => setSelSize(sz)}
-                    className={`h-10 border text-[11px] uppercase tracking-[0.06em] transition ${
+                    className={`h-10 rounded-control border text-[11px] uppercase tracking-[0.06em] transition ${
                       active
                         ? "border-ink bg-ink text-cream"
                         : inStock
@@ -208,7 +208,7 @@ function EditBody({ item, onDone }: { item: CartItem; onDone: () => void }) {
           type="button"
           onClick={save}
           disabled={!canSave}
-          className="flex h-12 w-full items-center justify-center gap-2 bg-ink text-[11px] font-medium uppercase tracking-[0.2em] text-cream transition-colors hover:bg-cocoa disabled:opacity-40"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-control bg-ink text-[11px] font-medium uppercase tracking-[0.2em] text-cream transition-colors hover:bg-cocoa disabled:opacity-40"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : unchanged ? "No changes" : "Update bag"}
         </button>

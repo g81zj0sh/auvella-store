@@ -135,7 +135,7 @@ function TrackingPage() {
               inputMode="numeric"
               autoComplete="off"
               required
-              className="mt-2 h-12 w-full border border-[#ebebeb] bg-white px-4 text-[15px] text-[#0a0a0a] outline-none placeholder:text-[#b5b5b5] focus:border-[#0a0a0a]"
+              className="mt-2 h-12 w-full rounded-control border border-[#ebebeb] bg-white px-4 text-[15px] text-[#0a0a0a] outline-none placeholder:text-[#b5b5b5] focus:border-[#0a0a0a]"
             />
           </label>
           <label className="mt-5 block">
@@ -149,13 +149,13 @@ function TrackingPage() {
               placeholder="you@example.com, 07700 900000 or your postcode"
               autoComplete="email"
               required
-              className="mt-2 h-12 w-full border border-[#ebebeb] bg-white px-4 text-[15px] text-[#0a0a0a] outline-none placeholder:text-[#b5b5b5] focus:border-[#0a0a0a]"
+              className="mt-2 h-12 w-full rounded-control border border-[#ebebeb] bg-white px-4 text-[15px] text-[#0a0a0a] outline-none placeholder:text-[#b5b5b5] focus:border-[#0a0a0a]"
             />
           </label>
           <button
             type="submit"
             disabled={busy}
-            className="mt-7 flex h-12 w-full items-center justify-center bg-[#0a0a0a] text-[11px] font-medium uppercase tracking-[0.22em] text-white transition-colors hover:bg-[#555555] disabled:opacity-60"
+            className="mt-7 flex h-12 w-full items-center justify-center rounded-control bg-[#0a0a0a] text-[11px] font-medium uppercase tracking-[0.22em] text-white transition-colors hover:bg-[#555555] disabled:opacity-60"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Track my order"}
           </button>
@@ -169,7 +169,7 @@ function TrackingPage() {
         )}
 
         {/* ---------- Delivery window, said plainly ---------- */}
-        <aside className="mt-14 border border-[#0a0a0a] px-6 py-7 md:px-8">
+        <aside className="mt-14 rounded-card border border-[#0a0a0a] px-6 py-7 md:px-8">
           <p className="text-[10px] uppercase tracking-[0.28em] text-[#8a8a8a]">The honest version</p>
           <p className="mt-3 text-[15px] leading-[1.75] text-[#0a0a0a]">
             Orders are dispatched within {PROCESSING_LABEL} business days, then shipping to {shipTo.name} takes a
@@ -209,7 +209,7 @@ function OrderResult({ order }: { order: TrackedOrder }) {
 
           {/* Tracking details, only when real */}
           {(order.trackingNumber || order.trackingUrl) && (
-            <div className="mt-8 border border-[#ebebeb] px-5 py-4 text-[14px] leading-[1.7] text-[#555555]">
+            <div className="mt-8 rounded-card border border-[#ebebeb] px-5 py-4 text-[14px] leading-[1.7] text-[#555555]">
               {order.courier && <p>Courier: <span className="text-[#0a0a0a]">{order.courier}</span></p>}
               {order.trackingNumber && <p>Tracking number: <span className="text-[#0a0a0a]">{order.trackingNumber}</span></p>}
               {order.trackingUrl && (
@@ -224,7 +224,7 @@ function OrderResult({ order }: { order: TrackedOrder }) {
               "we'll add tracking soon" is wrong once tracking exists, and
               "on its way" is wrong before the courier has collected it. */}
           {order.stage < 5 && (
-            <div className="mt-8 bg-[#f4f4f2] px-5 py-5 text-[14px] leading-[1.7] text-[#555555]">
+            <div className="mt-8 rounded-card bg-[#f4f4f2] px-5 py-5 text-[14px] leading-[1.7] text-[#555555]">
               {overWindow ? (
                 <>
                   <p className="text-[#0a0a0a]">
@@ -321,7 +321,7 @@ function LookupFailure({ reason, orderNumber }: { reason: Exclude<LookupResult, 
     error: "Something went wrong on our side, not yours. Try again in a minute, or email us with your order number.",
   };
   return (
-    <div className="border border-[#ebebeb] px-5 py-5 text-[14px] leading-[1.7] text-[#555555]">
+    <div className="rounded-card border border-[#ebebeb] px-5 py-5 text-[14px] leading-[1.7] text-[#555555]">
       <p>{copy[reason]}</p>
       {reason !== "invalid" && (
         <p className="mt-2">

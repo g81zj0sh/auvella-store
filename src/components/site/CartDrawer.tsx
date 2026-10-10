@@ -221,12 +221,12 @@ export function CartDrawer() {
                   {country?.name ? ` to ${country.name}` : ""}, and easy 30-day returns either way.
                 </p>
                 <div className="mx-auto mt-6 flex max-w-[300px] flex-col gap-2">
-                  <Button asChild className="h-11 w-full rounded-none bg-ink text-[11px] font-medium uppercase tracking-[0.18em] text-white hover:bg-ink/85">
+                  <Button asChild className="h-11 w-full rounded-control bg-ink text-[11px] font-medium uppercase tracking-[0.18em] text-white hover:bg-ink/85">
                     <Link to="/collections/$handle" params={{ handle: "everyday-support-edit" }} onClick={() => setOpen(false)}>
                       {t("Shop Best Sellers")}
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="h-11 w-full rounded-none border-ink text-[11px] font-medium uppercase tracking-[0.18em] text-ink hover:bg-ink hover:text-white">
+                  <Button asChild variant="outline" className="h-11 w-full rounded-control border-ink text-[11px] font-medium uppercase tracking-[0.18em] text-ink hover:bg-ink hover:text-white">
                     <Link to="/collections/$handle" params={{ handle: "new-in" }} onClick={() => setOpen(false)}>
                       New In
                     </Link>
@@ -256,7 +256,7 @@ export function CartDrawer() {
                     </>
                   )}
                 </p>
-                <div className="mt-2 h-[3px] w-full overflow-hidden bg-beige" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)} aria-label="Progress towards free shipping">
+                <div className="mt-2 h-[3px] w-full overflow-hidden rounded-pill bg-beige" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)} aria-label="Progress towards free shipping">
                   <div className="h-full bg-ink transition-[width] duration-500 ease-out" style={{ width: `${progress}%` }} />
                 </div>
               </div>
@@ -339,14 +339,14 @@ export function CartDrawer() {
 
                           <div className="mt-3 flex items-center justify-between gap-3">
                             {/* SKIMS-style quantity box: bin replaces minus at qty 1 */}
-                            <div className="inline-flex h-9 items-center border border-border">
+                            <div className="inline-flex h-9 items-center overflow-hidden rounded-control border border-border">
                               <button
                                 type="button"
                                 aria-label={item.quantity === 1 ? "Remove" : "Decrease quantity"}
                                 onClick={() =>
                                   item.quantity === 1 ? removeItem(item.variantId) : updateQuantity(item.variantId, item.quantity - 1)
                                 }
-                                className="flex h-full w-9 items-center justify-center text-ink hover:bg-beige"
+                                className="flex h-full w-9 items-center justify-center text-ink hover:bg-beige focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
                               >
                                 {item.quantity === 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
                               </button>
@@ -355,7 +355,7 @@ export function CartDrawer() {
                                 type="button"
                                 aria-label="Increase quantity"
                                 onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                                className="flex h-full w-9 items-center justify-center text-ink hover:bg-beige"
+                                className="flex h-full w-9 items-center justify-center text-ink hover:bg-beige focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                               </button>
@@ -425,7 +425,7 @@ export function CartDrawer() {
                 </div>
                 <Button
                   onClick={handleCheckout}
-                  className="w-full bg-cta text-cream hover:bg-cta-hover uppercase tracking-[0.2em] text-[11px] py-6 rounded-none"
+                  className="w-full bg-cta text-cream hover:bg-cta-hover uppercase tracking-[0.2em] text-[11px] py-6 rounded-control"
                   disabled={items.length === 0 || isLoading || isSyncing || isCheckingOut}
                 >
                   {isLoading || isSyncing || isCheckingOut ? (
@@ -478,9 +478,9 @@ function PromoCode({
               onKeyDown={(e) => { if (e.key === "Enter") void apply(); }}
               placeholder="Enter code"
               autoCapitalize="characters"
-              className="h-10 flex-1 border border-border bg-cream px-3 text-[13px] text-ink outline-none placeholder:text-cocoa/70 focus:border-ink"
+              className="h-10 flex-1 rounded-control border border-border bg-cream px-3 text-[13px] text-ink outline-none placeholder:text-cocoa/70 focus:border-ink"
             />
-            <button type="button" onClick={apply} disabled={busy || !code.trim()} className="h-10 border border-ink px-4 text-[11px] uppercase tracking-[0.16em] text-ink hover:bg-ink hover:text-cream disabled:opacity-40">
+            <button type="button" onClick={apply} disabled={busy || !code.trim()} className="h-10 rounded-control border border-ink px-4 text-[11px] uppercase tracking-[0.16em] text-ink hover:bg-ink hover:text-cream disabled:opacity-40">
               {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
             </button>
           </div>
@@ -488,7 +488,7 @@ function PromoCode({
           {codes.length > 0 && (
             <ul className="mt-3 flex flex-wrap gap-2">
               {codes.map((c) => (
-                <li key={c} className="inline-flex items-center gap-1.5 border border-border px-2.5 py-1 text-[12px] text-ink">
+                <li key={c} className="inline-flex items-center gap-1.5 rounded-pill border border-border px-2.5 py-1 text-[12px] text-ink">
                   {c}
                   <button type="button" aria-label={`Remove ${c}`} onClick={() => onRemove(c)} className="text-cocoa hover:text-ink"><X className="h-3 w-3" /></button>
                 </li>
@@ -531,7 +531,7 @@ function ProductGrid({
               {n.productType && <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-cocoa">{n.productType}</p>}
               <p className="mt-0.5 font-serif text-[14px] leading-snug text-ink line-clamp-2">{n.title}</p>
               <p className="mt-1 text-[13px] text-ink">{display(price.amount, price.currencyCode)}</p>
-              <button type="button" onClick={() => onPick(p)} className="mt-3 h-10 w-full border border-ink text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:bg-ink hover:text-cream">
+              <button type="button" onClick={() => onPick(p)} className="mt-3 h-10 w-full rounded-control border border-ink text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:bg-ink hover:text-cream">
                 Add to bag
               </button>
             </div>

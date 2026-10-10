@@ -203,7 +203,7 @@ export function ProductCard({ product, badge }: Props) {
           <Heart className={`h-[16px] w-[16px] ${liked ? "fill-[#0a0a0a]" : ""}`} strokeWidth={1.4} />
         </button>
         {badge && (
-          <span className="absolute left-3 top-3 bg-white px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-[#0a0a0a]">
+          <span className="absolute left-3 top-3 rounded-pill bg-white px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-[#0a0a0a]">
             {badge}
           </span>
         )}
@@ -240,7 +240,7 @@ export function ProductCard({ product, badge }: Props) {
             {display(shownPrice.amount, shownPrice.currencyCode)}
           </span>
           {bundleDeal && (
-            <span className="border border-[#0a0a0a] px-1.5 py-[1px] text-[10px] uppercase leading-none tracking-[0.08em] text-[#0a0a0a]">
+            <span className="rounded-pill border border-[#0a0a0a] px-1.5 py-[1px] text-[10px] uppercase leading-none tracking-[0.08em] text-[#0a0a0a]">
               {bundleLabel}
             </span>
           )}

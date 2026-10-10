@@ -40,7 +40,7 @@ function BackToTop() {
     <button
       aria-label="Back to top"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className={`fixed bottom-[calc(1.25rem+var(--buy-bar-h,0px))] right-5 z-40 grid h-11 w-11 place-items-center bg-[#0a0a0a] text-white transition-[opacity,bottom] duration-300 ${
+      className={`fixed bottom-[calc(1.25rem+var(--buy-bar-h,0px))] right-5 z-40 grid h-11 w-11 place-items-center rounded-full bg-[#0a0a0a] text-white transition-[opacity,bottom] duration-300 ${
         show ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
     >
@@ -124,7 +124,7 @@ export function Footer() {
                 e.preventDefault();
                 if (email.trim()) setDone(true);
               }}
-              className="mx-auto mt-6 flex max-w-xs border border-[#0a0a0a]"
+              className="mx-auto mt-6 flex max-w-xs overflow-hidden rounded-control border border-[#0a0a0a]"
             >
               <input
                 type="email"
@@ -136,7 +136,7 @@ export function Footer() {
               />
               <button
                 aria-label="Subscribe"
-                className="flex items-center justify-center border-l border-[#0a0a0a] px-4 text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
+                className="flex items-center justify-center border-l border-[#0a0a0a] px-4 text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0a0a0a]"
               >
                 <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
               </button>

@@ -309,7 +309,7 @@ function MegaPanel({ item }: { item: NavItem }) {
 function SimplePanel({ item }: { item: NavItem }) {
   return (
     <div className={`absolute left-0 top-full z-50 ${panelTransition}`}>
-      <div className="min-w-[220px] border border-[#EBEBEB]/70 bg-white supports-[backdrop-filter]:bg-white/80 backdrop-blur-xl p-5 shadow-[0_24px_48px_-32px_rgba(0,0,0,0.15)]">
+      <div className="min-w-[220px] rounded-card border border-[#EBEBEB]/70 bg-white supports-[backdrop-filter]:bg-white/80 backdrop-blur-xl p-5 shadow-[0_24px_48px_-32px_rgba(0,0,0,0.15)]">
         <ul className="space-y-3">
           {item.links?.map((l, i) => (
             <li key={l.label}>
@@ -359,7 +359,7 @@ function GlobePicker({ light }: { light: boolean }) {
       <PopoverContent
         align="end"
         sideOffset={14}
-        className="w-72 rounded-none border-[#EBEBEB] bg-white p-0 shadow-lg"
+        className="w-72 overflow-hidden rounded-card border-[#EBEBEB] bg-white p-0 shadow-lg"
       >
         <div className="max-h-[70vh] overflow-y-auto p-4" data-no-translate>
           <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-[#888888]">Ship to</p>
@@ -370,7 +370,7 @@ function GlobePicker({ light }: { light: boolean }) {
               if (c) setCountry(c);
             }}
             aria-label="Ship to"
-            className="mb-5 h-9 w-full border border-[#EBEBEB] bg-white px-2 text-[12px] text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none"
+            className="mb-5 h-9 w-full rounded-control border border-[#EBEBEB] bg-white px-2 text-[12px] text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none"
           >
             {COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>{c.name}</option>
@@ -384,7 +384,7 @@ function GlobePicker({ light }: { light: boolean }) {
                 <button
                   key={c.code}
                   onClick={() => setCurrency(c.code)}
-                  className={`flex h-9 items-center justify-center gap-1 border text-[11px] tracking-[0.08em] transition ${
+                  className={`flex h-9 items-center justify-center gap-1 rounded-control border text-[11px] tracking-[0.08em] transition ${
                     active
                       ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                       : "border-[#EBEBEB] text-[#0a0a0a] hover:border-[#0a0a0a]"
@@ -403,7 +403,7 @@ function GlobePicker({ light }: { light: boolean }) {
                 <button
                   key={l.code}
                   onClick={() => setLanguage(l.code as LanguageCode)}
-                  className={`flex h-9 items-center justify-between border px-3 text-[11px] tracking-[0.06em] transition ${
+                  className={`flex h-9 items-center justify-between rounded-control border px-3 text-[11px] tracking-[0.06em] transition ${
                     active
                       ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                       : "border-[#EBEBEB] text-[#0a0a0a] hover:border-[#0a0a0a]"
@@ -760,7 +760,7 @@ function MobileRegionRows() {
           <button
             key={l.code}
             onClick={() => setLanguage(l.code as LanguageCode)}
-            className={`h-8 border px-2.5 text-[11px] tracking-[0.06em] ${
+            className={`h-8 rounded-control border px-2.5 text-[11px] tracking-[0.06em] ${
               l.code === language
                 ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                 : "border-[#EBEBEB] text-[#0a0a0a]"

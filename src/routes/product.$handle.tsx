@@ -14,7 +14,6 @@ import {
 import { MultiBuySelector } from "@/components/site/MultiBuySelector";
 import { TrustBadges } from "@/components/site/TrustBadges";
 import { RatingBadge } from "@/components/site/RatingBadge";
-import { DeliveryPulse } from "@/components/site/DeliveryPulse";
 import { isFinalSale } from "@/lib/returnsPolicy";
 import { ProductStory } from "@/components/site/ProductStory";
 import { descriptionParts, fitNote, fabricLine } from "@/lib/productStory";
@@ -891,7 +890,7 @@ function ProductPage() {
           </p>
           {bundleDeal && (
             <div className="mt-2.5">
-              <span className="inline-block border border-[#0a0a0a] px-2 py-[3px] text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
+              <span className="inline-block rounded-pill border border-[#0a0a0a] px-2.5 py-[3px] text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
                 {bundleLabel}
               </span>
               <p className="mt-1.5 text-[11px] leading-relaxed text-[#555555]">
@@ -1058,7 +1057,7 @@ function ProductPage() {
 
             {bundleDeal && (
               <div className="mt-3">
-                <span className="inline-block border border-[#0a0a0a] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
+                <span className="inline-block rounded-pill border border-[#0a0a0a] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
                   {bundleLabel}
                 </span>
                 <p className="mt-2 text-[12px] leading-relaxed text-[#555555]">
@@ -1112,7 +1111,7 @@ function ProductPage() {
                         aria-label={v}
                         title={v}
                         onClick={() => setOpt(colorOption.name, v)}
-                        className={`h-[26px] w-[26px] border bg-cover transition-all ${
+                        className={`h-[28px] w-[28px] rounded-full border bg-cover transition-all ${
                           active
                             ? "border-[#0a0a0a] ring-1 ring-[#0a0a0a] ring-offset-1"
                             : "border-[#0a0a0a]/15 hover:border-[#0a0a0a]/50"
@@ -1144,7 +1143,7 @@ function ProductPage() {
             {sizeOption && (
               <div
                 ref={sizesRef}
-                className={`mt-7 transition-shadow duration-500 ${sizePulse ? "ring-1 ring-[#0a0a0a] ring-offset-4" : ""}`}
+                className={`mt-7 rounded-card transition-shadow duration-500 ${sizePulse ? "ring-1 ring-[#0a0a0a] ring-offset-4" : ""}`}
               >
                 <div className="flex items-center justify-between">
                   <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Size</p>
@@ -1167,7 +1166,7 @@ function ProductPage() {
                         key={v}
                         disabled={!available}
                         onClick={() => setOpt(sizeOption.name, v)}
-                        className={`flex h-10 items-center justify-center whitespace-nowrap border px-1 text-[12px] transition-colors ${
+                        className={`flex h-10 items-center justify-center whitespace-nowrap rounded-control border px-1 text-[12px] transition-colors ${
                           active
                             ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
                             : available
@@ -1198,7 +1197,7 @@ function ProductPage() {
                       <button
                         key={v}
                         onClick={() => setOpt(opt.name, v)}
-                        className={`flex h-10 items-center justify-center border px-4 text-[12px] transition-colors ${
+                        className={`flex h-10 items-center justify-center rounded-control border px-4 text-[12px] transition-colors ${
                           active ? "border-[#0a0a0a] bg-[#0a0a0a] text-white" : "border-[#DDDDDD] text-[#0a0a0a] hover:border-[#0a0a0a]"
                         }`}
                       >
@@ -1236,7 +1235,7 @@ function ProductPage() {
                   }}
                 />
                 {tier.quantity > 1 && (
-                  <div className="mt-3 space-y-2 border border-[#e6e4e0] bg-[#faf9f7] p-3">
+                  <div className="mt-3 space-y-2 rounded-card border border-[#e6e4e0] bg-[#faf9f7] p-3">
                     {Array.from({ length: tier.quantity }, (_, i) => {
                       const sel = i === 0 ? currentSelected : extraSels[i - 1];
                       const set = (name: string, value: string) => {
@@ -1290,7 +1289,7 @@ function ProductPage() {
                                 value={sel[o.name] ?? ""}
                                 onChange={(e) => set(o.name, e.target.value)}
                                 aria-label={`${o.name} for item ${i + 1}`}
-                                className="h-9 border border-[#8a8a8a] bg-white px-2 text-[12px] text-[#0a0a0a] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0a0a0a]"
+                                className="h-9 rounded-control border border-[#8a8a8a] bg-white px-2 text-[12px] text-[#0a0a0a] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0a0a0a]"
                               >
                                 {!sel[o.name] && (
                                   <option value="" disabled>
@@ -1328,24 +1327,14 @@ function ProductPage() {
               </div>
             )}
 
-            {/* Estimated delivery (pulsing) right above the button, with
-                fixed spacing whether or not the line shows. */}
-            <div className="mt-7 space-y-3">
-            <DeliveryPulse
-              available={
-                variant
-                  ? variant.availableForSale
-                  : node.variants.edges.some((v) => v.node.availableForSale)
-              }
-            />
-
             {/* Add to bag / Select a size - the boldest thing on the page:
                 full-width, solid --cta fill in both states. */}
+            <div className="mt-7">
             <button
               ref={atcRef}
               onClick={handleAdd}
               disabled={adding}
-              className="flex h-14 w-full items-center justify-center bg-cta text-[13px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_24px_-12px_rgba(0,0,0,0.55)] transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
+              className="flex h-14 w-full items-center justify-center rounded-control bg-cta text-[13px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_24px_-12px_rgba(0,0,0,0.55)] transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
             >
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1429,7 +1418,7 @@ function ProductPage() {
                             still announces a list once the bullets are gone. */}
                         {sections && (
                           <div
-                            className="ticklist mt-6 bg-zone px-5 py-4 [&_h3:first-child]:mt-0 [&_ul]:space-y-1.5"
+                            className="ticklist mt-6 rounded-card bg-zone px-5 py-4 [&_h3:first-child]:mt-0 [&_ul]:space-y-1.5"
                             dangerouslySetInnerHTML={{
                               __html: sections.replace(/<ul>/g, '<ul role="list">'),
                             }}
@@ -1546,7 +1535,7 @@ function ProductPage() {
               height={52}
               loading="lazy"
               decoding="async"
-              className="h-[52px] w-10 shrink-0 object-cover object-[center_top]"
+              className="h-[52px] w-10 shrink-0 rounded-md object-cover object-[center_top]"
             />
           )}
           <div className="min-w-0 flex-1">
@@ -1573,7 +1562,7 @@ function ProductPage() {
                   ? "Go to checkout"
                   : `Buy now: add ${tier.quantity === 1 ? "this item" : `${tier.quantity} items`} to your bag and go to checkout`
             }
-            className="flex h-12 min-w-[120px] shrink-0 items-center justify-center bg-cta px-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
+            className="flex h-12 min-w-[120px] shrink-0 items-center justify-center rounded-control bg-cta px-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
           >
             {buyingNow ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1614,7 +1603,7 @@ function ProductPage() {
           <button
             onClick={handleAdd}
             disabled={adding}
-            className="flex h-12 shrink-0 items-center justify-center bg-cta px-8 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
+            className="flex h-12 shrink-0 items-center justify-center rounded-control bg-cta px-8 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
           >
             {hasSize ? "Add to Bag" : "Select a Size"}
           </button>

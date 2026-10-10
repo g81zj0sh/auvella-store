@@ -45,7 +45,7 @@ function CallbackPage() {
           </p>
           <a
             href="/account"
-            className="mt-6 inline-flex h-11 items-center bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white"
+            className="mt-6 inline-flex h-11 items-center rounded-control bg-[#0a0a0a] px-8 text-[11px] uppercase tracking-[0.18em] text-white"
           >
             Back to Account
           </a>
