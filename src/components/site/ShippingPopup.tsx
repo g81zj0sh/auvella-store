@@ -10,6 +10,8 @@ import { landedOnHome } from "@/lib/landing";
  *  - Hemisphere-aware seasonal offer bar: "40% Off Autumn · Ending soon 🔥🔥".
  *    No countdown since v149 - Joshua found the ticking timer too big, and a
  *    clock that restarts every season reads as false urgency.
+ *  - Compact on phones (280px wide, tighter type/spacing); md: restores the
+ *    desktop sizing. Joshua asked for roughly half the mobile footprint.
  *  - Fades in on open, fades out on dismiss
  *  - Shows once per session (sessionStorage)
  *  - Only for visitors whose session STARTED on the home page. Someone who
@@ -142,38 +144,38 @@ export function ShippingPopup() {
         role="dialog"
         aria-modal="true"
         aria-label="Shipping information"
-        className={`relative w-full max-w-[350px] overflow-hidden rounded-card bg-white px-6 pb-6 pt-0 transition-all duration-300 ease-out md:max-w-[380px] md:px-7 md:pb-7 ${
+        className={`relative w-full max-w-[280px] overflow-hidden rounded-card bg-white px-4 pb-4 pt-0 transition-all duration-300 ease-out md:max-w-[380px] md:px-7 md:pb-7 ${
           visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.97] opacity-0"
         }`}
       >
         {/* Seasonal bar. The figure must match the compare-at discount every
             product actually shows: 40% since 5 Oct 2026 (compare-at = price /
             0.6; live check: every product 40-43% off). */}
-        <div className="-mx-6 bg-[#0a0a0a] py-2 pl-4 pr-10 text-center text-[10px] uppercase tracking-[0.14em] text-white md:-mx-7">
+        <div className="-mx-4 bg-[#0a0a0a] py-1.5 pl-4 pr-9 text-center text-[9px] uppercase tracking-[0.12em] text-white md:-mx-7 md:py-2 md:text-[10px] md:tracking-[0.14em]">
           40% Off {season} · Ending soon <span aria-hidden="true">🔥🔥</span>
         </div>
         <button
           aria-label="Close"
           onClick={dismiss}
-          className="absolute right-3 top-2 text-white transition-opacity hover:opacity-60"
+          className="absolute right-2.5 top-1.5 text-white transition-opacity hover:opacity-60 md:right-3 md:top-2"
         >
           <X className="h-4 w-4" strokeWidth={1.5} />
         </button>
 
         {view === "main" ? (
           <>
-            <p className="mt-5 text-center text-[9px] uppercase tracking-[0.4em] text-[#888888]">
+            <p className="mt-3 text-center text-[8px] uppercase tracking-[0.4em] text-[#888888] md:mt-5 md:text-[9px]">
               Auvella
             </p>
-            <h2 className="mt-2 text-center font-serif text-[19px] font-semibold uppercase leading-[1.2] tracking-[0.05em] text-[#0a0a0a] md:text-[21px]">
+            <h2 className="mt-1.5 text-center font-serif text-[14px] font-semibold uppercase leading-[1.2] tracking-[0.05em] text-[#0a0a0a] md:mt-2 md:text-[21px]">
               {headline}
             </h2>
-            <div className="mx-auto mt-3 h-px w-10 bg-[#0a0a0a]" />
-            <p className="mt-2 text-center text-[9px] uppercase tracking-[0.2em] text-[#888888]">
+            <div className="mx-auto mt-2 h-px w-8 bg-[#0a0a0a] md:mt-3 md:w-10" />
+            <p className="mt-1.5 text-center text-[8px] uppercase tracking-[0.2em] text-[#888888] md:mt-2 md:text-[9px]">
               Prices shown in {displayCurrency}
             </p>
 
-            <ul className="mt-4 space-y-1">
+            <ul className="mt-3 space-y-0.5 md:mt-4 md:space-y-1">
               {[
                 <span key="ship" className="font-semibold">
                   Free Shipping On Orders {thresholdFmt}+
@@ -195,7 +197,7 @@ export function ShippingPopup() {
               ].map((content, i) => (
                 <li
                   key={i}
-                  className="flex gap-2 text-[12px] font-medium leading-[1.55] text-[#0a0a0a]"
+                  className="flex gap-1.5 text-[10.5px] font-medium leading-[1.45] text-[#0a0a0a] md:gap-2 md:text-[12px] md:leading-[1.55]"
                 >
                   <span aria-hidden className="mt-[1px] select-none">
                     •
@@ -207,15 +209,15 @@ export function ShippingPopup() {
 
             <button
               onClick={dismiss}
-              className="mt-5 flex h-10 w-full items-center justify-center rounded-control bg-[#0a0a0a] text-[11px] font-medium uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#262626]"
+              className="mt-3.5 flex h-9 w-full items-center justify-center rounded-control bg-[#0a0a0a] text-[10px] font-medium uppercase tracking-[0.16em] md:mt-5 md:h-10 md:text-[11px] md:tracking-[0.18em] text-white transition-colors hover:bg-[#262626]"
             >
               Continue Shopping
             </button>
 
-            <div className="mt-3 text-center">
+            <div className="mt-2 text-center md:mt-3">
               <button
                 onClick={() => { setPickerQuery(""); setView("picker"); }}
-                className="text-[10px] uppercase tracking-[0.14em] text-[#555555] underline underline-offset-4 transition-colors hover:text-[#0a0a0a]"
+                className="text-[9px] uppercase tracking-[0.12em] text-[#555555] underline underline-offset-4 transition-colors hover:text-[#0a0a0a] md:text-[10px] md:tracking-[0.14em]"
               >
                 Choose Your Shipping Destination
               </button>
@@ -223,7 +225,7 @@ export function ShippingPopup() {
           </>
         ) : (
           <>
-            <h2 className="mt-5 pr-6 text-center font-serif text-[17px] font-semibold uppercase tracking-[0.06em] text-[#0a0a0a]">
+            <h2 className="mt-4 pr-5 text-center font-serif text-[14px] md:mt-5 md:text-[17px] font-semibold uppercase tracking-[0.06em] text-[#0a0a0a]">
               Choose Your Shipping Destination
             </h2>
             <input
