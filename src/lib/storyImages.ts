@@ -75,9 +75,11 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
   },
   // Batch 2 (30 Sept 2026): influencer mood - posed, flattering light,
   // styled; mirror shots at real places with different phones.
+  // v162: v2 looked too staged (Joshua, 11 Oct 2026). Now a 35mm-film-style
+  // candid (Soul 2.0), dress matched to the product photos by Nano Banana Pro.
   "long-sleeve-sculpt-maxi-dress": {
-    src: "/story/long-sleeve-maxi-wedding-garden-v2.webp",
-    alt: "Long Sleeve Sculpt Maxi Dress in navy, wedding guest in a country-house garden",
+    src: "/story/long-sleeve-maxi-wedding-garden-v3.webp",
+    alt: "Long Sleeve Sculpt Maxi Dress in navy, wedding guest looking back over her shoulder in a country-house garden",
   },
   "u-neck-slit-maxi-dress": {
     src: "/story/slit-maxi-seafront-sunset.webp",
@@ -218,9 +220,11 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/silk-eye-mask-hotel-morning.webp",
     alt: "Silk Eye Mask in light pink, waking up in a hotel bed",
   },
+  // v162: v2 looked too staged (Joshua, 11 Oct 2026). Now a candid phone
+  // selfie (Soul 2.0) with the real Body Glue tube put in by Seedream.
   "body-adhesive-glue-for-clothing-security": {
-    src: "/story/body-glue-getting-ready-v2.webp",
-    alt: "Body Adhesive tube held up at a dressing table, getting ready in a strapless dress",
+    src: "/story/body-glue-getting-ready-v3.webp",
+    alt: "Body Adhesive tube held up in a selfie, getting ready in a strapless top",
   },
   "jelly-cup-multi-way-strapless-bra": {
     src: "/story/jelly-cup-bra-wardrobe.webp",
