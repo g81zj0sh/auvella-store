@@ -6,6 +6,7 @@ import { ShippingPopup } from "@/components/site/ShippingPopup";
 import { freeShippingThresholdFmt, useShippingCountry, transitLabel } from "@/lib/shipping";
 import { usePreferences } from "@/lib/preferences";
 import { EditorialImage } from "@/components/site/EditorialImage";
+import { smoothScrollToId } from "@/lib/smoothScroll";
 
 import heroVideoAssetImg from "@/assets/media/hero.mp4";
 const heroVideoAsset = { url: heroVideoAssetImg };
@@ -42,7 +43,10 @@ const PANEL_IMG = {
   bodysuits: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012320_e7dab76a-eaa0-438e-b764-1fbb07097dec.png",
   loungewear: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012342_32782653-7841-41de-b44f-631c287717c6.png",
   bras: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012334_ccd0b28e-a5d8-4d56-8b2d-b2811c93455b.png",
-  activewear: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012834_6c3f6143-0be7-40b7-8dd8-587b1a5c5845.png",
+  /* Soul 2.0, 11 Oct 2026 — replaces the old activewear shot (crop top and
+     leggings) that had been standing in on the Dresses tile. Has a thin 35mm
+     film border like the rest of the set; the tile's scale crops it out. */
+  dresses: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20261011_035325_daf9361d-575c-4ab4-8b42-a7876a7f91c0.png",
   banner: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012841_d9e4e8cc-9579-40e2-9d11-f97a5a5596ba.png",
   sets: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_015333_ecdc5dfe-2246-4570-8b3f-4be0d5336583.png",
   shorts: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012327_9f7ade51-18e3-42c3-a333-a171ebff66f4.png",
@@ -372,7 +376,14 @@ function Index() {
             >
               Shop Best Sellers
             </Link>
-            <a href="#sleep" className="inline-flex items-center justify-center rounded-control bg-transparent text-cream border border-cream/40 px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-cream/10 transition-colors">
+            <a
+              href="#sleep"
+              onClick={(e) => {
+                // Glide down to the four tiles instead of the instant anchor jump.
+                if (smoothScrollToId("sleep")) e.preventDefault();
+              }}
+              className="inline-flex items-center justify-center rounded-control bg-transparent text-cream border border-cream/40 px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-cream/10 transition-colors"
+            >
               Explore Sleep &amp; Lounge
             </a>
           </div>
@@ -410,7 +421,7 @@ function Index() {
         <Panel image={PANEL_IMG.bodysuits} handle="bodysuits" name="Bodysuits" position="center 15%" scale={1.18} className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
         <Panel image={PANEL_IMG.loungewear} handle="loungewear-sleepwear" name="Lounge & Sleep" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
         <Panel image={PANEL_IMG.bras} handle="bras" name="Bras" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
-        <Panel image={PANEL_IMG.activewear} handle="dresses" name="Dresses" className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
+        <Panel image={PANEL_IMG.dresses} handle="dresses" name="Dresses" position="center 30%" scale={1.07} className="aspect-[3/4] lg:aspect-auto lg:h-[56vh]" size="small" />
       </section>
 
       {/* SECTION 4 — FULL-WIDTH EDITORIAL BANNER */}
