@@ -112,7 +112,10 @@ export function GlueOfferPopup() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogPortal>
-        <DialogOverlay className="z-[80]" />
+        {/* Focus backdrop (v165, after the owner's Smooche reference): the page
+            behind goes soft and out of focus under a light wash, so the
+            popup is the one sharp thing on screen. */}
+        <DialogOverlay className="z-[80] bg-[#0a0a0a]/35 backdrop-blur-[8px]" />
         <DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-[80] flex max-h-[92dvh] w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-card bg-white shadow-lg duration-200 focus:outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
           {noun && <GlueOfferBody noun={noun} onClose={() => setOpen(false)} />}
           <DialogPrimitive.Close className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/90 text-[#0a0a0a] shadow-sm transition-opacity hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a]">
