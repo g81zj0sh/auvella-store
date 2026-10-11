@@ -363,9 +363,15 @@ function Index() {
             Shapewear, bras and lounge built to hold where it helps and stay put all day.
           </p>
           <div className="mt-6 flex flex-wrap justify-end gap-3">
-            <a href="#bestsellers" className="inline-flex items-center justify-center rounded-control bg-cream text-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-white transition-colors">
+            {/* Straight into the collection, same as the bag/favourites/account
+                buttons — not a scroll down to the tile that links there. */}
+            <Link
+              to="/collections/$handle"
+              params={{ handle: "everyday-support-edit" }}
+              className="inline-flex items-center justify-center rounded-control bg-cream text-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-white transition-colors"
+            >
               Shop Best Sellers
-            </a>
+            </Link>
             <a href="#sleep" className="inline-flex items-center justify-center rounded-control bg-transparent text-cream border border-cream/40 px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-cream/10 transition-colors">
               Explore Sleep &amp; Lounge
             </a>
