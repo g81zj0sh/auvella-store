@@ -694,7 +694,8 @@ function ProductPage() {
    * Adds every unit of the chosen tier and reports how far it got. Stops at the
    * first line Shopify refuses, so a retry never doubles what already went in.
    */
-  const addUnits = async (): Promise<"all" | "some" | "none"> => {
+  /** `quiet`: Buy now - no add-on popup, the shopper is heading to checkout. */
+  const addUnits = async (opts?: { quiet?: boolean }): Promise<"all" | "some" | "none"> => {
     // The bag keeps one line per variant: the same size/colour twice is one
     // line of 2. Different sizes/colours are separate lines - the Shopify
     // rule counts units per product, so every one still earns the rate.
@@ -716,7 +717,7 @@ function ProductPage() {
         quantity: qty,
         selectedOptions: v.selectedOptions || [],
         attributes,
-      });
+      }, opts);
       if (!added) return done ? "some" : "none";
       done++;
     }
@@ -774,7 +775,7 @@ function ProductPage() {
     }
     try {
       if (!inBag) {
-        const result = await addUnits();
+        const result = await addUnits({ quiet: true });
         if (result !== "all") {
           win?.close();
           setAddedKey(null);

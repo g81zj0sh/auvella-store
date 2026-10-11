@@ -9,7 +9,7 @@ import { Star } from "lucide-react";
  * are none. No rounding up, no averages borrowed from other products, no
  * claims about who the reviewers are.
  */
-function StarRow({ rating }: { rating: number }) {
+export function StarRow({ rating }: { rating: number }) {
   const pct = `${Math.max(0, Math.min(100, (rating / 5) * 100))}%`;
   const row = (cls: string) =>
     Array.from({ length: 5 }).map((_, i) => (

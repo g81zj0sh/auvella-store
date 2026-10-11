@@ -18,6 +18,7 @@ import {
   type CartLineAttributes,
 } from "@/lib/shopify";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
+import { announceBagAdd } from "@/lib/glueOffer";
 
 export interface CartItem {
   lineId: string | null;
@@ -37,8 +38,10 @@ interface CartStore {
   checkoutUrl: string | null;
   isLoading: boolean;
   isSyncing: boolean;
-  /** Resolves true once Shopify has accepted the line. */
-  addItem: (item: Omit<CartItem, "lineId">) => Promise<boolean>;
+  /** Resolves true once Shopify has accepted the line. `quiet` skips the
+   *  add announcement (Buy now: the shopper is already off to checkout, so no
+   *  add-on popup should open behind them). */
+  addItem: (item: Omit<CartItem, "lineId">, opts?: { quiet?: boolean }) => Promise<boolean>;
   updateQuantity: (variantId: string, quantity: number) => Promise<void>;
   removeItem: (variantId: string) => Promise<void>;
   clearCart: () => void;
@@ -72,7 +75,7 @@ export const useCartStore = create<CartStore>()(
       isSyncing: false,
       discountCodes: [],
 
-      addItem: async (item) => {
+      addItem: async (item, opts) => {
         const { items, cartId, clearCart } = get();
         const existing = items.find((i) => i.variantId === item.variantId);
         set({ isLoading: true });
@@ -154,6 +157,8 @@ export const useCartStore = create<CartStore>()(
               { id: contentId, quantity: item.quantity, item_price: unitPrice },
             ],
           });
+          // Lets the Body Adhesive popup react to strapless/backless adds.
+          if (!opts?.quiet) announceBagAdd(item.product.node.handle);
         }
         return added;
       },
