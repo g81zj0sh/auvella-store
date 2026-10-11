@@ -524,16 +524,20 @@ function ProductGrid({
           const v = n.variants.edges.find((x) => x.node.availableForSale)?.node ?? n.variants.edges[0]?.node;
           const price = v?.price ?? n.priceRange.minVariantPrice;
           return (
-            <div key={n.id} className="bg-cream p-4">
+            /* Column flex + mt-auto pins every button to the card's foot, so a
+               two-line title doesn't push one lower than its neighbour (v160). */
+            <div key={n.id} className="flex flex-col bg-cream p-4">
               <button type="button" onClick={() => onPick(p)} className="block w-full aspect-[3/4] overflow-hidden bg-beige">
                 {img && <img src={shopifyImg(img.url, 500)} alt={img.altText ?? n.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]" />}
               </button>
               {n.productType && <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-cocoa">{n.productType}</p>}
               <p className="mt-0.5 font-serif text-[14px] leading-snug text-ink line-clamp-2">{n.title}</p>
               <p className="mt-1 text-[13px] text-ink">{display(price.amount, price.currencyCode)}</p>
-              <button type="button" onClick={() => onPick(p)} className="mt-3 h-10 w-full rounded-control border border-ink text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:bg-ink hover:text-cream">
-                Add to bag
-              </button>
+              <div className="mt-auto pt-3">
+                <button type="button" onClick={() => onPick(p)} className="h-10 w-full rounded-control border border-ink text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:bg-ink hover:text-cream">
+                  Add to bag
+                </button>
+              </div>
             </div>
           );
         })}

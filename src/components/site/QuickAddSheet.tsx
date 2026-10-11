@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cartStore";
 import { useDisplayPrice, usePreferences } from "@/lib/preferences";
 import { sizeLabel } from "@/lib/sizeLabels";
-import { colorToHex } from "@/lib/colorMap";
-import { shopifyImg, type ShopifyProduct } from "@/lib/shopify";
+import { fetchProductByHandle, shopifyImg, type ShopifyProduct } from "@/lib/shopify";
+import { buildColorImageMap } from "@/lib/colorImages";
+import { colourSwatchStyle } from "@/lib/swatch";
 import { SizeGuide } from "@/components/site/SizeGuide";
 import { resolveGuide } from "@/lib/sizeGuides";
 import { chartForHandle, isGuideHidden } from "@/lib/productSizeCharts";
@@ -17,6 +19,14 @@ import { chartForHandle, isGuideHidden } from "@/lib/productSizeCharts";
  * Right-side sheet on desktop, bottom sheet on mobile.
  * Gallery + thumbnails · colour swatches · size grid · quantity ·
  * Size Guide (same real charts as the PDP) · Add to Bag · View full details.
+ *
+ * v160: the sheet loads the full product (the product page's own query, so
+ * it's usually cached) instead of relying on the card that opened it - the
+ * bag's grids fetch only 6 photos per product, so most colours had no photo
+ * to switch to (e.g. the Satin Tie-Waist Robe changed only for its first two
+ * colours). Picking a colour shows that colour's photos and thumbnails via
+ * buildColorImageMap, the same mapping the product cards use, and swatches
+ * share the product page's colours (lib/swatch.ts).
  */
 
 type VariantNode = ShopifyProduct["node"]["variants"]["edges"][number]["node"];
@@ -37,20 +47,36 @@ export function QuickAddSheet({ product, open, onOpenChange }: Props) {
       >
         <SheetTitle className="sr-only">Quick add — {product.node.title}</SheetTitle>
         {/* key on handle so state resets when a different product opens */}
-        <QuickAddBody key={product.node.handle} product={product} onClose={() => onOpenChange(false)} />
+        <QuickAddBody
+          key={product.node.handle}
+          product={product}
+          onClose={() => onOpenChange(false)}
+        />
       </SheetContent>
     </Sheet>
   );
 }
 
-function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: () => void }) {
+function QuickAddBody({
+  product: card,
+  onClose,
+}: {
+  product: ShopifyProduct;
+  onClose: () => void;
+}) {
+  const { data: full } = useQuery({
+    queryKey: ["product", card.node.handle],
+    queryFn: () => fetchProductByHandle(card.node.handle),
+    staleTime: 5 * 60_000,
+  });
+  const product = full ?? card;
   const node = product.node;
   const sizeRegion = usePreferences((st) => st.sizeRegion);
   const addItem = useCartStore((s) => s.addItem);
   const isSyncing = useCartStore((s) => s.isSyncing);
   const displayPrice = useDisplayPrice();
 
-  const images = node.images.edges.map((e) => e.node);
+  const allImages = useMemo(() => node.images.edges.map((e) => e.node), [node]);
   const [imgIdx, setImgIdx] = useState(0);
 
   const colorOption = node.options.find((o) => /colou?r/i.test(o.name));
@@ -67,34 +93,72 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
     sizeOption && sizeOption.values.length === 1 ? sizeOption.values[0] : undefined,
   );
   const [qty, setQty] = useState(1);
+  /* Any option that is neither colour nor size (the Body Adhesive's Type).
+     The sheet used to ignore these, so every Body Adhesive went in as its
+     first type, whichever one the shopper wanted (v160). */
+  const otherOptions = node.options.filter(
+    (o) => o !== colorOption && o !== sizeOption && o.values.length > 1,
+  );
+  const [selOther, setSelOther] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      otherOptions.map((o) => [
+        o.name,
+        firstAvailable?.selectedOptions.find((x) => x.name === o.name)?.value ?? o.values[0],
+      ]),
+    ),
+  );
+  const matchesOther = (v: VariantNode, sel: Record<string, string>) =>
+    otherOptions.every((opt) =>
+      v.selectedOptions.some((o) => o.name === opt.name && o.value === sel[opt.name]),
+    );
+  /* The picked colour's own photos when the product has them mapped, else
+     the whole gallery (never empty). */
+  const colorMap = useMemo(() => buildColorImageMap(node), [node]);
+  const images = useMemo(() => {
+    const set = selColor ? colorMap.get(selColor) : undefined;
+    return set && set.length > 0 ? set.map((im) => im.node) : allImages;
+  }, [colorMap, selColor, allImages]);
+  // A new colour (or the full product arriving) starts at that set's first photo.
+  useEffect(() => {
+    setImgIdx(0);
+  }, [images]);
+  const shown = images[Math.min(imgIdx, images.length - 1)];
   const [guideOpen, setGuideOpen] = useState(false);
   const [adding, setAdding] = useState(false);
 
   const variantFor = (color?: string, size?: string): VariantNode | undefined =>
     node.variants.edges.find(({ node: v }) => {
       const okColor =
-        !colorOption || !color || v.selectedOptions.some((o) => o.name === colorOption.name && o.value === color);
+        !colorOption ||
+        !color ||
+        v.selectedOptions.some((o) => o.name === colorOption.name && o.value === color);
       const okSize =
-        !sizeOption || !size || v.selectedOptions.some((o) => o.name === sizeOption.name && o.value === size);
-      return okColor && okSize;
+        !sizeOption ||
+        !size ||
+        v.selectedOptions.some((o) => o.name === sizeOption.name && o.value === size);
+      return okColor && okSize && matchesOther(v, selOther);
     })?.node;
 
   const sizeInStock = (size: string) =>
     node.variants.edges.some(
       ({ node: v }) =>
         v.availableForSale &&
+        matchesOther(v, selOther) &&
         v.selectedOptions.some((o) => o.name === sizeOption?.name && o.value === size) &&
         (!colorOption ||
           !selColor ||
           v.selectedOptions.some((o) => o.name === colorOption.name && o.value === selColor)),
     );
 
-  const selected = useMemo(() => variantFor(selColor, selSize), [selColor, selSize]);
+  const selected = variantFor(selColor, selSize);
   const priceVariant = selected ?? firstAvailable;
   const needsSize = !!sizeOption && sizeOption.values.length > 1 && !selSize;
-  const canAdd = !!priceVariant && priceVariant.availableForSale && !needsSize && !adding && !isSyncing;
+  const canAdd =
+    !!priceVariant && priceVariant.availableForSale && !needsSize && !adding && !isSyncing;
 
-  const price = priceVariant ? displayPrice(priceVariant.price.amount, priceVariant.price.currencyCode) : "";
+  const price = priceVariant
+    ? displayPrice(priceVariant.price.amount, priceVariant.price.currencyCode)
+    : "";
   const compare =
     priceVariant?.compareAtPrice &&
     parseFloat(priceVariant.compareAtPrice.amount) > parseFloat(priceVariant.price.amount)
@@ -103,18 +167,37 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
 
   const guide = resolveGuide(node.title);
   const productChart = chartForHandle(node.handle);
-  const showGuide = !isGuideHidden(node.handle) && (productChart != null || guide.guideType !== "none");
+  const showGuide =
+    !isGuideHidden(node.handle) && (productChart != null || guide.guideType !== "none");
 
-  // swap gallery image to the one matching the picked colour when possible
-  const onPickColor = (c: string) => {
-    setSelColor(c);
-    const v = variantFor(c, selSize) ?? variantFor(c);
-    const vImgUrl = (v as any)?.image?.url as string | undefined;
-    if (vImgUrl) {
-      const i = images.findIndex((im) => im.url === vImgUrl);
-      if (i >= 0) setImgIdx(i);
-    }
+  const onPickColor = (c: string) => setSelColor(c);
+
+  /** Pick a value of an extra option; show that variant's own photo when it has one. */
+  const onPickOther = (name: string, value: string) => {
+    const next = { ...selOther, [name]: value };
+    setSelOther(next);
+    const v = node.variants.edges.find(
+      ({ node: vv }) =>
+        matchesOther(vv, next) &&
+        (!colorOption ||
+          !selColor ||
+          vv.selectedOptions.some((o) => o.name === colorOption.name && o.value === selColor)),
+    )?.node;
+    const url = v?.image?.url;
+    if (!url) return;
+    const key = (u: string) => u.split("?")[0];
+    const i = images.findIndex((im) => key(im.url) === key(url));
+    if (i >= 0) setImgIdx(i);
   };
+  const otherInStock = (name: string, value: string) =>
+    node.variants.edges.some(
+      ({ node: v }) =>
+        v.availableForSale &&
+        matchesOther(v, { ...selOther, [name]: value }) &&
+        (!colorOption ||
+          !selColor ||
+          v.selectedOptions.some((o) => o.name === colorOption.name && o.value === selColor)),
+    );
 
   const onAdd = async () => {
     if (!priceVariant || !canAdd) return;
@@ -163,10 +246,10 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
       {/* Gallery */}
       <div className="mt-5 px-6">
         <div className="aspect-[4/5] w-full overflow-hidden bg-[#f5f5f5]">
-          {images[imgIdx] && (
+          {shown && (
             <img
-              src={shopifyImg(images[imgIdx].url, 900)}
-              alt={images[imgIdx].altText ?? node.title}
+              src={shopifyImg(shown.url, 900)}
+              alt={shown.altText ?? node.title}
               className="h-full w-full object-cover object-top"
             />
           )}
@@ -178,10 +261,14 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                 key={im.url}
                 onClick={() => setImgIdx(i)}
                 className={`h-16 w-12 shrink-0 overflow-hidden border transition ${
-                  i === imgIdx ? "border-[#0a0a0a]" : "border-transparent hover:border-[#cccccc]"
+                  im === shown ? "border-[#0a0a0a]" : "border-transparent hover:border-[#cccccc]"
                 }`}
               >
-                <img src={shopifyImg(im.url, 200)} alt="" className="h-full w-full object-cover object-top" />
+                <img
+                  src={shopifyImg(im.url, 200)}
+                  alt=""
+                  className="h-full w-full object-cover object-top"
+                />
               </button>
             ))}
           </div>
@@ -194,11 +281,12 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
               Colour
-              <span className="ml-2 font-normal normal-case tracking-normal text-[#888888]">{selColor}</span>
+              <span className="ml-2 font-normal normal-case tracking-normal text-[#888888]">
+                {selColor}
+              </span>
             </p>
             <div className="mt-2.5 flex flex-wrap gap-2.5">
               {colorOption.values.map((c) => {
-                const hex = colorToHex(c) ?? "#cccccc";
                 const active = c === selColor;
                 return (
                   <button
@@ -211,8 +299,8 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                     }`}
                   >
                     <span
-                      className="block h-full w-full rounded-full border border-[#0a0a0a]/10"
-                      style={{ background: hex }}
+                      className="block h-full w-full rounded-full border border-[#0a0a0a]/10 bg-cover"
+                      style={colourSwatchStyle(node, colorOption.name, c, allImages)}
                     />
                   </button>
                 );
@@ -224,7 +312,9 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
         {sizeOption && sizeOption.values.length > 0 && (
           <div className="mt-6">
             <div className="flex items-center justify-between">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Size</p>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
+                Size
+              </p>
               {showGuide && (
                 <button
                   onClick={() => setGuideOpen(true)}
@@ -234,7 +324,9 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
                 </button>
               )}
             </div>
-            <div className={`mt-2.5 grid gap-1.5 ${sizeOption.values.some((v) => sizeLabel(node.handle, v, sizeRegion, guide.guideType)) ? "grid-cols-3" : "grid-cols-5"}`}>
+            <div
+              className={`mt-2.5 grid gap-1.5 ${sizeOption.values.some((v) => sizeLabel(node.handle, v, sizeRegion, guide.guideType)) ? "grid-cols-3" : "grid-cols-5"}`}
+            >
               {sizeOption.values.map((sz) => {
                 const regional = sizeLabel(node.handle, sz, sizeRegion, guide.guideType);
                 const active = sz === selSize;
@@ -261,8 +353,44 @@ function QuickAddBody({ product, onClose }: { product: ShopifyProduct; onClose: 
           </div>
         )}
 
+        {otherOptions.map((opt) => (
+          <div key={opt.name} className="mt-6">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
+              {opt.name}
+              <span className="ml-2 font-normal normal-case tracking-normal text-[#888888]">
+                {selOther[opt.name]}
+              </span>
+            </p>
+            <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+              {opt.values.map((val) => {
+                const active = selOther[opt.name] === val;
+                const inStock = otherInStock(opt.name, val);
+                return (
+                  <button
+                    key={val}
+                    disabled={!inStock}
+                    aria-pressed={active}
+                    onClick={() => onPickOther(opt.name, val)}
+                    className={`h-10 rounded-control border px-2 text-[11px] uppercase tracking-[0.06em] transition ${
+                      active
+                        ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
+                        : inStock
+                          ? "border-[#EBEBEB] text-[#0a0a0a] hover:border-[#0a0a0a]"
+                          : "cursor-not-allowed border-[#EBEBEB] text-[#c4c4c4] line-through"
+                    }`}
+                  >
+                    {val}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
         <div className="mt-6">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Quantity</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
+            Quantity
+          </p>
           <div className="mt-2.5 inline-flex h-10 items-center rounded-control border border-[#EBEBEB]">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}

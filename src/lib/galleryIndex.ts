@@ -474,10 +474,13 @@ export function indexedSwatch(
 ): { url: string; position: string; size: string } | null {
   const sw = indexedEntry(handle, color)?.sw;
   if (!sw) return null;
+  const position = `${sw.x}% ${sw.y}%`;
+  const size = `${sw.z}%`;
   for (const im of images) {
-    if (fileOf(im.url) === sw.f) {
-      return { url: im.url, position: `${sw.x}% ${sw.y}%`, size: `${sw.z}%` };
-    }
+    if (fileOf(im.url) === sw.f) return { url: im.url, position, size };
   }
-  return null;
+  // Not in the fetched batch (the bag's grids fetch 6 photos a product), so a
+  // print showed as a flat dot - 'Black Floral' as plain black - until the
+  // full product loaded. Every indexed file lives in the store's Files folder.
+  return { url: STORE_FILES + sw.f, position, size };
 }
