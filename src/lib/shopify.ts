@@ -28,7 +28,9 @@ export interface ShopifyProduct {
     /** Shopify's product type, e.g. "Bra" — drives the bra-only hover flip. */
     productType?: string;
     priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
-    images: { edges: Array<{ node: { url: string; altText: string | null } }> };
+    /** width/height are only fetched by the product-page query (they decide
+        whether its gallery frames are square). */
+    images: { edges: Array<{ node: { url: string; altText: string | null; width?: number | null; height?: number | null } }> };
     variants: {
       edges: Array<{
         node: {
@@ -168,7 +170,7 @@ const PRODUCT_BY_HANDLE_QUERY = `
     product(handle: $handle) {
       id title description descriptionHtml handle productType
       priceRange { minVariantPrice { amount currencyCode } }
-      images(first: 120) { edges { node { url altText } } }
+      images(first: 120) { edges { node { url altText width height } } }
       variants(first: 250) {
         edges {
           node {

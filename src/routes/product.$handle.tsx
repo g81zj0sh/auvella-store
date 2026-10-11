@@ -401,6 +401,21 @@ function ProductPage() {
     return set && set.length > 0 ? set : images;
   }, [images, colorImageMap, galleryColour]);
 
+  /* Square re-shoots (v166, Skims-style 2000x2000 on flat #EEEEEE): when
+     every photo in the set on show is square, the mobile slides go square
+     too, so there's no padding above and below. Mixed or portrait sets keep
+     the 3:4 frame. */
+  const squarePaths = useMemo(() => {
+    const s = new Set<string>();
+    for (const e of node?.images.edges ?? []) {
+      const { url, width, height } = e.node;
+      if (width && height && width === height) s.add(urlPath(url));
+    }
+    return s;
+  }, [node]);
+  const squareGallery =
+    activeImages.length > 0 && activeImages.every((im) => squarePaths.has(urlPath(im.node.url)));
+
   // Colour change: reset to that colour's first image, everywhere.
   const mobileGalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -979,6 +994,7 @@ function ProductPage() {
                 url={im.node.url}
                 alt={im.node.altText ?? node.title}
                 eager={i === 0}
+                square={squareGallery}
               />
             ))}
           </div>
@@ -1962,7 +1978,16 @@ function VisualSearchResults({
  * slide contains the image instead and fills the leftover space with that
  * image's own backdrop. Nothing is cropped and no seam shows.
  */
-function MobileSlide({ url, alt, eager }: { url: string; alt: string; eager: boolean }) {
+/** URL path without the CDN query, for matching the same file across sizes. */
+function urlPath(url: string): string {
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url.split("?")[0];
+  }
+}
+
+function MobileSlide({ url, alt, eager, square = false }: { url: string; alt: string; eager: boolean; square?: boolean }) {
   const [sampled, setSampled] = useState<Backdrop | undefined>(undefined);
   const backdrop = backdropCss(cachedBackdrop(url) ?? sampled);
   useEffect(() => {
@@ -1978,7 +2003,7 @@ function MobileSlide({ url, alt, eager }: { url: string; alt: string; eager: boo
 
   return (
     <div
-      className="aspect-[3/4] w-full shrink-0 snap-center"
+      className={`${square ? "aspect-square" : "aspect-[3/4]"} w-full shrink-0 snap-center`}
       style={{ background: backdrop }}
     >
       <img

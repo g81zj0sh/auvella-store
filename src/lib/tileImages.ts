@@ -125,10 +125,12 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Brown": "/tiles/lace-breathable-thong-underwear-brown.webp",
     "White": "/tiles/lace-breathable-thong-underwear-white.webp",
   },
+  // v166: Skims-style re-shoot (square, flat #EEEEEE); the tile is the new
+  // full-length front cropped to the tile shape.
   "seamless-sculpting-bodysuit": {
-    "Coffee": "/tiles/seamless-sculpting-bodysuit-coffee.webp",
-    "Nude": "/tiles/seamless-sculpting-bodysuit-nude.webp",
-    "Black": "/tiles/seamless-sculpting-bodysuit-black.webp",
+    "Coffee": "/tiles/seamless-sculpting-bodysuit-coffee-v2.webp",
+    "Nude": "/tiles/seamless-sculpting-bodysuit-nude-v2.webp",
+    "Black": "/tiles/seamless-sculpting-bodysuit-black-v2.webp",
   },
   "slim-fit-long-sleeve-top": {
     "Nude": "/tiles/slim-fit-long-sleeve-top-nude.webp",
