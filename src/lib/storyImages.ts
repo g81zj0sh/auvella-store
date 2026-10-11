@@ -32,7 +32,7 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
   // Situational, posed-for-camera shots (Joshua, 30 Sept 2026: real moments
   // where the piece belongs, looking into the camera, not mirror selfies).
   "off-shoulder-sculpt-midi-dress": {
-    src: "/story/off-shoulder-dress-evening.webp",
+    src: "/story/off-shoulder-dress-evening-v2.webp",
     alt: "Off-Shoulder Sculpt Dress in deep wine red, on a city street at dusk before dinner",
   },
   "solid-colour-bikini-set": {
@@ -76,7 +76,7 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
   // Batch 2 (30 Sept 2026): influencer mood - posed, flattering light,
   // styled; mirror shots at real places with different phones.
   "long-sleeve-sculpt-maxi-dress": {
-    src: "/story/long-sleeve-maxi-wedding-garden.webp",
+    src: "/story/long-sleeve-maxi-wedding-garden-v2.webp",
     alt: "Long Sleeve Sculpt Maxi Dress in navy, wedding guest in a country-house garden",
   },
   "u-neck-slit-maxi-dress": {
@@ -109,7 +109,7 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
   },
   // Batch 3 (30 Sept 2026): influencer mood; mirror shots with new phones.
   "sleeveless-ribbed-midi-dress": {
-    src: "/story/ribbed-midi-rooftop-bar.webp",
+    src: "/story/ribbed-midi-rooftop-bar-v2.webp",
     alt: "Sleeveless Ribbed Midi Dress in white at a rooftop bar at golden hour",
   },
   "womens-lace-long-sleeve-dress": {
@@ -195,8 +195,8 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     alt: "Silicone Strapless Backless Bra in off-white, hotel mirror photo before a night out",
   },
   "seamless-support-bra-with-tummy-control": {
-    src: "/story/tummy-control-bra-vanity.webp",
-    alt: "Seamless Tummy Control Bra in nude at a bright bathroom vanity",
+    src: "/story/tummy-control-bra-window-v2.webp",
+    alt: "Seamless Tummy Control Bra in nude with jeans, by a bright window at home",
   },
   "cotton-lace-brief": {
     src: "/story/cotton-lace-brief-sunday.webp",
@@ -219,8 +219,8 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     alt: "Silk Eye Mask in light pink, waking up in a hotel bed",
   },
   "body-adhesive-glue-for-clothing-security": {
-    src: "/story/body-glue-getting-ready.webp",
-    alt: "Body Adhesive being used to hold the neckline of a strapless dress",
+    src: "/story/body-glue-getting-ready-v2.webp",
+    alt: "Body Adhesive tube held up at a dressing table, getting ready in a strapless dress",
   },
   "jelly-cup-multi-way-strapless-bra": {
     src: "/story/jelly-cup-bra-wardrobe.webp",
