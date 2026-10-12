@@ -319,14 +319,14 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Off-White": "/tiles/womens-bra-off-white.webp",
   },
   "waist-shaping-fitness-body-shaper": {
-    "Nude": "/tiles/waist-shaping-fitness-body-shaper-nude.webp",
-    "Pink": "/tiles/waist-shaping-fitness-body-shaper-pink.webp",
-    "Black": "/tiles/waist-shaping-fitness-body-shaper-black.webp",
+    "Nude": "/tiles/waist-shaping-fitness-body-shaper-nude-v2.webp",
+    "Pink": "/tiles/waist-shaping-fitness-body-shaper-pink-v2.webp",
+    "Black": "/tiles/waist-shaping-fitness-body-shaper-black-v2.webp",
   },
   "high-waisted-tummy-control-shaping-pants": {
-    "Mint": "/tiles/high-waisted-tummy-control-shaping-pants-mint.webp",
-    "Nude": "/tiles/high-waisted-tummy-control-shaping-pants-nude.webp",
-    "Black": "/tiles/high-waisted-tummy-control-shaping-pants-black.webp",
+    "Mint": "/tiles/high-waisted-tummy-control-shaping-pants-mint-v2.webp",
+    "Nude": "/tiles/high-waisted-tummy-control-shaping-pants-nude-v2.webp",
+    "Black": "/tiles/high-waisted-tummy-control-shaping-pants-black-v2.webp",
   },
   "women-asymmetric-long-sleeve-t-shirt-and-wide-leg-pants-set": {
     "Off-White": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-off-white.webp",
