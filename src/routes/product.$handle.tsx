@@ -998,8 +998,12 @@ function ProductPage() {
               />
             ))}
           </div>
+          {/* Dots sit on the page colour, not the photo's backdrop: the grey
+              canvas must end exactly where the photo ends, or a close crop
+              (legs cut at the frame edge) looks like she is floating above a
+              grey band, and full-length shots read as further away. */}
           {galleryLen > 1 && (
-            <div className="flex justify-center gap-1.5 py-3 lg:hidden">
+            <div className="flex justify-center gap-1.5 bg-background py-3 lg:hidden">
               {activeImages.map((_, i) => (
                 <span
                   key={i}
