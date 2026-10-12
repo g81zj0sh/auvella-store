@@ -84,9 +84,12 @@ export function SizeGuide({
      would mislabel its cut (e.g. a small-cut dress): S/M/L then show with
      measurements only, and the region toggle has nothing to convert. */
   /* Labels: the product chart's stated sizes, else the default UK chart (sizeLabels.ts). */
+  const isBraGuide = (productChart?.guideType ?? guideType) === "bra";
   const noRegion = productChart?.regionLabels === false;
   const detected = detectRegionSupport(guide.columns, guide.rows);
-  const support = noRegion
+  /* A bra chart converts only band/cup sizes (its S/M/L never gain a dress
+     size), so one without them gives the region toggle nothing to change. */
+  const support = noRegion || (isBraGuide && !detected.hasBraTokens)
     ? { ...detected, letters: [] as typeof detected.letters, supported: detected.hasBraTokens }
     : detected;
 
@@ -105,7 +108,6 @@ export function SizeGuide({
     const isSizeCol = colIdx === 0;
     /* Bra charts skip the dress-size suffix: "S (8–10)" beside a list of bra
        fits implies dress size decides bra size, which it doesn't. */
-    const isBraGuide = (productChart?.guideType ?? guideType) === "bra";
     if (isSizeCol && support.letters.length > 0 && !isBraGuide) {
       const regional = handle
         ? sizeLabel(handle, txt, region, productChart?.guideType ?? guideType)
@@ -128,7 +130,7 @@ export function SizeGuide({
   // Only show how-to-measure rows relevant to this chart's columns.
   // "Underbust" must be matched before the broader "Bust" check.
   const colText = guide.columns.join(" ").toLowerCase();
-  const steps = HOW_TO_MEASURE.filter(([label]) => {
+  const steps = productChart?.howToMeasure === false ? [] : HOW_TO_MEASURE.filter(([label]) => {
     const l = label.toLowerCase();
     if (l === "bust") return /(^|[^r])bust/.test(colText); // bust but not only "underbust"
     return colText.includes(l);

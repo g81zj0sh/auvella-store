@@ -600,15 +600,25 @@ export const PRODUCT_SIZE_CHARTS = {
     ],
     fitNote: "Size up for more coverage. All measurements in cm — supplier notes allow 1–2 cm manual-measurement difference. ‘EURP SIZE’ (EU) column printed on the chart — kept. Size ranges refer to body measurements in centimetres.",
   },
+  /* Supplier's updated chart, sent by Joshua 12 Oct 2026 (replaces the old
+     weight / bra-size chart). Garment measurements in cm: Length, Bust and
+     Bust (Stretch). The chart also prints XXL (25 / 77 / 110 cm), which isn't
+     sold. Same numbers as the maternity nursing bra's chart. */
   "womens-bra": {
     guideType: "bra",
-    columns: ["Size", "Recommended Weight", "Fits Bra Sizes"],
+    unit: "both",
+    columns: ["Size", "Length", "Bust (Relaxed)", "Bust (Stretched)"],
     rows: [
-      ["M", "45–55 kg (chart also prints 90–110 jin)", "34A/B or 75A/B"],
-      ["L", "55–62.5 kg (chart also prints 110–125 jin)", "36A/B/C or 80A/B/C"],
-      ["XL", "62.5–72.5 kg (chart also prints 125–145 jin)", "38A/B/C or 85A/B/C"],
+      ["S", "21 cm (8.3\")", "61 cm (24.0\")", "94 cm (37.0\")"],
+      ["M", "22 cm (8.7\")", "65 cm (25.6\")", "98 cm (38.6\")"],
+      ["L", "23 cm (9.1\")", "69 cm (27.2\")", "102 cm (40.2\")"],
+      ["XL", "24 cm (9.4\")", "73 cm (28.7\")", "106 cm (41.7\")"],
     ],
-    fitNote: "True to size. Chart prints weight in both jin and kg — kg values are the chart's own.",
+    fitNote:
+      "These are the bra's own measurements, not body sizes: Bust (Relaxed) is the band at rest and Bust (Stretched) is as far as it stretches. To choose, fasten a bra that fits you well, lay it flat and measure straight across the bottom of the band; double that and pick the size with the closest Bust (Relaxed). With no straps, the band does all the holding, so if you're between two sizes, take the smaller.",
+    // Body measurements don't map onto a relaxed/stretched band, so the
+    // guide's "How to measure" steps would point the wrong way here.
+    howToMeasure: false,
   },
   "solid-colour-bikini-set": {
     guideType: "swim",
@@ -686,6 +696,9 @@ export interface ProductChart {
   /** false = show S/M/L without UK/US/EU equivalents (for cuts the
       standard letter table would mislabel). */
   regionLabels?: false;
+  /** false = no "How to measure" steps: for garment-only charts where a body
+      measurement can't be read against the columns. */
+  howToMeasure?: false;
 }
 
 /** The product's REAL supplier chart, or null if none usable. */

@@ -122,10 +122,13 @@ function fibreCard(key: FibreKey, ctx: string): Omit<Fabric, "share"> {
     case "silk":
       return { name: "Mulberry silk", line: "Smooth against skin and hair.", tag: "Smooth" };
     case "silicone":
-      // A grip band on a regular bra is not the same as a stick-on cup.
+      // A grip band, a stick-on cup and silicone in the build are different
+      // things: only an adhesive piece "holds to skin on its own".
       return /silicone band|silicone strip|anti-slip/i.test(ctx)
         ? { name: "Silicone grip band", line: "An anti-slip band that keeps it in place without straps.", tag: "Grip" }
-        : { name: "Silicone", line: "Holds to skin on its own — no straps, no band.", tag: "Grip" };
+        : /adhesive|stick-on/i.test(ctx)
+          ? { name: "Silicone", line: "Holds to skin on its own — no straps, no band.", tag: "Grip" }
+          : { name: "Silicone", line: "Soft and smooth against skin.", tag: "Smooth" };
   }
 }
 
@@ -347,7 +350,9 @@ export function beforeYouAsk(html: string | null | undefined, title = "", produc
   }
 
   // bras
-  const adhesive = has(/strapless, backless|adhesive|two-layer silicone/i) && !has(/silicone band|anti-slip/i);
+  // Only a piece its own Details call adhesive or stick-on: silicone in the
+  // build (a bandeau, a grip band) still holds by its band.
+  const adhesive = has(/adhesive|stick-on/i) && !has(/silicone band|anti-slip/i);
   const strapless = has(/strapless/i);
   const grip = has(/silicone band|anti-slip|non-slip/i);
   const hooks = has(/hook-and-eye/i); // adjustable fastenings only (a buckle doesn't loosen)
@@ -361,7 +366,7 @@ export function beforeYouAsk(html: string | null | undefined, title = "", produc
   const stay = adhesive
     ? "It holds by adhesive, so it needs clean, dry skin — no lotion or oil. It gives coverage and shape rather than lift."
     : strapless
-      ? `${grip ? "A silicone grip band holds it in place without straps. " : ""}A strapless bra stays up on its band, so the band size matters most — go by your underbust in the size guide.`
+      ? `${grip ? "A silicone grip band holds it in place without straps. " : ""}A strapless bra stays up on its band, so the band size matters most — the size guide shows how to pick it.`
       : `Size by your band: that's what holds a bra in place.${has(/adjustable|detachable/i) ? " The straps adjust, so they sit where you want them." : ""}`;
   const show = lace && !seamless
     ? "The lace is made to be seen — pretty under an open shirt. Under a thin T-shirt, the texture will show."

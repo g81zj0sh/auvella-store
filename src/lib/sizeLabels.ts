@@ -36,8 +36,6 @@ export const UK_SIZE_LABELS: Record<string, Record<string, string>> = {
   "seamless-wireless-full-cup-bra": { "S": "34B–D", "M": "36B–D", "L": "38B–D", "XL": "40B–D", "2XL": "42B–D", "3XL": "44B–DD" },
   // chart's EU (DE) column (−26)
   "womens-two-piece-swimsuit": { "S": "6–8", "M": "8–10", "L": "10–12" },
-  // chart's bra fits
-  "womens-bra": { "M": "34A–B", "L": "36A–C", "XL": "38A–C" },
   // chart's UK / AUS Size column
   "seamless-backless-adjustable-bodysuit": { "S": "10", "M": "12", "L": "14", "XL": "16", "2XL": "18", "3XL": "20" },
   // chart's AUS Size column (= UK)
