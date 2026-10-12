@@ -339,12 +339,12 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/women-asymmetric-long-sleeve-t-shirt-and-black.webp",
   },
   "seamless-tummy-control-body-shaper-cami": {
-    "Blue": "/tiles/seamless-tummy-control-body-shaper-cami-blue.webp",
-    "Pink": "/tiles/seamless-tummy-control-body-shaper-cami-pink.webp",
-    "Brown": "/tiles/seamless-tummy-control-body-shaper-cami-brown.webp",
-    "Nude": "/tiles/seamless-tummy-control-body-shaper-cami-nude.webp",
-    "White": "/tiles/seamless-tummy-control-body-shaper-cami-white.webp",
-    "Black": "/tiles/seamless-tummy-control-body-shaper-cami-black.webp",
+    "Blue": "/tiles/seamless-tummy-control-body-shaper-cami-blue-v2.webp",
+    "Pink": "/tiles/seamless-tummy-control-body-shaper-cami-pink-v2.webp",
+    "Brown": "/tiles/seamless-tummy-control-body-shaper-cami-brown-v2.webp",
+    "Nude": "/tiles/seamless-tummy-control-body-shaper-cami-nude-v2.webp",
+    "White": "/tiles/seamless-tummy-control-body-shaper-cami-white-v2.webp",
+    "Black": "/tiles/seamless-tummy-control-body-shaper-cami-black-v2.webp",
   },
   "womens-menstrual-period-panties": {
     "Silver Grey": "/tiles/womens-menstrual-period-panties-silver-grey.webp",
