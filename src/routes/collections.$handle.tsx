@@ -35,8 +35,12 @@ import {
 import { EditorialImage } from "@/components/site/EditorialImage";
 import { Check } from "lucide-react";
 
-import collectionBodysuitsAssetImg from "@/assets/collection-bodysuits-v2.png";
-const collectionBodysuitsAsset = { url: collectionBodysuitsAssetImg };
+/* Soul 2.0, 12 Oct 2026 — morning in the kitchen, black long-sleeve bodysuit
+   and jeans. Generated 16:9, outpainted to 21:9 and mirrored so the title
+   sits over the darker wall, not the window. Replaces the old portrait shot
+   that the wide banner was cropping to a sliver. */
+import heroEverydaySupportImg from "@/assets/heroes/everyday-support-edit.webp";
+const heroEverydaySupport = { url: heroEverydaySupportImg };
 import collectionActivewearAssetImg from "@/assets/collection-activewear-v3.png";
 const collectionActivewearAsset = { url: collectionActivewearAssetImg };
 import collectionPajamasAssetImg from "@/assets/collection-pajamas-v2.png";
@@ -113,6 +117,13 @@ const PARENT: Record<string, { handle: string; label: string }> = {
 };
 
 const NO_HERO = new Set(["shorts-and-waist", "one-piece", "maxi-dresses", "midi-dresses", "mini-dresses", "sleep-accessories", "robes-and-sleep"]);
+
+/* Where the banner crop sits, per hero (default "center"). The banner is
+   full-width x 45vh, so desktop only ever crops top/bottom (y matters) and
+   phones only crop the sides (x matters). */
+const HERO_POS: Record<string, string> = {
+  "everyday-support-edit": "38% 36%",
+};
 
 const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
   shapewear: { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url },
@@ -230,7 +241,7 @@ const HERO_IMG: Record<string, string> = {
   "loungewear-sleepwear": heroLoungewear.url,
   bras: heroBras.url,
   underwear: heroUnderwear.url,
-  "everyday-support-edit": collectionBodysuitsAsset.url,
+  "everyday-support-edit": heroEverydaySupport.url,
   activewear: heroActivewear.url,
   pajamas: heroLoungewear.url,
   "bras-and-tops": heroBras.url,
@@ -924,7 +935,7 @@ function CollectionPage() {
             className="absolute inset-0 block h-full w-full object-cover"
           />
         ) : heroImage ? (
-          <EditorialImage src={heroImage} alt={title} position="center" hover={false} eager />
+          <EditorialImage src={heroImage} alt={title} position={HERO_POS[handle] ?? "center"} hover={false} eager />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
         <div className="absolute bottom-7 left-7 z-10 max-w-lg">
