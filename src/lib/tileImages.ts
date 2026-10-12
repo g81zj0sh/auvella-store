@@ -369,3 +369,40 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Burgundy": "/tiles/cowl-neck-lace-up-mini-dress-burgundy.webp",
   },
 };
+
+/*
+ * The colour a product's tile opens on, where it isn't the first colour
+ * (Joshua, 12 Oct 2026: grids were mostly black and nude; on skims.com the
+ * colours change as you scroll). Chosen per collection so a row rarely
+ * shows two of the same hue, and only where the colour has its own tile
+ * photo and stock. Neutral-only products and the hero shapewear pieces keep
+ * their first colour. The tile falls back to the first colour if the one
+ * named here sells out. That colour leads the tile's swatch row, and
+ * tapping the tile opens the product page on it.
+ */
+export const TILE_DEFAULT_COLOUR: Record<string, string> = {
+  // Shapewear
+  "seamless-support-bra-with-tummy-control": "Enchanted Red",
+  "seamless-tummy-control-body-shaper-cami": "Blue",
+  "high-waisted-tummy-control-shaping-pants": "Mint",
+  "seamless-shaping-long-sleeve-bodysuit": "Rose Pink",
+  "seamless-sculpting-bodysuit": "Coffee",
+  // Bras and underwear
+  "womens-bra": "Green",
+  "womens-menstrual-period-panties": "Denim Blue",
+  "cotton-lace-brief": "Pink",
+  // Lounge and sleep
+  "women-asymmetric-long-sleeve-t-shirt-and-wide-leg-pants-set": "Dark Green",
+  "slim-fit-long-sleeve-top": "Blue",
+  "fleece-lined-drawstring-lounge-set": "Pink",
+  // Dresses
+  "cowl-neck-lace-up-back-mini-dress": "Burgundy",
+  "off-shoulder-sculpt-midi-dress": "Green",
+  "u-neck-slit-maxi-dress": "Baby Pink",
+  // Swim
+  "womens-two-piece-swimsuit": "Red",
+  "womens-swimwear": "Sky Blue",
+  "womens-high-waisted-ruched-bikini-bottoms": "Orange",
+  "ribbed-cut-out-one-piece-swimsuit": "Blue",
+  "solid-colour-bikini-set": "Hot Pink",
+};

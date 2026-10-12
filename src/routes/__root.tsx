@@ -201,7 +201,8 @@ function RootComponent() {
 
 function GlobalQuickAdd() {
   const product = useQuickAdd((s) => s.product);
+  const color = useQuickAdd((s) => s.color);
   const open = useQuickAdd((s) => s.open);
   const setOpen = useQuickAdd((s) => s.setOpen);
-  return <QuickAddSheet product={product} open={open} onOpenChange={setOpen} />;
+  return <QuickAddSheet product={product} color={color} open={open} onOpenChange={setOpen} />;
 }

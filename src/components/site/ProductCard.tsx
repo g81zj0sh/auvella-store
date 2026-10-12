@@ -1,4 +1,4 @@
-import { TILE_IMAGES } from "@/lib/tileImages";
+import { TILE_IMAGES, TILE_DEFAULT_COLOUR } from "@/lib/tileImages";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
@@ -21,11 +21,42 @@ import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
  * QUICK ADD bar slides up (black 70%, white 10px caps) — opens the
  * QuickAddSheet; name 12px caps; price 13px with sale
  * strike-through; colour swatches as 10px circles.
+ *
+ * Phones (v175, measured off skims.com at 440 px wide): the heart sits in a
+ * rail with a bag-plus quick add (40 x 72 px, 32 px buttons, 16 px icons,
+ * white at 50% with a blur), swatches are 24 px with the selected ring 4 px
+ * out, and in `bleed` grids the photo is 9:13, edge to edge.
  */
 
 interface Props {
   product: ShopifyProduct;
   badge?: string; // kept for API compatibility; rendered as minimal text label
+  /** Edge-to-edge two-column grid on phones (collection pages, favourites):
+      9:13 photo, text inset 16 px. Desktop is unchanged. */
+  bleed?: boolean;
+}
+
+/* Bag with a plus at its corner - the quick-add mark. Drawn on the header
+   bag's outline (lucide ShoppingBag) so the two read as one family. */
+function BagPlusIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M12 22H5a2 2 0 0 1-2-2V6.667a2 2 0 0 1 .4-1.2l2-2.667A2 2 0 0 1 7 2h10a2 2 0 0 1 1.6.8l2 2.667a2 2 0 0 1 .4 1.2V13" />
+      <path d="M3.103 6.034h17.794" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+      <path d="M18 16v6" />
+      <path d="M15 19h6" />
+    </svg>
+  );
 }
 
 /*
@@ -51,7 +82,7 @@ function useHoverCapable(): boolean {
   return can;
 }
 
-export function ProductCard({ product, badge }: Props) {
+export function ProductCard({ product, badge, bleed = false }: Props) {
   const node = product.node;
   const image = node.images.edges[0]?.node;
   const firstAvailable =
@@ -72,6 +103,23 @@ export function ProductCard({ product, badge }: Props) {
 
   const colorOption = node.options.find((o) => /colou?r/i.test(o.name));
   const colors = colorOption?.values ?? [];
+  /* Opening colour: the TILE_DEFAULT_COLOUR pick while it's in stock, else
+     the first. It leads the swatch row, so it's always one you can see. */
+  const preferred = TILE_DEFAULT_COLOUR[node.handle];
+  const preferredOk =
+    !!preferred &&
+    colors.includes(preferred) &&
+    node.variants.edges.some(
+      ({ node: v }) =>
+        v.availableForSale &&
+        v.selectedOptions.some((o) => o.name === colorOption?.name && o.value === preferred),
+    );
+  const startColor = preferredOk ? preferred : (colors[0] ?? null);
+  const swatchColors = preferredOk ? [preferred, ...colors.filter((c) => c !== preferred)] : colors;
+  // The product page opens on its first variant's colour unless told otherwise.
+  const pageColor = node.variants.edges[0]?.node.selectedOptions.find(
+    (o) => o.name === colorOption?.name,
+  )?.value;
 
   const favHandles = useFavorites((s) => s.handles);
   const toggleFav = useFavorites((s) => s.toggle);
@@ -86,14 +134,15 @@ export function ProductCard({ product, badge }: Props) {
   const onQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    openQuickAdd(product);
+    // Opens on the colour the tile is showing.
+    openQuickAdd(product, activeColor);
   };
 
   /* Colour runs, so a swatch can switch the tile to that colour's shots and a
      hover can reveal the garment on its own — the SKIMS pattern. */
   const colorMap = useMemo(() => buildColorImageMap(node), [node]);
   const optName = colorOptionName(node);
-  const [activeColor, setActiveColor] = useState<string | null>(colors[0] ?? null);
+  const [activeColor, setActiveColor] = useState<string | null>(startColor);
   const [hovering, setHovering] = useState(false);
   const hoverCapable = useHoverCapable();
 
@@ -155,6 +204,8 @@ export function ProductCard({ product, badge }: Props) {
     <Link
       to="/product/$handle"
       params={{ handle: node.handle }}
+      // Lands on the colour the tile is showing.
+      search={activeColor && activeColor !== pageColor ? { colour: activeColor } : {}}
       className="block"
     >
       {/*
@@ -168,7 +219,7 @@ export function ProductCard({ product, badge }: Props) {
         boundary.
       */}
       <div
-        className="group relative aspect-[3/4] w-full overflow-hidden bg-[#f5f5f5]"
+        className={`group relative ${bleed ? "aspect-[9/13] md:aspect-[3/4]" : "aspect-[3/4]"} w-full overflow-hidden bg-[#f5f5f5]`}
         onMouseEnter={hoverCapable ? () => setHovering(true) : undefined}
         onMouseLeave={hoverCapable ? () => setHovering(false) : undefined}
       >
@@ -195,21 +246,46 @@ export function ProductCard({ product, badge }: Props) {
             }`}
           />
         )}
+        {/* Desktop: the heart on its own; quick add is the hover bar below. */}
         <button
           aria-label={liked ? "Remove from favourites" : "Add to favourites"}
           onClick={onFav}
-          className="absolute right-2.5 top-2.5 z-10 grid h-8 w-8 place-items-center text-[#0a0a0a] transition-opacity hover:opacity-60"
+          className="absolute right-2.5 top-2.5 z-10 hidden h-8 w-8 place-items-center text-[#0a0a0a] transition-opacity hover:opacity-60 md:grid"
         >
           <Heart className={`h-[16px] w-[16px] ${liked ? "fill-[#0a0a0a]" : ""}`} strokeWidth={1.4} />
         </button>
+        {/* Phones: SKIMS's rail where the heart sat - heart over a bag-plus
+            quick add. 40 x 72 px: p-1 around two 32 px buttons. */}
+        <div className="absolute right-3 top-2 z-10 flex flex-col rounded-full bg-white/50 p-1 backdrop-blur-md md:hidden">
+          <button
+            type="button"
+            aria-label={liked ? "Remove from favourites" : "Add to favourites"}
+            aria-pressed={liked}
+            onClick={onFav}
+            className="grid h-8 w-8 place-items-center text-[#0a0a0a]"
+          >
+            <Heart className={`h-4 w-4 ${liked ? "fill-[#0a0a0a]" : ""}`} strokeWidth={1.8} />
+          </button>
+          <button
+            type="button"
+            aria-label={
+              firstAvailable?.availableForSale ? `Quick add ${node.title}` : `${node.title} is sold out`
+            }
+            onClick={onQuickAdd}
+            disabled={!firstAvailable?.availableForSale}
+            className="grid h-8 w-8 place-items-center text-[#0a0a0a] disabled:opacity-35"
+          >
+            <BagPlusIcon className="h-4 w-4" />
+          </button>
+        </div>
         {badge && (
           <span className="absolute left-3 top-3 rounded-pill bg-white px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-[#0a0a0a]">
             {badge}
           </span>
         )}
 
-        {/* QUICK ADD — slides up from bottom on hover */}
-        <div className="absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-[250ms] ease-out group-hover:translate-y-0">
+        {/* QUICK ADD — slides up from bottom on hover (desktop) */}
+        <div className="absolute inset-x-0 bottom-0 hidden translate-y-full transition-transform duration-[250ms] ease-out group-hover:translate-y-0 md:block">
             <button
               onClick={onQuickAdd}
               disabled={isLoading || !firstAvailable?.availableForSale}
@@ -226,7 +302,7 @@ export function ProductCard({ product, badge }: Props) {
         </div>
       </div>
 
-      <div className="mt-2.5">
+      <div className={bleed ? "mt-2.5 px-4 md:px-0" : "mt-2.5"}>
         <h3 className="text-[12px] uppercase tracking-wide text-[#0a0a0a] leading-snug">
           {node.title}
         </h3>
@@ -245,21 +321,24 @@ export function ProductCard({ product, badge }: Props) {
             </span>
           )}
         </div>
+        {/* Phones: 24 px dots, 8 px apart, ring 4 px out - SKIMS's sizes -
+            five then "+N" so the row fits a half-width tile. Desktop: 16 px
+            dots, six then "+N". */}
         {colors.length > 1 && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {colors.slice(0, 6).map((c) => (
+          <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-2 md:gap-1.5">
+            {swatchColors.slice(0, 6).map((c, i) => (
               <button
                 key={c}
                 title={c}
                 aria-label={c}
                 aria-pressed={c === activeColor}
                 onClick={(e) => onSwatch(e, c)}
-                className={`grid h-6 w-6 place-items-center rounded-full transition-shadow ${
-                  c === activeColor ? "ring-1 ring-[#0a0a0a] ring-offset-2" : ""
+                className={`${i === 5 ? "max-md:hidden " : ""}grid h-6 w-6 place-items-center rounded-full transition-shadow ${
+                  c === activeColor ? "ring-1 ring-[#0a0a0a] ring-offset-4 md:ring-offset-2" : ""
                 }`}
               >
                 <span
-                  className="h-4 w-4 rounded-full border border-[#0a0a0a]/15"
+                  className="h-6 w-6 rounded-full border border-[#0a0a0a]/15 md:h-4 md:w-4"
                   style={((): React.CSSProperties => {
                     // Prints show a crop of the fabric rather than a flat dot.
                     const crop = indexedSwatch(node.handle, c, node.images.edges.map((e) => e.node));
@@ -274,8 +353,11 @@ export function ProductCard({ product, badge }: Props) {
                 />
               </button>
             ))}
+            {colors.length > 5 && (
+              <span className="text-[10px] text-[#888888] md:hidden">+{colors.length - 5}</span>
+            )}
             {colors.length > 6 && (
-              <span className="text-[10px] text-[#888888]">+{colors.length - 6}</span>
+              <span className="hidden text-[10px] text-[#888888] md:inline">+{colors.length - 6}</span>
             )}
           </div>
         )}

@@ -56,6 +56,10 @@ import {
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
+  /* ?colour=Mint opens the page on that colour: a tile showing a colour
+     links here with it (v175), so the shopper lands on what they tapped. */
+  validateSearch: (search: Record<string, unknown>): { colour?: string } =>
+    typeof search.colour === "string" && search.colour ? { colour: search.colour } : {},
   /* Renamed products: old links get a permanent redirect to the new handle. */
   beforeLoad: ({ params }) => {
     const to = LEGACY_PRODUCT_HANDLES[params.handle];
@@ -217,16 +221,27 @@ function ProductPage() {
     });
   }, [node]);
 
-  // Initialize non-size options from the first variant; size stays an explicit choice.
+  // Initialize non-size options from the first variant (of the ?colour= one
+  // when the link names a colour); size stays an explicit choice.
+  const colourParam = Route.useSearch().colour;
   const initialSelected = useMemo(() => {
     if (!node) return {};
-    const first = node.variants.edges[0]?.node;
+    const colourOpt = node.options.find((o) => /colou?r/i.test(o.name));
+    const wanted = colourParam
+      ? colourOpt?.values.find((v) => v.toLowerCase() === colourParam.toLowerCase())
+      : undefined;
+    const first =
+      (wanted &&
+        node.variants.edges.find((v) =>
+          v.node.selectedOptions.some((o) => o.name === colourOpt?.name && o.value === wanted),
+        )?.node) ||
+      node.variants.edges[0]?.node;
     const init: Record<string, string> = {};
     first?.selectedOptions.forEach((o) => {
       if (!/size/i.test(o.name)) init[o.name] = o.value;
     });
     return init;
-  }, [node]);
+  }, [node, colourParam]);
 
   const currentSelected = Object.keys(selected).length ? selected : initialSelected;
 

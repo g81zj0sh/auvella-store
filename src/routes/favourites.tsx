@@ -126,9 +126,9 @@ function OwnView() {
         ) : isLoading ? (
           <SkeletonGrid count={handles.length} />
         ) : (
-          <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+          <div className="-mx-5 mt-12 grid grid-cols-2 gap-x-px gap-y-10 md:mx-0 md:grid-cols-3 md:gap-x-4 lg:grid-cols-4">
             {(products ?? []).map((p) => (
-              <ProductCard key={p.node.handle} product={p} />
+              <ProductCard key={p.node.handle} product={p} bleed />
             ))}
           </div>
         )}
@@ -191,9 +191,9 @@ function SharedView({ sharedParam }: { sharedParam: string }) {
             This shared list doesn't seem to have any available pieces right now.
           </p>
         ) : (
-          <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+          <div className="-mx-5 mt-12 grid grid-cols-2 gap-x-px gap-y-10 md:mx-0 md:grid-cols-3 md:gap-x-4 lg:grid-cols-4">
             {products.map((p) => (
-              <ProductCard key={p.node.handle} product={p} />
+              <ProductCard key={p.node.handle} product={p} bleed />
             ))}
           </div>
         )}
@@ -214,9 +214,9 @@ function SharedView({ sharedParam }: { sharedParam: string }) {
 
 function SkeletonGrid({ count }: { count: number }) {
   return (
-    <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+    <div className="-mx-5 mt-12 grid grid-cols-2 gap-x-px gap-y-10 md:mx-0 md:grid-cols-3 md:gap-x-4 lg:grid-cols-4">
       {Array.from({ length: Math.min(count, 12) }).map((_, i) => (
-        <div key={i} className="aspect-[3/4] animate-pulse bg-[#f5f5f5]" />
+        <div key={i} className="aspect-[9/13] animate-pulse bg-[#f5f5f5] md:aspect-[3/4]" />
       ))}
     </div>
   );

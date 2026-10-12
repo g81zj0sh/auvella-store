@@ -33,11 +33,13 @@ type VariantNode = ShopifyProduct["node"]["variants"]["edges"][number]["node"];
 
 interface Props {
   product: ShopifyProduct | null;
+  /** Colour to open on (the one the tile was showing); else the first in stock. */
+  color?: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }
 
-export function QuickAddSheet({ product, open, onOpenChange }: Props) {
+export function QuickAddSheet({ product, color, open, onOpenChange }: Props) {
   if (!product) return null;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -46,10 +48,11 @@ export function QuickAddSheet({ product, open, onOpenChange }: Props) {
         className="flex h-full w-full flex-col overflow-y-auto bg-white p-0 sm:max-w-md [&>button]:hidden"
       >
         <SheetTitle className="sr-only">Quick add — {product.node.title}</SheetTitle>
-        {/* key on handle so state resets when a different product opens */}
+        {/* key on handle + colour so state resets when a different tile opens */}
         <QuickAddBody
-          key={product.node.handle}
+          key={`${product.node.handle}|${color ?? ""}`}
           product={product}
+          color={color ?? undefined}
           onClose={() => onOpenChange(false)}
         />
       </SheetContent>
@@ -59,9 +62,11 @@ export function QuickAddSheet({ product, open, onOpenChange }: Props) {
 
 function QuickAddBody({
   product: card,
+  color: tileColor,
   onClose,
 }: {
   product: ShopifyProduct;
+  color?: string;
   onClose: () => void;
 }) {
   const { data: full } = useQuery({
@@ -85,6 +90,7 @@ function QuickAddBody({
   const firstAvailable =
     node.variants.edges.find((v) => v.node.availableForSale)?.node ?? node.variants.edges[0]?.node;
   const initialColor =
+    (tileColor && colorOption?.values.includes(tileColor) ? tileColor : undefined) ??
     firstAvailable?.selectedOptions.find((o) => o.name === colorOption?.name)?.value ??
     colorOption?.values[0];
 

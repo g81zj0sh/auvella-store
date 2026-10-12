@@ -402,9 +402,9 @@ function MoreFrom({ parent, exclude }: { parent: { handle: string; label: string
           View all
         </Link>
       </div>
-      <div className="grid grid-cols-2 gap-x-2 gap-y-8 md:grid-cols-4 md:gap-x-3">
+      <div className="-mx-5 grid grid-cols-2 gap-x-px gap-y-8 md:mx-0 md:grid-cols-4 md:gap-x-3">
         {items.map((p) => (
-          <ProductCard key={p.node.id} product={p} />
+          <ProductCard key={p.node.id} product={p} bleed />
         ))}
       </div>
     </section>
@@ -1019,9 +1019,11 @@ function CollectionPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-8 md:grid-cols-4 md:gap-x-3 md:gap-y-12">
+            {/* Phones: edge to edge with a 1 px gutter, as on skims.com (v175);
+                -mx-5 cancels container-px. */}
+            <div className="-mx-5 grid grid-cols-2 gap-x-px gap-y-8 md:mx-0 md:grid-cols-4 md:gap-x-3 md:gap-y-12">
               {visible.map((p) => (
-                <ProductCard key={p.node.id} product={p} />
+                <ProductCard key={p.node.id} product={p} bleed />
               ))}
             </div>
 
