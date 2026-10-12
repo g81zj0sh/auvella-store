@@ -304,12 +304,12 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "White": "/tiles/womens-lace-long-sleeve-dress-white.webp",
   },
   "jelly-cup-multi-way-strapless-bra": {
-    "Dark Brown Leopard": "/tiles/jelly-cup-multi-way-strapless-bra-dark-brown-leopard.webp",
-    "Pink Leopard": "/tiles/jelly-cup-multi-way-strapless-bra-pink-leopard.webp",
-    "White": "/tiles/jelly-cup-multi-way-strapless-bra-white.webp",
-    "Brown": "/tiles/jelly-cup-multi-way-strapless-bra-brown.webp",
-    "Nude": "/tiles/jelly-cup-multi-way-strapless-bra-nude.webp",
-    "Black": "/tiles/jelly-cup-multi-way-strapless-bra-black.webp",
+    "Dark Brown Leopard": "/tiles/jelly-cup-multi-way-strapless-bra-dark-brown-leopard-v2.webp",
+    "Pink Leopard": "/tiles/jelly-cup-multi-way-strapless-bra-pink-leopard-v2.webp",
+    "White": "/tiles/jelly-cup-multi-way-strapless-bra-white-v2.webp",
+    "Brown": "/tiles/jelly-cup-multi-way-strapless-bra-brown-v2.webp",
+    "Nude": "/tiles/jelly-cup-multi-way-strapless-bra-nude-v2.webp",
+    "Black": "/tiles/jelly-cup-multi-way-strapless-bra-black-v2.webp",
   },
   "womens-bra": {
     "Pink": "/tiles/womens-bra-pink.webp",
