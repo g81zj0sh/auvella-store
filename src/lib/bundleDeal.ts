@@ -22,6 +22,9 @@ export const BUNDLE_DEAL = {
   ] as string[],
 };
 
+/** The rule's saving per eligible item, in GBP (3 x £12.99 - 3 x £2.99 = £30). */
+export const BUNDLE_PER_UNIT_OFF_GBP = 2.99;
+
 export function inBundleDeal(handle: string | undefined | null): boolean {
   return !!handle && BUNDLE_DEAL.handles.includes(handle);
 }

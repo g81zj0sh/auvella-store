@@ -597,7 +597,7 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
 
       {/* Mobile menu — slides in from the left over a dimmed backdrop */}
       {open && (
-        <div className="fixed inset-0 z-[60] lg:hidden">
+        <div className="fixed inset-0 z-[60] lg:hidden" data-overlay="open">
           {/* Backdrop */}
           <button
             aria-label="Close menu"

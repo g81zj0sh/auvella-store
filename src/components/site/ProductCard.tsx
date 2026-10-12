@@ -14,6 +14,7 @@ import { findGhostForColor } from "@/lib/imageBackdrop";
 import { indexedEntry, indexedGhost, indexedHex, indexedRestImage, indexedSwatch } from "@/lib/galleryIndex";
 import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
 import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
+import { SALE_STICKER_HANDLES } from "@/lib/bundleOffer";
 
 /*
  * Product card — SKIMS spec:
@@ -193,6 +194,7 @@ export function ProductCard({ product, badge, bleed = false }: Props) {
   const shownCompare = colorVariant ? colorVariant.compareAtPrice : compareAt;
   const shownOnSale =
     !!shownCompare && parseFloat(shownCompare.amount) > parseFloat(shownPrice.amount);
+  const saleSticker = shownOnSale && SALE_STICKER_HANDLES.includes(node.handle);
 
   const onSwatch = (e: React.MouseEvent, c: string) => {
     e.preventDefault();
@@ -278,9 +280,21 @@ export function ProductCard({ product, badge, bleed = false }: Props) {
             <BagPlusIcon className="h-4 w-4" />
           </button>
         </div>
-        {badge && (
-          <span className="absolute left-3 top-3 rounded-pill bg-white px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-[#0a0a0a]">
-            {badge}
+        {/* Left-top labels: the carousel's badge, then a small "Sale" sticker
+            on the owner's picks (lib/bundleOffer.ts) - only while this tile
+            shows a reduced price, so it never sits beside a full price. */}
+        {(badge || saleSticker) && (
+          <span className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
+            {badge && (
+              <span className="rounded-pill bg-white px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-[#0a0a0a]">
+                {badge}
+              </span>
+            )}
+            {saleSticker && (
+              <span className="rounded-pill bg-[#0a0a0a] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
+                Sale
+              </span>
+            )}
           </span>
         )}
 
