@@ -354,11 +354,11 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/womens-menstrual-period-panties-black.webp",
   },
   "seamless-support-bra-with-tummy-control": {
-    "Black": "/tiles/seamless-support-bra-with-tummy-control-black.webp",
-    "Enchanted Red": "/tiles/seamless-support-bra-with-tummy-control-enchanted-red.webp",
-    "Light Green": "/tiles/seamless-support-bra-with-tummy-control-light-green.webp",
-    "Light Brown": "/tiles/seamless-support-bra-with-tummy-control-light-brown.webp",
-    "Nude": "/tiles/seamless-support-bra-with-tummy-control-nude.webp",
+    "Black": "/tiles/seamless-support-bra-with-tummy-control-black-v2.webp",
+    "Enchanted Red": "/tiles/seamless-support-bra-with-tummy-control-enchanted-red-v2.webp",
+    "Light Green": "/tiles/seamless-support-bra-with-tummy-control-light-green-v2.webp",
+    "Light Brown": "/tiles/seamless-support-bra-with-tummy-control-light-brown-v2.webp",
+    "Nude": "/tiles/seamless-support-bra-with-tummy-control-nude-v2.webp",
   },
   "women-waist-training-compression-garment": {
     "Black": "/tiles/women-waist-training-compression-garment-black.webp",
