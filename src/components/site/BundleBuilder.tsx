@@ -1,9 +1,18 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
-import { shopifyImg, type ShopifyProduct } from "@/lib/shopify";
+import { fetchProductByHandle, shopifyImg, type ShopifyProduct } from "@/lib/shopify";
 import { indexedGhost } from "@/lib/galleryIndex";
 import { backdropCss, tableBackdrop } from "@/lib/imageBackdrop";
-import { BUNDLE_STYLE_NAMES, BUNDLE_TIERS } from "@/lib/bundleDeal";
+import { BUNDLE_TIERS } from "@/lib/bundleDeal";
+import { fetchJudgemeData } from "@/lib/judgeme";
+import {
+  bundleCanBuy as canBuy,
+  bundleStyleName as styleName,
+  bundleVariant,
+  type BundlePick,
+} from "@/lib/bundlePicks";
+import { BundlePairView } from "@/components/site/BundlePairView";
 
 /*
  * The underwear "Bundle & save" builder (v177), after Step One's flow
@@ -16,50 +25,13 @@ import { BUNDLE_STYLE_NAMES, BUNDLE_TIERS } from "@/lib/bundleDeal";
  * Prices are what the two Shopify rules charge (lib/bundleDeal.ts), struck
  * only against the single price, never the compare-at. Nothing here counts
  * down or claims popularity.
+ *
+ * v179: each pair's picture opens a quick view of that pair (BundlePairView):
+ * phones get a small "View details" label on the picture, computers just
+ * click it (owner's brief, 13 Oct 2026).
  */
 
 export type BundleMode = "one" | "mix";
-
-/** One pair in a mixed bundle. `size` is set only when the shopper changed
- *  this pair's size; otherwise it follows the page's size. */
-export interface BundlePick {
-  handle: string;
-  colour: string;
-  size?: string;
-}
-
-type Variant = ShopifyProduct["node"]["variants"]["edges"][number]["node"];
-
-const optName = (p: ShopifyProduct, re: RegExp) =>
-  p.node.options.find((o) => re.test(o.name))?.name;
-
-/** The variant of `p` in this colour (and size, when given). */
-export function bundleVariant(
-  p: ShopifyProduct,
-  colour: string,
-  size?: string,
-): Variant | undefined {
-  const c = optName(p, /colou?r/i);
-  const s = optName(p, /size/i);
-  return p.node.variants.edges.find(({ node: v }) =>
-    v.selectedOptions.every((o) =>
-      o.name === c ? o.value === colour : o.name === s ? !size || o.value === size : true,
-    ),
-  )?.node;
-}
-
-/** Whether any variant in this colour (and size, when given) can be bought. */
-function canBuy(p: ShopifyProduct, colour: string, size?: string): boolean {
-  const c = optName(p, /colou?r/i);
-  const s = optName(p, /size/i);
-  return p.node.variants.edges.some(
-    ({ node: v }) =>
-      v.availableForSale &&
-      v.selectedOptions.every((o) =>
-        o.name === c ? o.value === colour : o.name === s ? !size || o.value === size : true,
-      ),
-  );
-}
 
 /** Garment shot of a style in a colour: it reads better than a model at thumbnail size. */
 function thumbFor(p: ShopifyProduct, colour: string): string | undefined {
@@ -70,8 +42,6 @@ function thumbFor(p: ShopifyProduct, colour: string): string | undefined {
     imgs[0]?.url
   );
 }
-
-const styleName = (p: ShopifyProduct) => BUNDLE_STYLE_NAMES[p.node.handle] ?? p.node.title;
 
 function Thumb({ url, className }: { url: string | undefined; className: string }) {
   return (
@@ -230,7 +200,8 @@ export function BundleModeToggle({
 
 /**
  * Mix mode: style tabs, that style's colours (tap to add), the bundle's
- * progress and one card per pair with its own size and a remove button.
+ * progress and one card per pair with its own size and a remove button. A
+ * pair's picture opens its quick view.
  */
 export function BundleMixer({
   styles,
@@ -238,10 +209,12 @@ export function BundleMixer({
   pairs,
   picks,
   size,
+  priced,
   doneNote,
   onPick,
   onRemove,
   onSize,
+  onUpdate,
 }: {
   /** The bundle's styles, in a fixed order; ones still loading are left out. */
   styles: ShopifyProduct[];
@@ -251,16 +224,48 @@ export function BundleMixer({
   picks: BundlePick[];
   /** The page's size, used by every pair that hasn't its own. */
   size: string | undefined;
+  /** Whether bundle prices can be shown (market and display currency GBP). */
+  priced: boolean;
   /** What the progress line says once every pair is picked. */
   doneNote: string;
   onPick: (handle: string, colour: string) => void;
   onRemove: (i: number) => void;
   onSize: (i: number, size: string) => void;
+  /** A pair's colour or size changed in its quick view. */
+  onUpdate: (i: number, pick: BundlePick) => void;
 }) {
   const [tab, setTab] = useState(current);
   const [fullTap, setFullTap] = useState(false);
   const pairsRef = useRef<HTMLOListElement>(null);
   const headingRef = useRef<HTMLParagraphElement>(null);
+  /** The pair whose quick view is showing, as it was when opened - kept
+   *  while the popup closes, so it animates out with the same content even
+   *  after the pair is updated or removed. */
+  const [view, setView] = useState<{ i: number; open: boolean; pick?: BundlePick }>({
+    i: 0,
+    open: false,
+  });
+  /** Screen-reader note after a pair is removed from its quick view. */
+  const [removedNote, setRemovedNote] = useState("");
+
+  /* Load every style's full product and reviews as soon as mixing starts,
+     so a pair's quick view opens with its photos and stars already there. */
+  const queryClient = useQueryClient();
+  const styleKey = styles.map((p) => p.node.handle).join("|");
+  useEffect(() => {
+    for (const h of styleKey.split("|").filter(Boolean)) {
+      void queryClient.prefetchQuery({
+        queryKey: ["product", h],
+        queryFn: () => fetchProductByHandle(h),
+        staleTime: 5 * 60_000,
+      });
+      void queryClient.prefetchQuery({
+        queryKey: ["judgeme-reviews", h],
+        queryFn: () => fetchJudgemeData(h),
+        staleTime: 5 * 60_000,
+      });
+    }
+  }, [queryClient, styleKey]);
   const open = styles.find((p) => p.node.handle === tab) ?? styles[0];
   const filled = Math.min(picks.length, pairs);
   const full = filled >= pairs;
@@ -366,6 +371,7 @@ export function BundleMixer({
         <div className="flex items-baseline justify-between">
           <p
             ref={headingRef}
+            id="bundle-heading"
             tabIndex={-1}
             className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a] outline-none"
           >
@@ -408,7 +414,7 @@ export function BundleMixer({
           const pk = picks[i];
           if (!pk)
             return (
-              <li key={`empty-${i}`} className="w-[92px] shrink-0">
+              <li key={i} className="w-[92px] shrink-0">
                 <span className="grid aspect-[4/5] w-full place-items-center rounded-[8px] border border-dashed border-[#bdbdbd] text-[11px] text-[#888888]">
                   Pair {i + 1}
                 </span>
@@ -420,12 +426,33 @@ export function BundleMixer({
           const soldOut = !!p && !!own && !(v && v.availableForSale);
           const sizes = p?.node.options.find((o) => /size/i.test(o.name))?.values ?? [];
           return (
-            <li key={`${i}-${pk.handle}-${pk.colour}`} className="w-[92px] shrink-0">
+            // Keyed by position, so the picture that opened a quick view is
+            // still there for focus to return to after the pair is changed.
+            <li key={i} className="w-[92px] shrink-0">
               <span className="relative block">
-                <Thumb
-                  url={p ? thumbFor(p, pk.colour) : undefined}
-                  className="aspect-[4/5] w-full border border-[#e6e4e0]"
-                />
+                {/* The picture opens this pair's quick view. Phones (no hover)
+                    always show a small "View details" label on it; with a
+                    mouse it appears on hover (or keyboard focus), with the
+                    hand cursor, so it's clear the picture can be clicked. */}
+                <button
+                  type="button"
+                  onClick={() => setView({ i, open: true, pick: pk })}
+                  data-pair-view={i}
+                  aria-haspopup="dialog"
+                  aria-label={`View details: pair ${i + 1}, ${p ? styleName(p) : ""} in ${pk.colour}`}
+                  className="group/pv relative block w-full cursor-pointer rounded-[8px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a]"
+                >
+                  <Thumb
+                    url={p ? thumbFor(p, pk.colour) : undefined}
+                    className="aspect-[4/5] w-full border border-[#e6e4e0] transition-colors group-hover/pv:border-[#0a0a0a]"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-1 bottom-1 rounded-pill bg-white/95 py-[3px] text-center text-[10px] font-medium leading-none text-[#0a0a0a] shadow-[0_1px_3px_rgba(0,0,0,0.14)] pointer-fine:translate-y-1 pointer-fine:opacity-0 pointer-fine:transition pointer-fine:duration-200 pointer-fine:group-hover/pv:translate-y-0 pointer-fine:group-hover/pv:opacity-100 pointer-fine:group-focus-visible/pv:translate-y-0 pointer-fine:group-focus-visible/pv:opacity-100"
+                  >
+                    View details
+                  </span>
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -484,6 +511,28 @@ export function BundleMixer({
           );
         })}
       </ol>
+
+      <BundlePairView
+        open={view.open}
+        onOpenChange={(o) => setView((v) => ({ ...v, open: o }))}
+        style={styles.find((s) => s.node.handle === view.pick?.handle)}
+        pick={view.pick}
+        index={view.i}
+        pairs={pairs}
+        size={size}
+        priced={priced}
+        onSave={(pk) => onUpdate(view.i, pk)}
+        onRemove={() => {
+          setFullTap(false);
+          onRemove(view.i);
+        }}
+        onAfterRemove={() =>
+          setRemovedNote(`Pair ${view.i + 1} removed. ${filled} of ${pairs} pairs picked.`)
+        }
+      />
+      <p role="status" className="sr-only">
+        {removedNote}
+      </p>
     </div>
   );
 }

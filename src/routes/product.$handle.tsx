@@ -15,10 +15,9 @@ import {
   BundleMixer,
   BundleModeToggle,
   BundleTiles,
-  bundleVariant,
   type BundleMode,
-  type BundlePick,
 } from "@/components/site/BundleBuilder";
+import { bundleVariant, type BundlePick } from "@/lib/bundlePicks";
 import { FreeShippingProgress } from "@/components/site/FreeShippingProgress";
 import { colourSwatchStyle } from "@/lib/swatch";
 import { bagTotals } from "@/lib/bagTotals";
@@ -1363,6 +1362,7 @@ function ProductPage() {
                   pairs={pack}
                   picks={picks}
                   size={globalSize}
+                  priced={bundlePriced}
                   doneNote={
                     bundlePriced
                       ? `Bundle complete: ${pack} pairs for ${payLabel}`
@@ -1381,6 +1381,11 @@ function ProductPage() {
                   onSize={(i, s) =>
                     setPicks((prev) => prev.map((pk, j) => (j === i ? { ...pk, size: s } : pk)))
                   }
+                  onUpdate={(i, next) => {
+                    setPicks((prev) => prev.map((pk, j) => (j === i ? next : pk)));
+                    if (next.handle === node.handle)
+                      setPreviewColour(next.colour !== activeColour ? next.colour : undefined);
+                  }}
                 />
               </div>
             )}

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Ruler } from "lucide-react";
 import {
@@ -42,6 +43,7 @@ export function SizeGuide({
   fitOverride,
   productChart,
   handle,
+  stacked = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -52,6 +54,9 @@ export function SizeGuide({
   productChart?: ProductChart | null;
   /** Product handle, for its per-product UK sizes (sizeLabels.ts). */
   handle?: string;
+  /** Opened from inside another popup (the bundle pair quick view, z-80):
+      draw above it rather than underneath at the default z-50. */
+  stacked?: boolean;
 }) {
   /* Hooks first: this component is rendered with guideType "none" while the
      product is still loading, and gained a chart once the data arrived. With
@@ -60,6 +65,10 @@ export function SizeGuide({
   // ---------- Regional size labelling (labels only; measurements never change) ----------
   const region = usePreferences((st) => st.sizeRegion);
   const setRegion = usePreferences((st) => st.setSizeRegion);
+  /* The "Size Guide" button that opened this gets focus back on close. Radix
+     only does that for its own Dialog.Trigger, which none of the openers use,
+     so focus used to drop to the page body. */
+  const opener = useRef<HTMLElement | null>(null);
 
   if (!productChart && guideType === "none") return null;
   const category =
@@ -138,7 +147,20 @@ export function SizeGuide({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl overflow-hidden rounded-none border-border bg-cream p-0 sm:rounded-card">
+      <DialogContent
+        className={`max-w-2xl overflow-hidden rounded-none border-border bg-cream p-0 sm:rounded-card ${stacked ? "z-[90]" : ""}`}
+        overlayClassName={stacked ? "z-[90]" : undefined}
+        onOpenAutoFocus={() => {
+          // Still the opener here: Radix moves focus in after this event.
+          opener.current = document.activeElement as HTMLElement | null;
+        }}
+        onCloseAutoFocus={(e) => {
+          const el = opener.current;
+          if (!el || !el.isConnected) return;
+          e.preventDefault();
+          el.focus({ preventScroll: true });
+        }}
+      >
         <div className="max-h-[85vh] overflow-y-auto">
           <DialogHeader className="border-b border-border px-6 py-5 md:px-8">
             <DialogTitle className="flex items-center gap-2 font-serif text-2xl text-ink">
