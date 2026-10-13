@@ -87,10 +87,10 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/strapless-slim-fit-bodysuit-black.webp",
   },
   "cotton-lace-brief": {
-    "Blue": "/tiles/cotton-lace-brief-blue.webp",
-    "Pink": "/tiles/cotton-lace-brief-pink.webp",
-    "White": "/tiles/cotton-lace-brief-white.webp",
-    "Black": "/tiles/cotton-lace-brief-black.webp",
+    "Blue": "/tiles/cotton-lace-brief-blue-v2.webp",
+    "Pink": "/tiles/cotton-lace-brief-pink-v2.webp",
+    "White": "/tiles/cotton-lace-brief-white-v2.webp",
+    "Black": "/tiles/cotton-lace-brief-black-v2.webp",
   },
   "long-sleeve-zip-one-piece-swimsuit": {
     "Royal Blue": "/tiles/long-sleeve-zip-one-piece-swimsuit-royal-blue.webp",
@@ -236,11 +236,11 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/seamless-shaping-long-sleeve-bodysuit-black.webp",
   },
   "womens-high-waisted-breathable-traceless-thong-panties": {
-    "Scarlet": "/tiles/womens-high-waisted-breathable-traceless-scarlet.webp",
-    "Coffee": "/tiles/womens-high-waisted-breathable-traceless-coffee.webp",
-    "Clay": "/tiles/womens-high-waisted-breathable-traceless-clay.webp",
-    "White": "/tiles/womens-high-waisted-breathable-traceless-white.webp",
-    "Black": "/tiles/womens-high-waisted-breathable-traceless-black.webp",
+    "Scarlet": "/tiles/womens-high-waisted-breathable-traceless-thong-panties-scarlet-v2.webp",
+    "Coffee": "/tiles/womens-high-waisted-breathable-traceless-thong-panties-coffee-v2.webp",
+    "Clay": "/tiles/womens-high-waisted-breathable-traceless-thong-panties-clay-v2.webp",
+    "White": "/tiles/womens-high-waisted-breathable-traceless-thong-panties-white-v2.webp",
+    "Black": "/tiles/womens-high-waisted-breathable-traceless-thong-panties-black-v2.webp",
   },
   "maternity-nursing-bra-front-opening-push-up": {
     "White": "/tiles/maternity-nursing-bra-front-opening-push-white.webp",
