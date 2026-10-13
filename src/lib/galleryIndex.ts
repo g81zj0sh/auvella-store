@@ -130,7 +130,7 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
   "lace-breathable-thong-underwear": {
     "White": { m: ["lace-thong-white-1.jpg", "lace-thong-white-2.jpg", "lace-thong-white-3.jpg", "lace-thong-white-4.jpg"], g: ["lace-thong-white-5.jpg", "lace-thong-white-6.jpg"], hex: null },
     "Brown": { m: ["lace-thong-brown-1.jpg", "lace-thong-brown-2.jpg", "lace-thong-brown-3.jpg", "lace-thong-brown-4.jpg"], g: ["lace-thong-brown-5.jpg", "lace-thong-brown-6.jpg"], hex: "#311a1a" },
-    "Nude": { m: ["lace-thong-nude-1.jpg", "lace-thong-nude-2.jpg", "lace-thong-nude-3.jpg", "lace-thong-nude-4.jpg"], g: ["lace-thong-nude-5.jpg", "lace-thong-nude-6.jpg"], hex: "#ba9780" },
+    "Nude": { m: ["lace-thong-nude-1.jpg", "lace-thong-nude-2.jpg", "lace-thong-nude-3.jpg", "lace-thong-nude-4.jpg"], g: ["lace-thong-nude-5.jpg", "lace-thong-nude-6.jpg"], hex: "#cba48a" },
     "Iris Purple": { m: ["lace-thong-iris-purple-1.jpg", "lace-thong-iris-purple-2.jpg", "lace-thong-iris-purple-3.jpg", "lace-thong-iris-purple-4.jpg"], g: ["lace-thong-iris-purple-5.jpg", "lace-thong-iris-purple-6.jpg"], hex: "#7a4d9f" },
     "Angora Red": { m: ["lace-thong-angora-red-1.jpg", "lace-thong-angora-red-2.jpg", "lace-thong-angora-red-3.jpg", "lace-thong-angora-red-4.jpg"], g: ["lace-thong-angora-red-5.jpg", "lace-thong-angora-red-6.jpg"], hex: "#3c1018" },
     "Black Floral": { m: ["lace-thong-black-floral-1.jpg", "lace-thong-black-floral-2.jpg", "lace-thong-black-floral-3.jpg", "lace-thong-black-floral-4.jpg"], g: ["lace-thong-black-floral-5.jpg", "lace-thong-black-floral-6.jpg"], hex: null, sw: { f: "lace-thong-black-floral-5.jpg", x: 51, y: 54, z: 800 } },
