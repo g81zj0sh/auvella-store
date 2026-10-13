@@ -13,8 +13,7 @@ import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
 import { findGhostForColor } from "@/lib/imageBackdrop";
 import { indexedEntry, indexedGhost, indexedHex, indexedRestImage, indexedSwatch } from "@/lib/galleryIndex";
 import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
-import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
-import { SALE_STICKER_HANDLES } from "@/lib/bundleOffer";
+import { inBundleDeal, SALE_STICKER_HANDLES, useBundleLabel } from "@/lib/bundleDeal";
 
 /*
  * Product card — SKIMS spec:
@@ -281,7 +280,7 @@ export function ProductCard({ product, badge, bleed = false }: Props) {
           </button>
         </div>
         {/* Left-top labels: the carousel's badge, then a small "Sale" sticker
-            on the owner's picks (lib/bundleOffer.ts) - only while this tile
+            on the owner's picks (SALE_STICKER_HANDLES, lib/bundleDeal.ts) - only while this tile
             shows a reduced price, so it never sits beside a full price. */}
         {(badge || saleSticker) && (
           <span className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">

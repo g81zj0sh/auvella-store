@@ -1,6 +1,6 @@
 import type { CartItem } from "@/stores/cartStore";
 import { cartLineKey, type CartTotals } from "@/lib/shopify";
-import { BUNDLE_DEAL, BUNDLE_PER_UNIT_OFF_GBP, inBundleDeal } from "@/lib/bundleDeal";
+import { BUNDLE_DEAL, bundleUnitOffGBP, inBundleDeal } from "@/lib/bundleDeal";
 import { DUO_DEAL, duoUnitOff, inDuoDeal } from "@/lib/duoDeal";
 
 /*
@@ -61,7 +61,7 @@ export function bagTotals(
   const bundleUnits = items
     .filter((i) => inBundleDeal(i.product.node.handle))
     .reduce((s, i) => s + i.quantity, 0);
-  const bundlePerUnitOff = BUNDLE_PER_UNIT_OFF_GBP;
+  const bundlePerUnitOff = bundleUnitOffGBP(bundleUnits);
   const bundleSaving =
     bundleUnits >= BUNDLE_DEAL.minQuantity
       ? Math.round(bundleUnits * bundlePerUnitOff * 100) / 100

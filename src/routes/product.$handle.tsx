@@ -11,6 +11,14 @@ import {
   type MultiBuyTier,
 } from "@/lib/duoDeal";
 import { MultiBuySelector } from "@/components/site/MultiBuySelector";
+import {
+  BundleMixer,
+  BundleModeToggle,
+  BundleTiles,
+  bundleVariant,
+  type BundleMode,
+  type BundlePick,
+} from "@/components/site/BundleBuilder";
 import { FreeShippingProgress } from "@/components/site/FreeShippingProgress";
 import { colourSwatchStyle } from "@/lib/swatch";
 import { bagTotals } from "@/lib/bagTotals";
@@ -32,6 +40,7 @@ import {
   fetchProductByHandle,
   fetchProductRecommendations,
   fetchProducts,
+  fetchProductsByHandles,
   shopifyImg,
   shopifySrcSet,
   type ShopifyProduct,
@@ -45,7 +54,14 @@ import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch } from "lucide-re
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
-import { BUNDLE_DEAL, inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
+import {
+  BUNDLE_DEAL,
+  BUNDLE_ATTRIBUTE,
+  BUNDLE_DEFAULT_PAIRS,
+  bundleHeadline,
+  bundleUnitOffGBP,
+  inBundleDeal,
+} from "@/lib/bundleDeal";
 import {
   bagFreeShipping,
   freeShippingThresholdFmt,
@@ -159,15 +175,30 @@ function ProductPage() {
 
   const node = product?.node;
 
+  // All three underwear styles, for mixing a bundle on any one of their pages.
+  const { data: bundleProducts = [] } = useQuery({
+    queryKey: ["bundle-products"],
+    queryFn: () => fetchProductsByHandles(BUNDLE_DEAL.handles),
+    enabled: inBundleDeal(handle),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: judgeme, isLoading: reviewsLoading } = useJudgemeReviews(handle);
   const reviewAvg = judgeme?.average ?? 0;
   const reviewCount = judgeme?.count ?? 0;
 
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [imageIdx, setImageIdx] = useState(0);
-  /* Multi-buy tier: 1, 2 or 3 units of this product (MULTI_BUY_TIERS). Only
-     offered where the Shopify rule applies; everywhere else it stays 1. */
-  const [pack, setPack] = useState<MultiBuyTier["quantity"]>(1);
+  /* Multi-buy tier: 1, 2 or 3 units (MULTI_BUY_TIERS) on Buy 2 products, or
+     1, 3 or 5 pairs (BUNDLE_TIERS, 3 preselected) on the underwear bundle.
+     Only offered where a Shopify rule applies; everywhere else it stays 1. */
+  const packFor = (h: string) => (inBundleDeal(h) ? BUNDLE_DEFAULT_PAIRS : 1);
+  const [pack, setPack] = useState<number>(() => packFor(handle));
+  /* Underwear bundle (v177, after Step One): one colour for every pair, or
+     mixed styles and colours picked pair by pair (BundleBuilder). */
+  const [bundleMode, setBundleMode] = useState<BundleMode>("one");
+  const [picks, setPicks] = useState<BundlePick[]>([]);
+  const builderRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [barVisible, setBarVisible] = useState(false);
   const favHandles = useFavorites((s) => s.handles);
@@ -266,12 +297,14 @@ function ProductPage() {
      2026). Any change to #1 - the main selection - or to the tier hands the
      gallery back to #1. */
   const [previewColour, setPreviewColour] = useState<string | undefined>(undefined);
-  // The route stays mounted between products: each one starts on a single
-  // item with no picks left over from the last.
+  // The route stays mounted between products: each one starts on its default
+  // tier with no picks left over from the last.
   useEffect(() => {
     setSelected({});
-    setPack(1);
+    setPack(packFor(handle));
     setExtraSel([]);
+    setBundleMode("one");
+    setPicks([]);
     setPreviewColour(undefined);
     setAddedKey(null);
   }, [handle]);
@@ -501,8 +534,6 @@ function ProductPage() {
   const { country: shipCountry } = useShippingCountry();
   const activeCurrency = usePreferences((s) => s.currency);
   const shipThreshold = freeShippingThresholdFmt(activeCurrency);
-  // Hook — must sit above the early returns below, not beside bundleDeal.
-  const bundleLabel = useBundleLabel();
   const shipDest = `${shipCountry.the ? "the " : ""}${shipCountry.name}`;
 
   /*
@@ -648,13 +679,64 @@ function ProductPage() {
   const multiBuy = inDuoDeal(node.handle);
   const tier =
     MULTI_BUY_TIERS.find((t) => t.quantity === (multiBuy ? pack : 1)) ?? MULTI_BUY_TIERS[0];
-  const units = [variant, ...extraVariants].slice(0, tier.quantity);
+  /* Underwear bundle: 1, 3 or 5 pairs, all in this colour or mixed across
+     the three styles (picks). Its £ amounts are UK prices, shown only when
+     the shopper sees GBP, as bundleLabel does; elsewhere the tiles name the
+     deal and the bag shows Shopify's own figure. */
+  const bundle = inBundleDeal(node.handle);
+  const mixing = bundle && pack > 1 && bundleMode === "mix";
+  const bundlePriced = currency === "GBP" && activeCurrency === "GBP";
+  // The pill under the price: both breaks, priced under the same rule as the tiles.
+  const bundleLabel = bundleHeadline(bundlePriced ? "GBP" : "");
+  /** Units the main button adds. */
+  const count = bundle ? pack : tier.quantity;
+  const short = (n: number) => cur(n).replace(/\.00$/, "");
+  // Non-null past the "not found" return above.
+  const self = product as ShopifyProduct;
+  const globalSize = sizeOption ? currentSelected[sizeOption.name] : undefined;
+  /** The bundle's styles in BUNDLE_DEAL order; this page's own data for this one. */
+  const bundleStyles = bundle
+    ? BUNDLE_DEAL.handles
+        .map((h) => (h === node.handle ? self : bundleProducts.find((p) => p.node.handle === h)))
+        .filter((p): p is ShopifyProduct => !!p)
+    : [];
+  type Unit = { p: ShopifyProduct; v: NonNullable<typeof variant> | undefined };
+  const units: Unit[] = mixing
+    ? picks.slice(0, pack).map((pk) => {
+        const p = bundleStyles.find((s) => s.node.handle === pk.handle);
+        const sz = pk.size ?? globalSize;
+        return { p: p ?? self, v: p && sz ? bundleVariant(p, pk.colour, sz) : undefined };
+      })
+    : bundle
+      ? Array.from({ length: pack }, () => ({ p: self, v: variant }))
+      : [variant, ...extraVariants].slice(0, tier.quantity).map((v) => ({ p: self, v }));
   /** Unit prices for a tier: each chosen item's own price, the shown price until it resolves. */
   const tierUnitPrices = (t: MultiBuyTier) =>
     [variant, ...extraVariants]
       .slice(0, t.quantity)
       .map((u) => (u ? parseFloat(u.price.amount) : unitPrice));
-  const payTotal = tierTotal(tierUnitPrices(tier), tier.percent);
+  /** A bundle at these unit prices: £2.99 / £3.99 off each pair at 3 / 5 (bundleUnitOffGBP). */
+  const bundleTotal = (prices: number[]) => {
+    const full = prices.reduce((s, x) => s + x, 0);
+    const off = bundlePriced ? prices.length * bundleUnitOffGBP(prices.length) : 0;
+    return Math.round((full - off) * 100) / 100;
+  };
+  const payTotal = bundle
+    ? bundleTotal(
+        Array.from({ length: pack }, (_, i) =>
+          units[i]?.v ? parseFloat(units[i].v.price.amount) : unitPrice,
+        ),
+      )
+    : tierTotal(tierUnitPrices(tier), tier.percent);
+  /* The price the buttons and sticky bars quote. A bundle outside GBP has
+     none: its discount is Shopify's market figure, shown in the bag. */
+  const payLabel: string | null =
+    bundle && count > 1 ? (bundlePriced ? short(payTotal) : null) : cur(payTotal);
+  /* What the button still needs before it can add: the rest of a mixed
+     bundle, then a size for every pair. */
+  const pairsLeft = mixing ? Math.max(0, pack - picks.length) : 0;
+  const sized = mixing ? picks.slice(0, pack).every((pk) => !!(pk.size ?? globalSize)) : hasSize;
+  const ctaNeed = pairsLeft ? `Pick ${pairsLeft} more` : sized ? null : "Select a Size";
   /* Free-shipping progress: exactly the bag's standing - its value after
      discounts (bagTotals) under the drawer's own rule (bagFreeShipping) - so
      the box and the bag always show the same figure. This selection is NOT
@@ -666,16 +748,30 @@ function ProductPage() {
 
   /* This exact selection (tier + variants) is what the main button last added
      and it is still in the bag: the sticky bar then just goes to checkout. */
-  const unitsKey = `${tier.quantity}:${units.map((u) => u?.id ?? "").join("|")}`;
+  const unitsKey = `${count}:${units.map((u) => u.v?.id ?? "").join("|")}`;
   const inBag =
-    addedKey === unitsKey && units.every((u) => !!u && bagItems.some((i) => i.variantId === u.id));
+    addedKey === unitsKey &&
+    units.length === count &&
+    units.every(({ v }) => !!v && bagItems.some((i) => i.variantId === v.id));
 
-  const choosePack = (q: MultiBuyTier["quantity"]) => {
+  const choosePack = (q: number) => {
     setPack(q);
     // Items beyond the new tier are dropped, so a later tier starts as a copy of #1 again.
     setExtraSel((prev) => prev.slice(0, q - 1));
+    setPicks((prev) => prev.slice(0, q));
     setPreviewColour(undefined);
   };
+
+  /** Mixing starts from what's on screen: this style in this colour is pair 1. */
+  const chooseMode = (m: BundleMode) => {
+    setBundleMode(m);
+    if (m === "mix" && picks.length === 0 && activeColour)
+      setPicks([{ handle: node.handle, colour: activeColour }]);
+    setPreviewColour(undefined);
+  };
+
+  const scrollToBuilder = () =>
+    builderRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
 
   /** Whether some purchasable variant has this option value, given a row's other picks. */
   const optAvailable = (sel: Record<string, string>, name: string, value: string) =>
@@ -689,7 +785,7 @@ function ProductPage() {
 
   /** What stops a row of the multi-buy panel being added, if anything. */
   const rowProblem = (i: number): string | null => {
-    const u = units[i];
+    const u = units[i]?.v;
     const sel = i === 0 ? currentSelected : extraSels[i - 1];
     if (sizeOption && !sel[sizeOption.name]) return `Choose a size for item #${i + 1}`;
     if (!u) return `Item #${i + 1}: that colour and size don't go together — pick another`;
@@ -699,6 +795,29 @@ function ProductPage() {
 
   /** Size chosen and every item resolves to a purchasable variant; tells the shopper if not. */
   const readyToAdd = (): boolean => {
+    if (mixing) {
+      if (pairsLeft) {
+        scrollToBuilder();
+        return false;
+      }
+      const unsized = picks.slice(0, pack).findIndex((pk) => !(pk.size ?? globalSize));
+      if (unsized >= 0) {
+        if (!globalSize) scrollToSizes();
+        else toast.error(`Choose a size for pair ${unsized + 1}`, { position: "top-center" });
+        return false;
+      }
+      const bad = units.findIndex(({ v }) => !v || !v.availableForSale);
+      if (bad >= 0) {
+        toast.error(
+          units[bad].v
+            ? `Pair ${bad + 1} is sold out in that size — choose another`
+            : `Pair ${bad + 1}: that colour and size don't go together — choose another`,
+          { position: "top-center" },
+        );
+        return false;
+      }
+      return true;
+    }
     if (!hasSize) {
       scrollToSizes();
       return false;
@@ -712,7 +831,8 @@ function ProductPage() {
       );
       return false;
     }
-    const problem = units.map((_, i) => rowProblem(i)).find(Boolean);
+    // Buy 2 rows; a single-colour bundle is N of the variant checked above.
+    const problem = multiBuy ? units.map((_, i) => rowProblem(i)).find(Boolean) : null;
     if (problem) {
       toast.error(problem, { position: "top-center" });
       return false;
@@ -729,18 +849,23 @@ function ProductPage() {
     // The bag keeps one line per variant: the same size/colour twice is one
     // line of 2. Different sizes/colours are separate lines - the Shopify
     // rule counts units per product, so every one still earns the rate.
-    const lines = new Map<string, { v: NonNullable<typeof variant>; qty: number }>();
-    for (const u of units) {
-      if (!u) return "none";
-      lines.set(u.id, { v: u, qty: (lines.get(u.id)?.qty ?? 0) + 1 });
+    // A mixed bundle's pairs can come from all three underwear styles.
+    const lines = new Map<string, { p: ShopifyProduct; v: NonNullable<typeof variant>; qty: number }>();
+    for (const { p, v } of units) {
+      if (!v) return "none";
+      lines.set(v.id, { p, v, qty: (lines.get(v.id)?.qty ?? 0) + 1 });
     }
-    const attributes = multiBuy
-      ? [{ key: MULTI_BUY_ATTRIBUTE, value: String(tier.quantity) }]
-      : undefined;
+    if (!lines.size) return "none";
+    const attributes =
+      multiBuy
+        ? [{ key: MULTI_BUY_ATTRIBUTE, value: String(count) }]
+        : bundle && count > 1
+          ? [{ key: BUNDLE_ATTRIBUTE, value: String(count) }]
+          : undefined;
     let done = 0;
-    for (const { v, qty } of lines.values()) {
+    for (const { p, v, qty } of lines.values()) {
       const added = await addItem({
-        product,
+        product: p,
         variantId: v.id,
         variantTitle: v.title,
         price: v.price,
@@ -772,11 +897,13 @@ function ProductPage() {
     }
     setAddedKey(unitsKey);
     toast.success(
-      tier.quantity === 1
+      count === 1
         ? "Added to bag"
-        : tier.percent
-          ? `${tier.quantity} added to bag — ${tier.percent}% off each applies at checkout`
-          : `${tier.quantity} added to bag`,
+        : bundle
+          ? `${count} pairs added — the bundle price shows in your bag`
+          : tier.percent
+            ? `${tier.quantity} added to bag — ${tier.percent}% off each applies at checkout`
+            : `${tier.quantity} added to bag`,
       { position: "top-center" },
     );
   };
@@ -894,9 +1021,6 @@ function ProductPage() {
               <span className="inline-block rounded-pill border border-[#0a0a0a] px-2.5 py-[3px] text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
                 {bundleLabel}
               </span>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-[#555555]">
-                {BUNDLE_DEAL.detail}
-              </p>
             </div>
           )}
         </div>
@@ -1066,9 +1190,6 @@ function ProductPage() {
                 <span className="inline-block rounded-pill border border-[#0a0a0a] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
                   {bundleLabel}
                 </span>
-                <p className="mt-2 text-[12px] leading-relaxed text-[#555555]">
-                  {BUNDLE_DEAL.detail}
-                </p>
               </div>
             )}
             </div>
@@ -1086,8 +1207,40 @@ function ProductPage() {
               </p>
             </div>
 
-            {/* Colour */}
-            {colorOption && (
+            {/* Underwear "Bundle & save" (v177, after Step One): how many
+                pairs first, then one colour for all of them or a mix. */}
+            {bundle && (
+              <>
+                <BundleTiles
+                  name={`bundle-${node.handle}`}
+                  value={pack}
+                  onChange={choosePack}
+                  price={(pairs) => {
+                    // Outside GBP the deal is named, not priced (bundleLabel).
+                    if (pairs > 1 && !bundlePriced) return { perPair: null, total: null, full: null };
+                    const each = Math.round((unitPrice - bundleUnitOffGBP(pairs)) * 100) / 100;
+                    const total = Math.round(each * pairs * 100) / 100;
+                    // Struck against the single price only, never the compare-at.
+                    const full = Math.round(unitPrice * pairs * 100) / 100;
+                    return {
+                      perPair: short(each),
+                      total: pairs > 1 ? short(total) : null,
+                      full: pairs > 1 && total < full ? cur(full) : null,
+                    };
+                  }}
+                />
+                {pack > 1 && (
+                  <BundleModeToggle
+                    name={`bundle-mode-${node.handle}`}
+                    value={bundleMode}
+                    onChange={chooseMode}
+                  />
+                )}
+              </>
+            )}
+
+            {/* Colour (a mixed bundle picks colours pair by pair instead) */}
+            {colorOption && !mixing && (
               <div className="mt-8">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
                   Colour
@@ -1131,7 +1284,14 @@ function ProductPage() {
                 className={`mt-7 rounded-card transition-shadow duration-500 ${sizePulse ? "ring-1 ring-[#0a0a0a] ring-offset-4" : ""}`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">Size</p>
+                  <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
+                    Size
+                    {bundle && pack > 1 && (
+                      <span className="ml-2 font-normal normal-case tracking-normal text-[#888888]">
+                        {mixing ? "change any pair below" : `for all ${pack} pairs`}
+                      </span>
+                    )}
+                  </p>
                   {showSizeGuide && (
                     <button
                       onClick={() => setSizeGuideOpen(true)}
@@ -1193,6 +1353,50 @@ function ProductPage() {
                 </div>
               </div>
             ))}
+
+            {mixing && (
+              <div ref={builderRef}>
+                <BundleMixer
+                  key={node.handle}
+                  styles={bundleStyles}
+                  current={node.handle}
+                  pairs={pack}
+                  picks={picks}
+                  size={globalSize}
+                  doneNote={
+                    bundlePriced
+                      ? `Bundle complete: ${pack} pairs for ${payLabel}`
+                      : "Bundle complete: the bundle price shows in your bag"
+                  }
+                  onPick={(h, colour) => {
+                    setPicks((prev) => [...prev, { handle: h, colour }]);
+                    // The gallery shows this style's colour when it's this page's style.
+                    if (h === node.handle)
+                      setPreviewColour(colour !== activeColour ? colour : undefined);
+                  }}
+                  onRemove={(i) => {
+                    setPicks((prev) => prev.filter((_, j) => j !== i));
+                    setPreviewColour(undefined);
+                  }}
+                  onSize={(i, s) =>
+                    setPicks((prev) => prev.map((pk, j) => (j === i ? { ...pk, size: s } : pk)))
+                  }
+                />
+              </div>
+            )}
+            {bundle && (
+              <p className="mt-3 text-[12px] text-[#555555]">
+                Mix and match across our{" "}
+                <Link
+                  to="/collections/$handle"
+                  params={{ handle: "underwear" }}
+                  className="underline underline-offset-2"
+                >
+                  briefs and thongs
+                </Link>
+                . The price updates in your bag.
+              </p>
+            )}
 
             {/*
               Multi-buy power cards (v158). True and plain: each tier's price
@@ -1325,28 +1529,36 @@ function ProductPage() {
             </div>
 
             {/* Add to bag / Select a size - the boldest thing on the page:
-                full-width, solid --cta fill in both states. */}
+                full-width, solid --cta fill. Grey while a mixed bundle still
+                has pairs to pick (Step One does the same); a tap scrolls to
+                the builder. */}
             <div className="mt-4">
             <button
               ref={atcRef}
               onClick={handleAdd}
               disabled={adding}
-              className="flex h-14 w-full items-center justify-center rounded-control bg-cta text-[13px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_24px_-12px_rgba(0,0,0,0.55)] transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
+              className={`flex h-14 w-full items-center justify-center rounded-control text-[13px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_24px_-12px_rgba(0,0,0,0.55)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60 ${
+                pairsLeft ? "bg-[#6b6b6b] hover:bg-[#555555]" : "bg-cta hover:bg-cta-hover"
+              }`}
             >
               {adding ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : hasSize ? (
-                <>
-                  {tier.quantity > 1 ? (
-                    <>
-                      Add {tier.quantity} to Bag — {cur(payTotal)}
-                    </>
-                  ) : (
-                    <>Add to Bag — {cur(unitPrice)}</>
-                  )}
-                </>
+              ) : pairsLeft ? (
+                `Pick ${pairsLeft} more pair${pairsLeft === 1 ? "" : "s"}`
+              ) : ctaNeed ? (
+                ctaNeed
+              ) : count > 1 ? (
+                bundle ? (
+                  <>
+                    Add {count} pairs{payLabel && <> — {payLabel}</>}
+                  </>
+                ) : (
+                  <>
+                    Add {count} to Bag — {payLabel}
+                  </>
+                )
               ) : (
-                "Select a Size"
+                <>Add to Bag — {cur(unitPrice)}</>
               )}
             </button>
             </div>
@@ -1540,11 +1752,11 @@ function ProductPage() {
               {node.title}
             </p>
             <p className="text-[15px] font-semibold leading-tight text-[#0a0a0a]">
-              {cur(payTotal)}
-              {tier.quantity > 1 && (
+              {payLabel ?? `${count} pairs`}
+              {payLabel && count > 1 && (
                 <span className="text-[12px] font-normal text-[#555555]">
                   {" "}
-                  · {tier.quantity} items
+                  · {count} {bundle ? "pairs" : "items"}
                 </span>
               )}
             </p>
@@ -1553,18 +1765,20 @@ function ProductPage() {
             onClick={handleBuyNow}
             disabled={adding || buyingNow}
             aria-label={
-              !hasSize
+              ctaNeed
                 ? undefined
                 : inBag
                   ? "Go to checkout"
-                  : `Buy now: add ${tier.quantity === 1 ? "this item" : `${tier.quantity} items`} to your bag and go to checkout`
+                  : `Buy now: add ${count === 1 ? "this item" : `${count} ${bundle ? "pairs" : "items"}`} to your bag and go to checkout`
             }
-            className="flex h-12 min-w-[120px] shrink-0 items-center justify-center rounded-control bg-cta px-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
+            className={`flex h-12 min-w-[120px] shrink-0 items-center justify-center rounded-control px-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60 ${
+              pairsLeft ? "bg-[#6b6b6b] hover:bg-[#555555]" : "bg-cta hover:bg-cta-hover"
+            }`}
           >
             {buyingNow ? (
               <Loader2 className="h-4 w-4 animate-spin" />
-            ) : !hasSize ? (
-              "Select a Size"
+            ) : ctaNeed ? (
+              ctaNeed
             ) : inBag ? (
               "Checkout"
             ) : (
@@ -1588,11 +1802,11 @@ function ProductPage() {
               {node.title}
             </p>
             <p className="text-[15px] font-semibold leading-tight text-[#0a0a0a]">
-              {cur(payTotal)}
-              {tier.quantity > 1 && (
+              {payLabel ?? `${count} pairs`}
+              {payLabel && count > 1 && (
                 <span className="text-[12px] font-normal text-[#555555]">
                   {" "}
-                  · {tier.quantity} items
+                  · {count} {bundle ? "pairs" : "items"}
                 </span>
               )}
             </p>
@@ -1600,9 +1814,11 @@ function ProductPage() {
           <button
             onClick={handleAdd}
             disabled={adding}
-            className="flex h-12 shrink-0 items-center justify-center rounded-control bg-cta px-8 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-cta-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60"
+            className={`flex h-12 shrink-0 items-center justify-center rounded-control px-8 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:opacity-60 ${
+              pairsLeft ? "bg-[#6b6b6b] hover:bg-[#555555]" : "bg-cta hover:bg-cta-hover"
+            }`}
           >
-            {hasSize ? "Add to Bag" : "Select a Size"}
+            {ctaNeed ?? "Add to Bag"}
           </button>
         </div>
       </div>

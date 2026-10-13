@@ -18,7 +18,6 @@ import { hasMarketingConsent, onConsentChange } from "@/lib/consent";
 import { Toaster } from "sonner";
 import { QuickAddSheet } from "@/components/site/QuickAddSheet";
 import { GlueOfferPopup } from "@/components/site/GlueOfferPopup";
-import { BundleOfferPopup } from "@/components/site/BundleOfferPopup";
 import { useQuickAdd } from "@/stores/quickAddStore";
 import { useCartSync } from "@/hooks/useCartSync";
 import { useDomTranslation } from "@/lib/preferences";
@@ -193,7 +192,6 @@ function RootComponent() {
       <Outlet />
       <GlobalQuickAdd />
       <GlueOfferPopup />
-      <BundleOfferPopup />
       <CookieConsent />
       <Toaster position="top-center" />
     </QueryClientProvider>

@@ -11,7 +11,13 @@ import { useQuickAdd } from "@/stores/quickAddStore";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
 import { bagFreeShipping, useShippingCountry } from "@/lib/shipping";
 import { cartLineImage } from "@/lib/cartImage";
-import { BUNDLE_DEAL, BUNDLE_SHOPIFY_TITLE, bundleLabel, inBundleDeal } from "@/lib/bundleDeal";
+import {
+  BUNDLE_DEAL,
+  BUNDLE5_SHOPIFY_TITLE,
+  BUNDLE_SHOPIFY_TITLE,
+  bundleLabel,
+  inBundleDeal,
+} from "@/lib/bundleDeal";
 import { DUO_DEAL } from "@/lib/duoDeal";
 import { bagTotals } from "@/lib/bagTotals";
 import { estimateDelivery, DISPATCH_CUTOFF_LONDON } from "@/lib/deliveryEstimate";
@@ -68,12 +74,18 @@ export function CartDrawer() {
   const totals = useCartStore((s) => s.totals);
   const { baseCurrency, duoSaving, duoOneShort, bundleSaving, shopifyTotals, payable, pending } =
     bagTotals(items, totals, displayCurrency, discountCodes);
+  /* Bundle: how many eligible underwear lines are in the bag. */
+  const bundleQty = items.filter((i) => inBundleDeal(i.product.node.handle)).reduce((s, i) => s + i.quantity, 0);
   const savingLines: Array<{ label: string; amount: number }> = shopifyTotals
     ? shopifyTotals.discounts.map((d) =>
-        d.label.toLowerCase() === BUNDLE_SHOPIFY_TITLE.toLowerCase() ? { ...d, label: bundleLabel(baseCurrency) } : d,
+        d.label.toLowerCase() === BUNDLE_SHOPIFY_TITLE.toLowerCase()
+          ? { ...d, label: bundleLabel(baseCurrency) }
+          : d.label.toLowerCase() === BUNDLE5_SHOPIFY_TITLE.toLowerCase()
+            ? { ...d, label: bundleLabel(baseCurrency, 5) }
+            : d,
       )
     : [
-        ...(bundleSaving > 0 ? [{ label: bundleLabel(baseCurrency), amount: bundleSaving }] : []),
+        ...(bundleSaving > 0 ? [{ label: bundleLabel(baseCurrency, bundleQty), amount: bundleSaving }] : []),
         ...(duoSaving > 0 ? [{ label: `Buy 2, save ${DUO_DEAL.percent}%`, amount: duoSaving }] : []),
       ];
 
@@ -127,8 +139,6 @@ export function CartDrawer() {
     staleTime: 5 * 60_000,
   });
 
-  /* Bundle: how many eligible underwear lines are in the bag. */
-  const bundleQty = items.filter((i) => inBundleDeal(i.product.node.handle)).reduce((s, i) => s + i.quantity, 0);
 
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const handleCheckout = async () => {
