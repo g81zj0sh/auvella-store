@@ -64,11 +64,12 @@ export const BUNDLE_STYLE_NAMES: Record<string, string> = {
 };
 
 /*
- * Tiles that wear a small "Sale" sticker (owner's pick, 13 Oct 2026). The
- * sticker only shows while the tile itself shows a reduced price, so it can
- * never say "Sale" next to a full price.
+ * Tiles that wear a small "Sale" sticker: all three bundle styles (owner,
+ * 13 Oct 2026; v176 had the lace brief only). The sticker only shows while
+ * the tile itself shows a reduced price, so it can never say "Sale" next to a
+ * full price.
  */
-export const SALE_STICKER_HANDLES = ["cotton-lace-brief"];
+export const SALE_STICKER_HANDLES = BUNDLE_DEAL.handles;
 
 export function inBundleDeal(handle: string | undefined | null): boolean {
   return !!handle && BUNDLE_DEAL.handles.includes(handle);
