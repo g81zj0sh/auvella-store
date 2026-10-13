@@ -50,14 +50,6 @@ export const PRODUCT_FACETS: Record<string, FacetValues> = {
     cup: "3/4 Cup",
     material: "Nylon Blend",
   },
-  "womens-bra": {
-    category: "Bras & Bralettes",
-    style: "Strapless",
-    wiring: "Wireless",
-    lining: "Moulded",
-    cup: "Silicone",
-    material: "Silicone",
-  },
   "seamless-sculpt-sports-bra": {
     category: "Activewear",
     style: "Sports",

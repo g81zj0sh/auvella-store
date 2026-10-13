@@ -42,7 +42,6 @@ export const DUO_DEAL = {
     "solid-colour-bikini-set",
     "strapless-slim-fit-bodysuit",
     "strapless-tummy-control-body-shaper",
-    "womens-bra",
     "womens-high-waisted-ruched-bikini-bottoms",
     "womens-one-piece-diamond-swimsuit",
     "womens-swimwear",

@@ -600,26 +600,6 @@ export const PRODUCT_SIZE_CHARTS = {
     ],
     fitNote: "Size up for more coverage. All measurements in cm — supplier notes allow 1–2 cm manual-measurement difference. ‘EURP SIZE’ (EU) column printed on the chart — kept. Size ranges refer to body measurements in centimetres.",
   },
-  /* Supplier's updated chart, sent by Joshua 12 Oct 2026 (replaces the old
-     weight / bra-size chart). Garment measurements in cm: Length, Bust and
-     Bust (Stretch). The chart also prints XXL (25 / 77 / 110 cm), which isn't
-     sold. Same numbers as the maternity nursing bra's chart. */
-  "womens-bra": {
-    guideType: "bra",
-    unit: "both",
-    columns: ["Size", "Length", "Bust (Relaxed)", "Bust (Stretched)"],
-    rows: [
-      ["S", "21 cm (8.3\")", "61 cm (24.0\")", "94 cm (37.0\")"],
-      ["M", "22 cm (8.7\")", "65 cm (25.6\")", "98 cm (38.6\")"],
-      ["L", "23 cm (9.1\")", "69 cm (27.2\")", "102 cm (40.2\")"],
-      ["XL", "24 cm (9.4\")", "73 cm (28.7\")", "106 cm (41.7\")"],
-    ],
-    fitNote:
-      "These are the bra's own measurements, not body sizes: Bust (Relaxed) is the band at rest and Bust (Stretched) is as far as it stretches. To choose, fasten a bra that fits you well, lay it flat and measure straight across the bottom of the band; double that and pick the size with the closest Bust (Relaxed). With no straps, the band does all the holding, so if you're between two sizes, take the smaller.",
-    // Body measurements don't map onto a relaxed/stretched band, so the
-    // guide's "How to measure" steps would point the wrong way here.
-    howToMeasure: false,
-  },
   "solid-colour-bikini-set": {
     guideType: "swim",
     columns: ["Size", "Bust", "Waist", "Hip", "Cup"],
@@ -646,10 +626,14 @@ export const PRODUCT_SIZE_CHARTS = {
     ],
     fitNote: "Cut close to the body — size up if between sizes. Inch and cm values both printed on the chart; US/UK-AU/DE size columns printed on the chart. (Chart supplied separately by store owner, 2026-07-29 — not yet tagged in the Shopify gallery.). Size ranges refer to body measurements in centimetres.",
   },
+  /* SU00362446's own chart: TeemDrop re-sent it on 13 Oct 2026, saying the
+     chart sent on 12 Oct as the silicone bra's was really this one (that bra
+     had no chart, and Joshua deleted it). Garment measurements in cm,
+     headings as printed. */
   "maternity-nursing-bra-front-opening-push-up": {
     guideType: "bra",
     unit: "both",
-    columns: ["Size", "Garment Length", "Underbust", "Underbust (Stretched)"],
+    columns: ["Size", "Garment Length", "Underbust", "Underbust Stretch"],
     rows: [
       ["S", "21 cm (8.3\")", "61 cm (24.0\")", "94 cm (37.0\")"],
       ["M", "22 cm (8.7\")", "65 cm (25.6\")", "98 cm (38.6\")"],
@@ -658,7 +642,10 @@ export const PRODUCT_SIZE_CHARTS = {
       ["XXL", "25 cm (9.8\")", "77 cm (30.3\")", "110 cm (43.3\")"],
     ],
     fitNote:
-      "Choose by underbust — the band provides the support, and it stretches to the Underbust (Stretched) figure for comfort through pregnancy and nursing. Corrected supplier chart, confirmed directly with the supplier (replaces an earlier mis-supplied chart). All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+      "These are the bra's own measurements, not body sizes: Underbust is the band at rest and Underbust Stretch is as far as it stretches, which leaves room through pregnancy and nursing. To choose, fasten a bra that fits you well, lay it flat and measure straight across the bottom of the band; double that and pick the size with the closest Underbust. Start on the loosest hooks, so there's room to tighten as things settle.",
+    // Body measurements don't map onto a relaxed/stretched band, so the
+    // guide's "How to measure" steps would point the wrong way here.
+    howToMeasure: false,
   },
   "womens-swimwear": {
     guideType: "swim",

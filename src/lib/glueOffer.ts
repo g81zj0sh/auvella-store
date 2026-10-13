@@ -17,7 +17,6 @@ export const GLUE_HANDLE = "body-adhesive-glue-for-clothing-security";
 export const GLUE_PAIRS: Record<string, string> = {
   "invisible-front-buckle-strapless-bra": "strapless bra",
   "jelly-cup-multi-way-strapless-bra": "strapless bra",
-  "womens-bra": "backless bra",
   "strapless-slim-fit-bodysuit": "strapless bodysuit",
   "strapless-tummy-control-body-shaper": "strapless bodysuit",
   "off-shoulder-sculpt-midi-dress": "off-shoulder dress",

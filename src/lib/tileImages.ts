@@ -311,13 +311,6 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Nude": "/tiles/jelly-cup-multi-way-strapless-bra-nude-v2.webp",
     "Black": "/tiles/jelly-cup-multi-way-strapless-bra-black-v2.webp",
   },
-  "womens-bra": {
-    "Pink": "/tiles/womens-bra-pink.webp",
-    "Tan": "/tiles/womens-bra-tan.webp",
-    "Green": "/tiles/womens-bra-green.webp",
-    "Black": "/tiles/womens-bra-black.webp",
-    "Off-White": "/tiles/womens-bra-off-white.webp",
-  },
   "waist-shaping-fitness-body-shaper": {
     "Nude": "/tiles/waist-shaping-fitness-body-shaper-nude-v2.webp",
     "Pink": "/tiles/waist-shaping-fitness-body-shaper-pink-v2.webp",
@@ -394,7 +387,6 @@ export const TILE_DEFAULT_COLOUR: Record<string, string> = {
   "seamless-shaping-long-sleeve-bodysuit": "Rose Pink",
   "seamless-sculpting-bodysuit": "Coffee",
   // Bras and underwear
-  "womens-bra": "Green",
   "womens-menstrual-period-panties": "Denim Blue",
   "cotton-lace-brief": "Pink",
   // Lounge and sleep

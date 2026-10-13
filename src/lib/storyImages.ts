@@ -192,10 +192,6 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/lace-bralette-wine-bar.webp",
     alt: "Lace Scoop Bralette in pink under a cream blazer at a wine bar",
   },
-  "womens-bra": {
-    src: "/story/silicone-bra-hotel-mirror.webp",
-    alt: "Silicone Strapless Backless Bra in off-white, hotel mirror photo before a night out",
-  },
   "seamless-support-bra-with-tummy-control": {
     src: "/story/tummy-control-bra-window-v2.webp",
     alt: "Seamless Tummy Control Bra in nude with jeans, by a bright window at home",
