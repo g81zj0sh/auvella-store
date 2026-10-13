@@ -368,6 +368,12 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/cowl-neck-lace-up-mini-dress-black.webp",
     "Burgundy": "/tiles/cowl-neck-lace-up-mini-dress-burgundy.webp",
   },
+  "thick-rib-knit-lounge-set": {
+    "Blue": "/tiles/thick-rib-knit-lounge-set-blue.webp",
+    "Oatmeal": "/tiles/thick-rib-knit-lounge-set-oatmeal.webp",
+    "Grey": "/tiles/thick-rib-knit-lounge-set-grey.webp",
+    "Black": "/tiles/thick-rib-knit-lounge-set-black.webp",
+  },
 };
 
 /*
@@ -395,6 +401,7 @@ export const TILE_DEFAULT_COLOUR: Record<string, string> = {
   "women-asymmetric-long-sleeve-t-shirt-and-wide-leg-pants-set": "Dark Green",
   "slim-fit-long-sleeve-top": "Blue",
   "fleece-lined-drawstring-lounge-set": "Pink",
+  "thick-rib-knit-lounge-set": "Oatmeal",
   // Dresses
   "cowl-neck-lace-up-back-mini-dress": "Burgundy",
   "off-shoulder-sculpt-midi-dress": "Green",

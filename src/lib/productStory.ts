@@ -118,7 +118,10 @@ function fibreCard(key: FibreKey, ctx: string): Omit<Fabric, "share"> {
         ? { name: "Satin-finish polyester", line: "Smooth and cool with a soft sheen, and it doesn't crease.", tag: "Smooth" }
         : /velvet/i.test(ctx)
           ? { name: "Velvet-finish polyester", line: "A soft pile that holds warmth and keeps its colour.", tag: "Warm" }
-          : { name: "Polyester", line: "Light and hard-wearing; keeps its colour and shape wash after wash.", tag: "Easy care" };
+          // A thick rib knit isn't "light": say what it is.
+          : /thick(ened)? rib/i.test(ctx)
+            ? { name: "Rib-knit polyester", line: "A thick, springy rib that holds its shape and keeps its colour.", tag: "Warm" }
+            : { name: "Polyester", line: "Light and hard-wearing; keeps its colour and shape wash after wash.", tag: "Easy care" };
     case "silk":
       return { name: "Mulberry silk", line: "Smooth against skin and hair.", tag: "Smooth" };
     case "silicone":
@@ -252,6 +255,9 @@ const BENEFITS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^no boning, no buttons/i, () => "No boning, no buttons — it flexes when you bend and nothing digs in"],
   [/^built-in abdominal belt/i, () => "Built-in abdominal belt — firm hold through the middle, no separate belt to fasten"],
   [/^elasticated waist$/i, () => "Elasticated waist — gives when you sit, no pressure line"],
+  [/^thickened rib knit, heat-set/i, () => "Thickened rib knit, heat-set — a proper layer for cold mornings, and the rib keeps its shape"],
+  [/^long-sleeve crew-neck top, hip length/i, () => "Long-sleeve crew-neck top, hip length — warm to the wrist, and it covers the trouser waistband"],
+  [/^wide-leg trousers with a drawstring waist and side pockets/i, () => "Wide-leg trousers, drawstring waist, side pockets — nothing clings, you set the waist, and your phone has a home"],
   [/^(lightweight, )?(breathable, )?quick-drying(, breathable)?$|^breathable, moisture-wicking$/i, () => "Light, quick-drying fabric that breathes — comfortable through a warm day"],
   [/^strapless bustier cut, no fastenings/i, () => "Strapless bustier cut, no fastenings — nothing to show under an off-shoulder neckline"],
   [/^built-in moulded bra pads/i, () => "Built-in moulded bra pads — one layer instead of a top and a bra"],

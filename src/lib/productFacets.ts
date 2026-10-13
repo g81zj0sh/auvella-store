@@ -351,6 +351,13 @@ export const PRODUCT_FACETS: Record<string, FacetValues> = {
     sleeve: "Long Sleeve",
     material: "Cotton-Feel",
   },
+  "thick-rib-knit-lounge-set": {
+    category: "Loungewear",
+    style: "Lounge Set",
+    fabric: "Knit",
+    sleeve: "Long Sleeve",
+    material: "Polyester Blend",
+  },
   "womens-velvet-jumpsuit-long-sleeve-square-neck": {
     category: "Loungewear",
     style: "Jumpsuit",

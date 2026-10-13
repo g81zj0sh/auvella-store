@@ -234,4 +234,10 @@ export const STORY_IMAGES: Record<string, StoryImage> = {
     src: "/story/lace-up-mini-dress-sea-terrace.webp",
     alt: "Cowl Neck Lace-Up Back Mini Dress in burgundy, showing the open lace-up back on a sea-view terrace at golden hour",
   },
+  // 13 Oct 2026, new product set up on arrival (Joshua's standing rule):
+  // Soul 2.0 candid, the Blue set put on by Seedream from the product photos.
+  "thick-rib-knit-lounge-set": {
+    src: "/story/rib-knit-lounge-set-cabin-morning.webp",
+    alt: "Thick Rib-Knit Lounge Set in blue, morning coffee by the window of a timber cabin in autumn",
+  },
 };

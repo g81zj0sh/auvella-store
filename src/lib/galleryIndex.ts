@@ -397,6 +397,12 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
     "Grass Green": { m: ["hf_20260926_165250_748e43ab-becf-4edd-ad53-b5c86196f008_min.webp"], g: ["hf_20260926_161747_1416b5ab-d87d-4999-840d-08951e3ff7f1_min.webp", "hf_20260926_161917_2df2f902-5249-490a-ae11-a173dfe9de5e_min.webp"], hex: null },
     "Leopard Print": { m: ["hf_20260926_165250_beae98c0-c102-4cce-a732-ff9b12fc4a49_min.webp"], g: ["hf_20260926_161748_e0349626-e655-45b5-ada9-9277c6a2d3ea_min.webp", "hf_20260926_161747_6d6895a9-6f31-43b3-9cad-38a58b00402f_min.webp"], hex: null, sw: { f: "hf_20260926_161748_e0349626-e655-45b5-ada9-9277c6a2d3ea_min.webp", x: 36, y: 41, z: 800 } },
   },
+  "thick-rib-knit-lounge-set": {
+    "Blue": { m: ["autumn-and-winter-pit-thickened-suit-blue-1.jpg", "autumn-and-winter-pit-thickened-suit-blue-2.jpg", "autumn-and-winter-pit-thickened-suit-blue-3.jpg", "autumn-and-winter-pit-thickened-suit-blue-4.jpg"], g: ["autumn-and-winter-pit-thickened-suit-blue-5.jpg", "autumn-and-winter-pit-thickened-suit-blue-6.jpg"], hex: "#384661" },
+    "Oatmeal": { m: ["autumn-and-winter-pit-thickened-suit-apricot-1.jpg", "autumn-and-winter-pit-thickened-suit-apricot-2.jpg", "autumn-and-winter-pit-thickened-suit-apricot-3.jpg", "autumn-and-winter-pit-thickened-suit-apricot-4.jpg"], g: ["autumn-and-winter-pit-thickened-suit-apricot-5.jpg", "autumn-and-winter-pit-thickened-suit-apricot-6.jpg"], hex: "#d7cdc3" },
+    "Grey": { m: ["autumn-and-winter-pit-thickened-suit-khaki-1.jpg", "autumn-and-winter-pit-thickened-suit-khaki-2.jpg", "autumn-and-winter-pit-thickened-suit-khaki-3.jpg", "autumn-and-winter-pit-thickened-suit-khaki-4.jpg"], g: ["autumn-and-winter-pit-thickened-suit-khaki-5.jpg", "autumn-and-winter-pit-thickened-suit-khaki-6.jpg"], hex: "#a7a09a" },
+    "Black": { m: ["autumn-and-winter-pit-thickened-suit-black-1.jpg", "autumn-and-winter-pit-thickened-suit-black-2.jpg", "autumn-and-winter-pit-thickened-suit-black-3.jpg", "autumn-and-winter-pit-thickened-suit-black-4.jpg"], g: ["autumn-and-winter-pit-thickened-suit-black-5.jpg", "autumn-and-winter-pit-thickened-suit-black-6.jpg"], hex: "#1a1a1a" },
+  },
 };
 
 type Img = { url: string; altText?: string | null };
