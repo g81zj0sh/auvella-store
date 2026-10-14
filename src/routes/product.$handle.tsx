@@ -47,6 +47,8 @@ import {
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { ensurePerks } from "@/components/site/PerkSync";
+import { PerkUnlocks } from "@/components/site/PerkUnlocks";
+import { PERK_UNLOCK, perkPlan } from "@/lib/perks";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
@@ -59,6 +61,7 @@ import {
   BUNDLE_DEAL,
   BUNDLE_ATTRIBUTE,
   BUNDLE_DEFAULT_PAIRS,
+  BUNDLE_TIERS,
   bundleHeadline,
   bundleUnitOffGBP,
   inBundleDeal,
@@ -859,12 +862,19 @@ function ProductPage() {
       lines.set(v.id, { p, v, qty: (lines.get(v.id)?.qty ?? 0) + 1 });
     }
     if (!lines.size) return "none";
-    /* The Buy 2 / Buy 3 cards promise their perks (lib/perks): picking one
-       brings back a perk the shopper took out of the bag earlier. */
-    if (multiBuy && count >= 2) {
+    /* The Buy 2 / Buy 3 cards and the underwear's gift tiles promise their
+       perks (lib/perks): adding that many brings back a perk the shopper
+       took out of the bag earlier. */
+    // Underwear counts every pair in the bag, as PerkSync and the tiles do.
+    const bagPairs = perkPlan(useCartStore.getState().items).bundlePairs;
+    const unlock = (k: "protection" | "washbag") =>
+      multiBuy
+        ? count >= PERK_UNLOCK[k].duo
+        : bundle && count + bagPairs >= PERK_UNLOCK[k].bundle;
+    if (unlock("protection")) {
       const cart = useCartStore.getState();
       cart.setPerkPrefs({
-        perksDismissed: cart.perksDismissed.filter((k) => k === "washbag" && count < 3),
+        perksDismissed: cart.perksDismissed.filter((k) => !unlock(k)),
       });
     }
     const attributes =
@@ -1241,6 +1251,13 @@ function ProductPage() {
                       full: pairs > 1 && total < full ? cur(full) : null,
                     };
                   }}
+                />
+                {/* Free gifts the chosen bundle unlocks (lib/perks, v185). */}
+                <PerkUnlocks
+                  pairs={pack}
+                  inBag={perkPlan(bagItems).bundlePairs}
+                  tiers={BUNDLE_TIERS.map((t) => t.pairs)}
+                  onChoose={choosePack}
                 />
                 {pack > 1 && (
                   <BundleModeToggle

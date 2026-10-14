@@ -2,6 +2,7 @@ import type { MultiBuyTier } from "@/lib/duoDeal";
 import { shopifyImg } from "@/lib/shopify";
 import { PROTECTION, WASH_BAG } from "@/lib/perks";
 import { ProtectionIcon } from "@/components/site/ProtectionIcon";
+import { usePerkValues } from "@/lib/usePerkValues";
 
 /*
  * Multi-buy "power cards" (v158): large, full-width cards - Just One /
@@ -18,18 +19,23 @@ import { ProtectionIcon } from "@/components/site/ProtectionIcon";
  * v184 (owner's brief, after Smooche): Buy 2 lists "+ FREE Shipping
  * Protection", Buy 3+ also "+ FREE Anti-Snag Shapewear Wash Bag", each with
  * its picture. The bag adds them free while it qualifies (lib/perks,
- * PerkSync). No "worth £X": the wash bag is never sold on its own.
+ * PerkSync).
+ *
+ * v185 (owner, after Smooche): the gifts sit in a band across the foot of
+ * the card, each with its value struck on the right (the gift variant's
+ * compare-at, £3.49 / £10); the selected card's band turns ink, so what the
+ * shopper is getting stands out.
  */
 
 const PERKS: Record<
   MultiBuyTier["quantity"],
-  Array<{ title: string; image: string; contain: boolean }>
+  Array<{ key: "protection" | "washBag"; title: string; image: string }>
 > = {
   1: [],
-  2: [{ title: PROTECTION.title, image: PROTECTION.image, contain: true }],
+  2: [{ key: "protection", title: PROTECTION.title, image: PROTECTION.image }],
   3: [
-    { title: PROTECTION.title, image: PROTECTION.image, contain: true },
-    { title: WASH_BAG.title, image: WASH_BAG.image, contain: false },
+    { key: "protection", title: PROTECTION.title, image: PROTECTION.image },
+    { key: "washBag", title: WASH_BAG.title, image: WASH_BAG.image },
   ],
 };
 interface Props {
@@ -56,6 +62,7 @@ function badgeFor(t: MultiBuyTier): string | null {
 }
 
 export function MultiBuySelector({ tiers, value, onChange, price, name }: Props) {
+  const worth = usePerkValues();
   return (
     <fieldset className="mt-7">
       <legend className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
@@ -144,16 +151,23 @@ export function MultiBuySelector({ tiers, value, onChange, price, name }: Props)
                 </span>
               </span>
               {PERKS[t.quantity].length > 0 && (
-                <span className="mt-3 block space-y-1.5 border-t border-[#0a0a0a]/10 pt-3">
+                /* Gift band, full width across the card's foot (inner radius:
+                   12px card minus its 2/3px border). */
+                <span
+                  className={`-mx-4 -mb-4 mt-4 block divide-y transition-colors ${
+                    bold ? "rounded-b-[9px]" : "rounded-b-[10px]"
+                  } ${
+                    active
+                      ? "divide-white/15 bg-[#0a0a0a] text-white"
+                      : "divide-[#0a0a0a]/10 bg-[#f3f1ee] text-[#0a0a0a]"
+                  }`}
+                >
                   {PERKS[t.quantity].map((p) => (
-                    <span key={p.title} className="flex items-center gap-2.5">
-                      {p.contain ? (
-                        <ProtectionIcon
-                          size={28}
-                          className="rounded-[6px] ring-1 ring-[#0a0a0a]/10"
-                        />
+                    <span key={p.title} className="flex items-center gap-3 px-4 py-2.5">
+                      {p.key === "protection" ? (
+                        <ProtectionIcon size={28} className="rounded-[6px]" />
                       ) : (
-                        <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-[6px] bg-white ring-1 ring-[#0a0a0a]/10">
+                        <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-[6px] bg-white">
                           <img
                             src={shopifyImg(p.image, 96)}
                             alt=""
@@ -163,9 +177,17 @@ export function MultiBuySelector({ tiers, value, onChange, price, name }: Props)
                           />
                         </span>
                       )}
-                      <span className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[#0a0a0a]">
+                      <span className="min-w-0 flex-1 text-[12px] font-semibold uppercase leading-snug tracking-[0.04em]">
                         + Free {p.title}
                       </span>
+                      {worth[p.key] && (
+                        <s
+                          className={`shrink-0 text-[12px] ${active ? "text-white/65" : "text-[#6b6b6b]"}`}
+                        >
+                          <span className="sr-only">worth </span>
+                          {worth[p.key]}
+                        </s>
+                      )}
                     </span>
                   ))}
                 </span>

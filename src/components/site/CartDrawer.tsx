@@ -33,8 +33,8 @@ import { CartEditSheet } from "@/components/site/CartEditSheet";
 import { BagTimer } from "@/components/site/BagTimer";
 import { ensurePerks } from "@/components/site/PerkSync";
 import { ProtectionIcon } from "@/components/site/ProtectionIcon";
+import { usePerkValues } from "@/lib/usePerkValues";
 import {
-  HIDDEN_HANDLES,
   PROTECTION,
   WASH_BAG,
   countedItems,
@@ -87,19 +87,10 @@ export function CartDrawer() {
   const totalItems = countedItems(items);
   const plan = perkPlan(items);
   const protectionLine = items.find((i) => perkKindOf(i.variantId) === "protection");
-  /* The perk products, in the shopper's market, for the toggle's price. */
-  const { data: perkProducts } = useQuery({
-    queryKey: ["perk-products"],
-    queryFn: () => fetchProductsByHandles(HIDDEN_HANDLES, { includeHidden: true }),
-    enabled: open && items.length > 0,
-    staleTime: 10 * 60_000,
-  });
-  const paidProtection = perkProducts
-    ?.find((p) => p.node.handle === PROTECTION.handle)
-    ?.node.variants.edges.find((e) => e.node.id === PROTECTION.paidVariantId)?.node.price;
-  const protectionPrice = paidProtection
-    ? display(paidProtection.amount, paidProtection.currencyCode)
-    : display("3.49", "GBP");
+  /* The perks' prices in the shopper's market: the toggle's £3.49 and what
+     each free gift is worth, struck beside "FREE". */
+  const perkValues = usePerkValues(open && items.length > 0);
+  const protectionPrice = perkValues.paidProtection;
 
   /** The shopper took a perk out (X or the toggle): it stays out. */
   const dropPerk = async (kind: PerkKind) => {
@@ -360,6 +351,7 @@ export function CartDrawer() {
                           item={item}
                           kind={perk}
                           free={parseFloat(item.price.amount) === 0}
+                          worth={perk === "protection" ? perkValues.protection : perkValues.washBag}
                           display={display}
                           disabled={isLoading}
                           onRemove={() => void dropPerk(perk)}
@@ -479,7 +471,7 @@ export function CartDrawer() {
                     on={protectionPending ?? !!protectionLine}
                     free={plan.protectionFree}
                     price={protectionPrice}
-                    busy={isLoading || protectionPending !== null}
+                    busy={isLoading || protectionPending !== null || !protectionPrice}
                     onChange={(on) => void setProtection(on)}
                   />
                 )}
@@ -558,11 +550,13 @@ export function CartDrawer() {
 /* ── Multi-buy perk line ───────────────────────────────────────────────── */
 
 /** A perk in the bag: no product page, no Edit, quantity fixed at 1, an X
- *  to take it out. "FREE" only while Shopify's line price really is £0. */
+ *  to take it out. "FREE" (its value struck beside it, the gift variant's
+ *  compare-at) only while Shopify's line price really is £0. */
 function PerkLine({
   item,
   kind,
   free,
+  worth,
   display,
   disabled,
   onRemove,
@@ -570,6 +564,8 @@ function PerkLine({
   item: CartItem;
   kind: PerkKind;
   free: boolean;
+  /** What the free gift is worth, formatted (£3.49 / £10). */
+  worth: string | null;
   display: (amount: string | number, currency: string) => string;
   disabled: boolean;
   onRemove: () => void;
@@ -581,7 +577,7 @@ function PerkLine({
       ? free
         ? "Included free with your multi-buy"
         : "Damage, loss & theft cover"
-      : "Included free with your Buy 3 · Large 50x60cm";
+      : "Included free with your multi-buy · Large 50x60cm";
   return (
     <li className="flex gap-4 py-5">
       <div className="grid h-28 w-[88px] flex-shrink-0 place-items-center overflow-hidden bg-beige">
@@ -613,9 +609,21 @@ function PerkLine({
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-1.5 text-[14px] font-semibold text-ink">
-          {free ? "FREE" : display(item.price.amount, item.price.currencyCode)}
-        </p>
+        {free ? (
+          <p className="mt-1.5 flex items-baseline gap-2 text-[14px]">
+            {worth && (
+              <s className="text-[13px] text-cocoa">
+                <span className="sr-only">worth </span>
+                {worth}
+              </s>
+            )}
+            <span className="font-semibold text-[#166534]">FREE</span>
+          </p>
+        ) : (
+          <p className="mt-1.5 text-[14px] font-semibold text-ink">
+            {display(item.price.amount, item.price.currencyCode)}
+          </p>
+        )}
         <p className="mt-2 text-[12px] text-cocoa">{note}</p>
       </div>
     </li>
@@ -635,7 +643,8 @@ function ShippingInsurance({
 }: {
   on: boolean;
   free: boolean;
-  price: string;
+  /** null until the shopper's market price has loaded (never a guess). */
+  price: string | null;
   busy: boolean;
   onChange: (on: boolean) => void;
 }) {
@@ -647,8 +656,8 @@ function ShippingInsurance({
           Shipping insurance
         </p>
         <p id="shipping-insurance-price" className="mt-0.5 text-[12px] leading-snug text-ink">
-          from Damage, Loss &amp; Theft for{" "}
-          {free ? (
+          from Damage, Loss &amp; Theft{price ? " for " : ""}
+          {!price ? null : free ? (
             <>
               <s className="text-cocoa">
                 <span className="sr-only">normally </span>
