@@ -1,3 +1,4 @@
+import { isHiddenProduct, withoutHidden } from "@/lib/perks";
 import { toast } from "sonner";
 
 export const SHOPIFY_API_VERSION = "2025-07";
@@ -162,7 +163,7 @@ const PRODUCTS_QUERY = `
 
 export async function fetchProducts(first = 12, query?: string): Promise<ShopifyProduct[]> {
   const data = await storefrontApiRequest(PRODUCTS_QUERY, { first, query });
-  return data?.data?.products?.edges ?? [];
+  return withoutHidden(data?.data?.products?.edges ?? []);
 }
 
 const PRODUCT_BY_HANDLE_QUERY = `
@@ -188,10 +189,12 @@ const PRODUCT_BY_HANDLE_QUERY = `
   }
 `;
 
+/** null for an unknown handle - and for the hidden perk products (lib/perks),
+ *  which only ever reach a bag through PerkSync. */
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
   const data = await storefrontApiRequest(PRODUCT_BY_HANDLE_QUERY, { handle });
   const node = data?.data?.product;
-  return node ? { node } : null;
+  return node && !isHiddenProduct(node) ? { node } : null;
 }
 
 // ---------- Collections ----------
@@ -252,7 +255,7 @@ export async function fetchCollectionByHandle(
     description: c.description ?? "",
     handle: c.handle,
     image: c.image ?? null,
-    products: c.products?.edges ?? [],
+    products: withoutHidden(c.products?.edges ?? []),
   };
 }
 
@@ -285,7 +288,7 @@ export async function fetchProductRecommendations(productId: string): Promise<Sh
   try {
     const data = await storefrontApiRequest(PRODUCT_RECOMMENDATIONS_QUERY, { productId });
     const recs = data?.data?.productRecommendations ?? [];
-    return recs.map((node: any) => ({ node })) as ShopifyProduct[];
+    return withoutHidden(recs.map((node: any) => ({ node })) as ShopifyProduct[]);
   } catch {
     return [];
   }
@@ -469,12 +472,23 @@ export function formatCheckoutUrl(checkoutUrl: string): string {
   }
 }
 
+/*
+ * A dead or expired cart - but not one missing line. Shopify answers a stale
+ * line id with "The merchandise line with id ... does not exist", and reading
+ * that as a dead cart emptied the whole bag (v184 review: a second tab, or
+ * PerkSync, removing a line the other had already removed).
+ */
 function isCartNotFoundError(userErrors: Array<{ field: string[] | null; message: string }>): boolean {
-  return userErrors.some(
-    (e) =>
-      e.message.toLowerCase().includes("cart not found") ||
-      e.message.toLowerCase().includes("does not exist"),
-  );
+  return userErrors.some((e) => {
+    const m = e.message.toLowerCase();
+    if (/\bline\b/.test(m)) return false;
+    return m.includes("cart not found") || m.includes("does not exist");
+  });
+}
+
+/** The line is already gone from the cart (removed elsewhere). */
+function isLineGoneError(userErrors: Array<{ field: string[] | null; message: string }>): boolean {
+  return userErrors.some((e) => /\bline\b/i.test(e.message) && /does not exist/i.test(e.message));
 }
 
 /** Optional cart line attributes (e.g. the multi-buy tier); omitted when there are none. */
@@ -579,8 +593,69 @@ export async function removeLineFromShopifyCart(cartId: string, lineId: string) 
   const data = await storefrontApiRequest(CART_LINES_REMOVE_MUTATION, { cartId, lineIds: [lineId] });
   const errs = data?.data?.cartLinesRemove?.userErrors ?? [];
   if (isCartNotFoundError(errs)) return { success: false, cartNotFound: true } as const;
+  // Already removed (another tab, or Shopify's own cart page): job done.
+  if (isLineGoneError(errs)) return { success: true } as const;
   if (errs.length) return { success: false } as const;
   return { success: true } as const;
+}
+
+const CART_LINES_QUERY = `
+  query cartLines($id: ID!) {
+    cart(id: $id) {
+      id
+      lines(first: 100) {
+        nodes {
+          id
+          quantity
+          merchandise { ... on ProductVariant { id product { id handle productType } } }
+        }
+      }
+    }
+  }
+`;
+
+export type LiveCartLine = {
+  id: string;
+  quantity: number;
+  variantId: string;
+  product: { node: { id: string; handle: string; productType: string } };
+};
+
+/*
+ * The lines Shopify actually holds for a cart - what checkout will charge.
+ * PerkSync works from these rather than the bag's saved copy, which another
+ * tab, a lost response or Shopify's own /cart page can leave out of date.
+ * null when Shopify couldn't be reached (try again later); gone when the cart
+ * no longer exists.
+ */
+export async function fetchCartLines(
+  cartId: string,
+): Promise<{ gone: true } | { gone: false; lines: LiveCartLine[] } | null> {
+  try {
+    const data = await storefrontApiRequest(CART_LINES_QUERY, { id: cartId });
+    if (!data?.data) return null;
+    const cart = data.data.cart;
+    if (!cart) return { gone: true };
+    return {
+      gone: false,
+      lines: (cart.lines?.nodes ?? [])
+        .filter((l: { merchandise?: { id?: string } }) => !!l.merchandise?.id)
+        .map(
+          (l: {
+            id: string;
+            quantity: number;
+            merchandise: { id: string; product: { id: string; handle: string; productType: string } };
+          }) => ({
+            id: l.id,
+            quantity: l.quantity,
+            variantId: l.merchandise.id,
+            product: { node: l.merchandise.product },
+          }),
+        ),
+    };
+  } catch {
+    return null;
+  }
 }
 
 // ---------- Bag drawer helpers ----------
@@ -615,7 +690,11 @@ const BAG_PRODUCT_FIELDS = `
  * is one aliased product(handle:) lookup per handle. Order of the result
  * matches the order of the input; missing handles are dropped.
  */
-export async function fetchProductsByHandles(handles: string[]): Promise<ShopifyProduct[]> {
+export async function fetchProductsByHandles(
+  handles: string[],
+  /** PerkSync only: the perk products are hidden everywhere else. */
+  opts?: { includeHidden?: boolean },
+): Promise<ShopifyProduct[]> {
   const clean = [...new Set(handles.filter(Boolean))].slice(0, 12);
   if (!clean.length) return [];
   const query = `query BagProducts { ${clean
@@ -623,10 +702,11 @@ export async function fetchProductsByHandles(handles: string[]): Promise<Shopify
     .join("\n")} }`;
   try {
     const data = await storefrontApiRequest(query);
-    return clean
+    const found = clean
       .map((_, i) => data?.data?.[`p${i}`])
       .filter(Boolean)
       .map((node: any) => ({ node })) as ShopifyProduct[];
+    return opts?.includeHidden ? found : withoutHidden(found);
   } catch {
     return [];
   }

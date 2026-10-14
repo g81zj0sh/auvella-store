@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { isHiddenHandle } from "@/lib/perks";
 
 /*
  * Recently Viewed — product handles the customer has opened (PDP visit or
@@ -21,9 +22,12 @@ export const useRecentlyViewed = create<RecentlyViewedStore>()(
     (set) => ({
       handles: [],
       record: (handle) =>
-        set((s) => ({
-          handles: [handle, ...s.handles.filter((h) => h !== handle)].slice(0, MAX_RECENT),
-        })),
+        // The hidden perk products (lib/perks) never show as viewed.
+        isHiddenHandle(handle)
+          ? undefined
+          : set((s) => ({
+              handles: [handle, ...s.handles.filter((h) => h !== handle)].slice(0, MAX_RECENT),
+            })),
       clear: () => set({ handles: [] }),
     }),
     { name: "auvella_recently_viewed_v1" },

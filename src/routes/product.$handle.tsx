@@ -1,4 +1,5 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
+import { isHiddenHandle } from "@/lib/perks";
 import { LEGACY_PRODUCT_HANDLES } from "@/lib/productHandles";
 import { sizeLabel } from "@/lib/sizeLabels";
 import { galleryUrls, indexedGhost, GALLERY_INDEX } from "@/lib/galleryIndex";
@@ -45,6 +46,7 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+import { ensurePerks } from "@/components/site/PerkSync";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
@@ -77,6 +79,8 @@ export const Route = createFileRoute("/product/$handle")({
     typeof search.colour === "string" && search.colour ? { colour: search.colour } : {},
   /* Renamed products: old links get a permanent redirect to the new handle. */
   beforeLoad: ({ params }) => {
+    // The multi-buy perks (lib/perks) have no page: a real 404, no tracking.
+    if (isHiddenHandle(params.handle)) throw notFound();
     const to = LEGACY_PRODUCT_HANDLES[params.handle];
     if (to) throw redirect({ to: "/product/$handle", params: { handle: to }, statusCode: 301 });
   },
@@ -855,6 +859,14 @@ function ProductPage() {
       lines.set(v.id, { p, v, qty: (lines.get(v.id)?.qty ?? 0) + 1 });
     }
     if (!lines.size) return "none";
+    /* The Buy 2 / Buy 3 cards promise their perks (lib/perks): picking one
+       brings back a perk the shopper took out of the bag earlier. */
+    if (multiBuy && count >= 2) {
+      const cart = useCartStore.getState();
+      cart.setPerkPrefs({
+        perksDismissed: cart.perksDismissed.filter((k) => k === "washbag" && count < 3),
+      });
+    }
     const attributes =
       multiBuy
         ? [{ key: MULTI_BUY_ATTRIBUTE, value: String(count) }]
@@ -940,6 +952,8 @@ function ProductPage() {
         }
         setAddedKey(unitsKey);
       }
+      // The Buy 2 / Buy 3 perks in the bag before checkout opens.
+      await ensurePerks();
       const url = (await resolveCheckoutUrl()) ?? getCheckoutUrl();
       if (!url) {
         win?.close();

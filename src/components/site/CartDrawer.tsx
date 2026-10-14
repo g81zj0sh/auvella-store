@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShoppingBag, Minus, Plus, Trash2, Loader2, ChevronDown, X } from "lucide-react";
+import { toast } from "sonner";
 import { useCartStore, type CartItem } from "@/stores/cartStore";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
@@ -30,6 +31,18 @@ import {
 } from "@/lib/shopify";
 import { CartEditSheet } from "@/components/site/CartEditSheet";
 import { BagTimer } from "@/components/site/BagTimer";
+import { ensurePerks } from "@/components/site/PerkSync";
+import { ProtectionIcon } from "@/components/site/ProtectionIcon";
+import {
+  HIDDEN_HANDLES,
+  PROTECTION,
+  WASH_BAG,
+  countedItems,
+  isHiddenProduct,
+  perkKindOf,
+  perkPlan,
+  type PerkKind,
+} from "@/lib/perks";
 /*
  * Bag drawer.
  *
@@ -48,6 +61,10 @@ import { BagTimer } from "@/components/site/BagTimer";
  *                         Europe/London; no countdown while no cutoff is
  *                         confirmed (DISPATCH_CUTOFF_LONDON is null)
  *   Bundle nudge        — mirrors the live 3-for-£30 automatic discount
+ *   Multi-buy perks     — the free shipping protection / wash bag lines and
+ *                         the opt-in "Shipping insurance" toggle (lib/perks,
+ *                         PerkSync): the toggle starts off, and a free perk
+ *                         only ever shows while the bag earns it
  */
 
 const LOW_STOCK_BELOW = 40;
@@ -58,6 +75,7 @@ export function CartDrawer() {
   const {
     items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, resolveCheckoutUrl, syncCart,
     discountCodes, applyDiscountCode, removeDiscountCode,
+    perksDismissed, protectionOptIn, setPerkPrefs,
   } = useCartStore();
   const favourites = useFavorites();
   const recentHandles = useRecentlyViewed((s) => s.handles);
@@ -65,7 +83,64 @@ export function CartDrawer() {
 
   const display = useDisplayPrice();
   const t = useT();
-  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+  // Perks aren't products the shopper chose: left out of the counts.
+  const totalItems = countedItems(items);
+  const plan = perkPlan(items);
+  const protectionLine = items.find((i) => perkKindOf(i.variantId) === "protection");
+  /* The perk products, in the shopper's market, for the toggle's price. */
+  const { data: perkProducts } = useQuery({
+    queryKey: ["perk-products"],
+    queryFn: () => fetchProductsByHandles(HIDDEN_HANDLES, { includeHidden: true }),
+    enabled: open && items.length > 0,
+    staleTime: 10 * 60_000,
+  });
+  const paidProtection = perkProducts
+    ?.find((p) => p.node.handle === PROTECTION.handle)
+    ?.node.variants.edges.find((e) => e.node.id === PROTECTION.paidVariantId)?.node.price;
+  const protectionPrice = paidProtection
+    ? display(paidProtection.amount, paidProtection.currencyCode)
+    : display("3.49", "GBP");
+
+  /** The shopper took a perk out (X or the toggle): it stays out. */
+  const dropPerk = async (kind: PerkKind) => {
+    setPerkPrefs({
+      perksDismissed: [...new Set([...useCartStore.getState().perksDismissed, kind])],
+      ...(kind === "protection" ? { protectionOptIn: false } : {}),
+    });
+    try {
+      for (const i of useCartStore.getState().items) {
+        if (perkKindOf(i.variantId) === kind) await removeItem(i.variantId);
+      }
+    } catch {
+      // PerkSync takes it out on its next pass.
+    }
+  };
+  /* The switch shows the shopper's choice at once; the bag catches up. */
+  const [protectionPending, setProtectionPending] = useState<boolean | null>(null);
+  const setProtection = async (on: boolean) => {
+    setProtectionPending(on);
+    try {
+      if (!on) return await dropPerk("protection");
+      /* Consent to pay: only a tap made while £3.49 is the price shown
+         counts as opting in to it (reg 40). Switching it back on while it
+         reads FREE just undoes the shopper's earlier X - so dropping below
+         Buy 2 later takes the free one out and never swaps in a paid one. */
+      const paid = !plan.protectionFree;
+      setPerkPrefs({
+        perksDismissed: useCartStore.getState().perksDismissed.filter((k) => k !== "protection"),
+        ...(paid ? { protectionOptIn: true } : {}),
+      });
+      await ensurePerks();
+      if (!useCartStore.getState().items.some((i) => perkKindOf(i.variantId) === "protection")) {
+        if (paid) setPerkPrefs({ protectionOptIn: false });
+        toast.error("We couldn't add shipping insurance. Please try again.", {
+          position: "top-center",
+        });
+      }
+    } finally {
+      setProtectionPending(null);
+    }
+  };
   /* The bag's arithmetic (full price, the mirrored Buy 2 and 3-for-£30 savings,
      Shopify's own totals once they're in) lives in lib/bagTotals.ts, so the
      product page's free-shipping box uses exactly the same figures. An empty
@@ -121,7 +196,7 @@ export function CartDrawer() {
 
   /* Frequently bought together — anchored on the first line, minus what's in the bag. */
   const inBag = new Set(items.map((i) => i.product.node.handle));
-  const anchorId = items[0]?.product.node.id;
+  const anchorId = items.find((i) => !isHiddenProduct(i.product.node))?.product.node.id;
   const { data: recos } = useQuery({
     queryKey: ["bag-recos", anchorId],
     queryFn: () => fetchProductRecommendations(anchorId!),
@@ -147,6 +222,8 @@ export function CartDrawer() {
     // Synchronous window.open inside the gesture: mobile Safari blocks it after an await.
     const win = window.open("", "_blank");
     try {
+      // Perks in step with the bag before Shopify sees it.
+      await ensurePerks();
       const url = (await resolveCheckoutUrl()) ?? getCheckoutUrl();
       if (!url) { win?.close(); return; }
       if (win) win.location.href = url; else window.location.href = url;
@@ -187,8 +264,8 @@ export function CartDrawer() {
             </SheetTitle>
             <SheetDescription className="sr-only">Items in your bag</SheetDescription>
           </SheetHeader>
-          {items.length > 0 && <BagTimer />}
-          {items.length === 0 ? (
+          {totalItems > 0 && <BagTimer />}
+          {totalItems === 0 ? (
             /*
              * Empty bag. An empty drawer is still a shopper who opened the bag,
              * so it gives them a place to go and, if they've been browsing,
@@ -275,6 +352,19 @@ export function CartDrawer() {
                 {/* ── Lines ───────────────────────────────────────────── */}
                 <ul className="px-6 divide-y divide-border">
                   {items.map((item) => {
+                    const perk = perkKindOf(item.variantId);
+                    if (perk)
+                      return (
+                        <PerkLine
+                          key={item.variantId}
+                          item={item}
+                          kind={perk}
+                          free={parseFloat(item.price.amount) === 0}
+                          display={display}
+                          disabled={isLoading}
+                          onRemove={() => void dropPerk(perk)}
+                        />
+                      );
                     const node = item.product.node;
                     const variant = node.variants.edges.find((v) => v.node.id === item.variantId)?.node;
                     const compare = variant?.compareAtPrice ?? null;
@@ -384,6 +474,16 @@ export function CartDrawer() {
                   })}
                 </ul>
 
+                {plan.hasProducts && (
+                  <ShippingInsurance
+                    on={protectionPending ?? !!protectionLine}
+                    free={plan.protectionFree}
+                    price={protectionPrice}
+                    busy={isLoading || protectionPending !== null}
+                    onChange={(on) => void setProtection(on)}
+                  />
+                )}
+
                 <PromoCode codes={discountCodes} onApply={applyDiscountCode} onRemove={removeDiscountCode} />
 
                 {together.length > 0 && (
@@ -436,7 +536,7 @@ export function CartDrawer() {
                 <Button
                   onClick={handleCheckout}
                   className="w-full bg-cta text-cream hover:bg-cta-hover uppercase tracking-[0.2em] text-[11px] py-6 rounded-control"
-                  disabled={items.length === 0 || isLoading || isSyncing || isCheckingOut}
+                  disabled={totalItems === 0 || isLoading || isSyncing || isCheckingOut}
                 >
                   {isLoading || isSyncing || isCheckingOut ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -452,6 +552,140 @@ export function CartDrawer() {
 
       <CartEditSheet item={editing} open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }} />
     </>
+  );
+}
+
+/* ── Multi-buy perk line ───────────────────────────────────────────────── */
+
+/** A perk in the bag: no product page, no Edit, quantity fixed at 1, an X
+ *  to take it out. "FREE" only while Shopify's line price really is £0. */
+function PerkLine({
+  item,
+  kind,
+  free,
+  display,
+  disabled,
+  onRemove,
+}: {
+  item: CartItem;
+  kind: PerkKind;
+  free: boolean;
+  display: (amount: string | number, currency: string) => string;
+  disabled: boolean;
+  onRemove: () => void;
+}) {
+  const info = kind === "protection" ? PROTECTION : WASH_BAG;
+  const thumb = cartLineImage(item.product, item.variantId, item.selectedOptions, 300);
+  const note =
+    kind === "protection"
+      ? free
+        ? "Included free with your multi-buy"
+        : "Damage, loss & theft cover"
+      : "Included free with your Buy 3 · Large 50x60cm";
+  return (
+    <li className="flex gap-4 py-5">
+      <div className="grid h-28 w-[88px] flex-shrink-0 place-items-center overflow-hidden bg-beige">
+        {kind === "protection" ? (
+          <ProtectionIcon size={56} className="rounded-[8px]" />
+        ) : (
+          <img
+            src={thumb?.url ?? shopifyImg(info.image, 300)}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-cocoa">
+              {free ? "Free gift" : "Added by you"}
+            </p>
+            <p className="mt-0.5 font-serif text-[16px] leading-snug text-ink">{info.title}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onRemove}
+            disabled={disabled}
+            aria-label={`Remove ${info.title}`}
+            className="-mr-1 -mt-1 grid h-8 w-8 flex-shrink-0 place-items-center rounded-full text-ink transition-colors hover:bg-beige disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-ink"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mt-1.5 text-[14px] font-semibold text-ink">
+          {free ? "FREE" : display(item.price.amount, item.price.currencyCode)}
+        </p>
+        <p className="mt-2 text-[12px] text-cocoa">{note}</p>
+      </div>
+    </li>
+  );
+}
+
+/* ── Shipping insurance toggle (opt-in, starts off) ────────────────────── */
+
+/** Owner's wording (14 Oct 2026). Off unless the shopper turns it on - or
+ *  the bag earns it free with a Buy 2. */
+function ShippingInsurance({
+  on,
+  free,
+  price,
+  busy,
+  onChange,
+}: {
+  on: boolean;
+  free: boolean;
+  price: string;
+  busy: boolean;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <div className="mx-6 mb-5 flex items-start gap-3 rounded-card border border-border bg-white p-4">
+      <ProtectionIcon size={36} className="mt-0.5 rounded-[8px] ring-1 ring-border" />
+      <div className="min-w-0 flex-1">
+        <p id="shipping-insurance-label" className="text-[13px] font-semibold leading-snug text-ink">
+          Shipping insurance
+        </p>
+        <p id="shipping-insurance-price" className="mt-0.5 text-[12px] leading-snug text-ink">
+          from Damage, Loss &amp; Theft for{" "}
+          {free ? (
+            <>
+              <s className="text-cocoa">
+                <span className="sr-only">normally </span>
+                {price}
+              </s>{" "}
+              <span className="font-semibold">FREE</span>
+              <span className="sr-only"> with your multi-buy</span>
+            </>
+          ) : (
+            price
+          )}
+        </p>
+        <p className="mt-1.5 text-[11px] leading-relaxed text-cocoa">
+          Get peace of mind with Auvella&apos;s Delivery Guarantee in the event your delivery is
+          damaged, stolen, or lost during transit.
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby="shipping-insurance-label"
+        aria-describedby="shipping-insurance-price"
+        disabled={busy}
+        onClick={() => onChange(!on)}
+        className={`relative mt-0.5 h-6 w-11 flex-shrink-0 rounded-full transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+          on ? "bg-ink" : "bg-[#8a8a8a]"
+        }`}
+      >
+        <span
+          aria-hidden="true"
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] duration-200 ${
+            on ? "left-[22px]" : "left-0.5"
+          }`}
+        />
+      </button>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { isHiddenHandle } from "@/lib/perks";
 
 /*
  * Favourites ("wishlist", but the customer-facing word is always Favourites).
@@ -19,11 +20,14 @@ export const useFavorites = create<FavoritesStore>()(
     (set, get) => ({
       handles: [],
       toggle: (handle) =>
-        set((s) => ({
-          handles: s.handles.includes(handle)
-            ? s.handles.filter((h) => h !== handle)
-            : [...s.handles, handle],
-        })),
+        // The hidden perk products (lib/perks) can't be saved.
+        isHiddenHandle(handle)
+          ? undefined
+          : set((s) => ({
+              handles: s.handles.includes(handle)
+                ? s.handles.filter((h) => h !== handle)
+                : [...s.handles, handle],
+            })),
       has: (handle) => get().handles.includes(handle),
       remove: (handle) => set((s) => ({ handles: s.handles.filter((h) => h !== handle) })),
     }),

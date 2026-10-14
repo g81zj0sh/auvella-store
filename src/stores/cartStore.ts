@@ -19,6 +19,7 @@ import {
 } from "@/lib/shopify";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 import { announceBagAdd } from "@/lib/glueOffer";
+import { perkKindOf, type PerkKind } from "@/lib/perks";
 
 export interface CartItem {
   lineId: string | null;
@@ -62,6 +63,16 @@ interface CartStore {
   discountCodes: string[];
   applyDiscountCode: (code: string) => Promise<void>;
   removeDiscountCode: (code: string) => Promise<void>;
+  /** Multi-buy perks (lib/perks, PerkSync): the perks the shopper took out
+   *  (X or the toggle), so they aren't put back, and whether they switched
+   *  the £3.49 shipping protection on. Both reset with the bag. */
+  perksDismissed: PerkKind[];
+  protectionOptIn: boolean;
+  setPerkPrefs: (p: { perksDismissed?: PerkKind[]; protectionOptIn?: boolean }) => void;
+  /** PerkSync only: make the bag's perk lines exactly these - the ones
+   *  Shopify holds - leaving every other line alone. Writes nothing when they
+   *  already match, so it can't loop. No Meta AddToCart, no add-on popup. */
+  mirrorPerkLines: (perks: CartItem[]) => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -74,6 +85,28 @@ export const useCartStore = create<CartStore>()(
       isLoading: false,
       isSyncing: false,
       discountCodes: [],
+      perksDismissed: [],
+      protectionOptIn: false,
+
+      setPerkPrefs: (p) => set(p),
+
+      mirrorPerkLines: (perks) => {
+        const items = get().items;
+        const current = items.filter((i) => perkKindOf(i.variantId));
+        const same =
+          current.length === perks.length &&
+          current.every((c) =>
+            perks.some(
+              (p) =>
+                p.variantId === c.variantId &&
+                p.lineId === c.lineId &&
+                p.quantity === c.quantity &&
+                p.price.amount === c.price.amount,
+            ),
+          );
+        if (same) return;
+        set({ items: [...items.filter((i) => !perkKindOf(i.variantId)), ...perks] });
+      },
 
       addItem: async (item, opts) => {
         const { items, cartId, clearCart } = get();
@@ -285,7 +318,15 @@ export const useCartStore = create<CartStore>()(
         set({ discountCodes: res.applied });
       },
 
-      clearCart: () => set({ items: [], cartId: null, checkoutUrl: null, discountCodes: [] }),
+      clearCart: () =>
+        set({
+          items: [],
+          cartId: null,
+          checkoutUrl: null,
+          discountCodes: [],
+          perksDismissed: [],
+          protectionOptIn: false,
+        }),
       /* The shopper changed country: move the existing Shopify cart to that
          market so checkout opens in the right currency. */
       syncCountry: async (countryCode: string) => {
@@ -296,7 +337,7 @@ export const useCartStore = create<CartStore>()(
         await get().refreshTotals();
       },
       refreshTotals: async () => {
-        const { cartId, items } = get();
+        const { cartId } = get();
         if (!cartId) {
           if (get().totals) set({ totals: null });
           return;
@@ -307,8 +348,10 @@ export const useCartStore = create<CartStore>()(
           // Line prices come back in the market's currency: keep the bag's
           // lines on the same numbers checkout will use. Only write when
           // something changed, so this can't loop.
+          // Merge into the lines as they are NOW: a line added during the
+          // fetch (a perk) must not be dropped by an older copy (v184).
           let changed = false;
-          const next = items.map((i) => {
+          const next = get().items.map((i) => {
             const p = t.linePrices[i.variantId];
             if (p && (p.amount !== i.price.amount || p.currencyCode !== i.price.currencyCode)) {
               changed = true;
@@ -401,6 +444,8 @@ export const useCartStore = create<CartStore>()(
         items: state.items,
         cartId: state.cartId,
         checkoutUrl: state.checkoutUrl,
+        perksDismissed: state.perksDismissed,
+        protectionOptIn: state.protectionOptIn,
       }),
     },
   ),

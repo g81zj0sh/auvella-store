@@ -1,4 +1,7 @@
 import type { MultiBuyTier } from "@/lib/duoDeal";
+import { shopifyImg } from "@/lib/shopify";
+import { PROTECTION, WASH_BAG } from "@/lib/perks";
+import { ProtectionIcon } from "@/components/site/ProtectionIcon";
 
 /*
  * Multi-buy "power cards" (v158): large, full-width cards - Just One /
@@ -11,7 +14,24 @@ import type { MultiBuyTier } from "@/lib/duoDeal";
  * promise what checkout gives. The 3+ card is badged "Best value" (owner's
  * call, 10 Oct 2026; it carries the largest saving in pounds). No popularity
  * badge: there is no order data to back "most popular" yet.
+ *
+ * v184 (owner's brief, after Smooche): Buy 2 lists "+ FREE Shipping
+ * Protection", Buy 3+ also "+ FREE Anti-Snag Shapewear Wash Bag", each with
+ * its picture. The bag adds them free while it qualifies (lib/perks,
+ * PerkSync). No "worth £X": the wash bag is never sold on its own.
  */
+
+const PERKS: Record<
+  MultiBuyTier["quantity"],
+  Array<{ title: string; image: string; contain: boolean }>
+> = {
+  1: [],
+  2: [{ title: PROTECTION.title, image: PROTECTION.image, contain: true }],
+  3: [
+    { title: PROTECTION.title, image: PROTECTION.image, contain: true },
+    { title: WASH_BAG.title, image: WASH_BAG.image, contain: false },
+  ],
+};
 interface Props {
   tiers: MultiBuyTier[];
   /** The selected tier's quantity. */
@@ -55,7 +75,7 @@ export function MultiBuySelector({ tiers, value, onChange, price, name }: Props)
             <label
               key={t.quantity}
               htmlFor={id}
-              className={`relative flex min-h-[76px] cursor-pointer items-center justify-between gap-3 rounded-[12px] px-4 py-4 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#0a0a0a] ${
+              className={`relative flex min-h-[76px] cursor-pointer flex-col justify-center rounded-[12px] px-4 py-4 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#0a0a0a] ${
                 bold ? "border-[3px]" : "border-2"
               } ${
                 active
@@ -85,42 +105,71 @@ export function MultiBuySelector({ tiers, value, onChange, price, name }: Props)
                   {badge}
                 </span>
               )}
-              <span className="flex min-w-0 items-center gap-3">
-                <span
-                  aria-hidden="true"
-                  className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${
-                    active ? "border-[#0a0a0a]" : "border-[#8a8a8a]"
-                  }`}
-                >
-                  {active && <span className="h-2.5 w-2.5 rounded-full bg-[#0a0a0a]" />}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[15px] font-semibold leading-tight text-[#0a0a0a]">
-                    {label.title}
-                    {label.sub && (
-                      <span className="ml-1.5 text-[12px] font-medium text-[#555555]">
-                        ({label.sub})
+              <span className="flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${
+                      active ? "border-[#0a0a0a]" : "border-[#8a8a8a]"
+                    }`}
+                  >
+                    {active && <span className="h-2.5 w-2.5 rounded-full bg-[#0a0a0a]" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold leading-tight text-[#0a0a0a]">
+                      {label.title}
+                      {label.sub && (
+                        <span className="ml-1.5 text-[12px] font-medium text-[#555555]">
+                          ({label.sub})
+                        </span>
+                      )}
+                    </span>
+                    {saving ? (
+                      <span className="mt-1 block text-[16px] font-semibold leading-tight text-[#166534]">
+                        Save {saving}
                       </span>
+                    ) : (
+                      <span className="mt-1 block text-[12px] text-[#555555]">Standard price</span>
                     )}
                   </span>
-                  {saving ? (
-                    <span className="mt-1 block text-[16px] font-semibold leading-tight text-[#166534]">
-                      Save {saving}
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="block text-[16px] font-semibold text-[#0a0a0a]">{total}</span>
+                  {full && (
+                    <span className="block text-[12px] text-[#6b6b6b]">
+                      <span className="sr-only">full price </span>
+                      <s>{full}</s>
                     </span>
-                  ) : (
-                    <span className="mt-1 block text-[12px] text-[#555555]">Standard price</span>
                   )}
                 </span>
               </span>
-              <span className="shrink-0 text-right">
-                <span className="block text-[16px] font-semibold text-[#0a0a0a]">{total}</span>
-                {full && (
-                  <span className="block text-[12px] text-[#6b6b6b]">
-                    <span className="sr-only">full price </span>
-                    <s>{full}</s>
-                  </span>
-                )}
-              </span>
+              {PERKS[t.quantity].length > 0 && (
+                <span className="mt-3 block space-y-1.5 border-t border-[#0a0a0a]/10 pt-3">
+                  {PERKS[t.quantity].map((p) => (
+                    <span key={p.title} className="flex items-center gap-2.5">
+                      {p.contain ? (
+                        <ProtectionIcon
+                          size={28}
+                          className="rounded-[6px] ring-1 ring-[#0a0a0a]/10"
+                        />
+                      ) : (
+                        <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-[6px] bg-white ring-1 ring-[#0a0a0a]/10">
+                          <img
+                            src={shopifyImg(p.image, 96)}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover"
+                          />
+                        </span>
+                      )}
+                      <span className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[#0a0a0a]">
+                        + Free {p.title}
+                      </span>
+                    </span>
+                  ))}
+                </span>
+              )}
             </label>
           );
         })}

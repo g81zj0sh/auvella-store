@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
+import { isHiddenProduct } from "@/lib/perks";
 
 interface QuickAddStore {
   product: ShopifyProduct | null;
@@ -16,6 +17,8 @@ export const useQuickAdd = create<QuickAddStore>((set) => ({
   color: null,
   open: false,
   openFor: (p, color) => {
+    // The hidden perk products (lib/perks) can't be bought on their own.
+    if (isHiddenProduct(p.node)) return;
     useRecentlyViewed.getState().record(p.node.handle);
     set({ product: p, color: color ?? null, open: true });
   },

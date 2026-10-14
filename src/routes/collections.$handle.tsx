@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { canonicalCollectionHandle, PREVIOUS_SHOPIFY_HANDLE } from "@/lib/collectionHandles";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -465,6 +465,8 @@ export const Route = createFileRoute("/collections/$handle")({
   validateSearch: (search: Record<string, unknown>): { colour?: string } =>
     typeof search.colour === "string" ? { colour: search.colour } : {},
   loader: ({ params, context }) => {
+    // The wash bag's own Shopify collection: the bag is a Buy 3 perk only.
+    if (params.handle === "laundry-bag") throw notFound();
     const canonical = canonicalCollectionHandle(params.handle);
     if (canonical !== params.handle) {
       throw redirect({ to: "/collections/$handle", params: { handle: canonical }, statusCode: 301 });

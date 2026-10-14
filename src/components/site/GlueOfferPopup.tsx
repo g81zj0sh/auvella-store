@@ -16,6 +16,7 @@ import { useDisplayPrice } from "@/lib/preferences";
 import { fetchJudgemeData, useJudgemeReviews } from "@/lib/judgeme";
 import { fetchProductByHandle, shopifyImg } from "@/lib/shopify";
 import { unitOffAt } from "@/lib/duoDeal";
+import { ensurePerks } from "@/components/site/PerkSync";
 import {
   BAG_ADD_EVENT,
   GLUE_CLAIMS,
@@ -230,6 +231,7 @@ function GlueOfferBody({ noun, onClose }: { noun: string; onClose: () => void })
     setLeaving(true);
     const win = window.open("", "_blank");
     try {
+      await ensurePerks();
       const url = (await resolveCheckoutUrl()) ?? getCheckoutUrl();
       if (!url) {
         win?.close();
