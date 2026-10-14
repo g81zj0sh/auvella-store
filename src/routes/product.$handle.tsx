@@ -661,13 +661,19 @@ function ProductPage() {
   const showSizeGuide =
     !guideHidden && (productChart != null || sizeGuide.guideType !== "none");
 
-  /** True if any purchasable variant carries this size value. */
-  const sizeAvailable = (size: string) =>
-    node.variants.edges.some(
+  /** True if this size can be bought in the chosen colour (any colour while a
+      mixed bundle picks colours per pair). Since 14 Oct 2026 nothing sells
+      past zero stock, so one colour's size can be sold out while the others
+      aren't - the button has to say so before the shopper taps Add. */
+  const sizeAvailable = (size: string) => {
+    const colour = colorOption && !mixing ? currentSelected[colorOption.name] : undefined;
+    return node.variants.edges.some(
       (v) =>
         v.node.availableForSale &&
-        v.node.selectedOptions.some((o) => /size/i.test(o.name) && o.value === size),
+        v.node.selectedOptions.some((o) => /size/i.test(o.name) && o.value === size) &&
+        (!colour || v.node.selectedOptions.some((o) => o.name === colorOption!.name && o.value === colour)),
     );
+  };
 
   const setOpt = (name: string, value: string) => {
     setSelected({ ...currentSelected, [name]: value });
@@ -742,7 +748,15 @@ function ProductPage() {
      bundle, then a size for every pair. */
   const pairsLeft = mixing ? Math.max(0, pack - picks.length) : 0;
   const sized = mixing ? picks.slice(0, pack).every((pk) => !!(pk.size ?? globalSize)) : hasSize;
-  const ctaNeed = pairsLeft ? `Pick ${pairsLeft} more` : sized ? null : "Select a Size";
+  // A chosen colour and size that has sold out (after a colour switch) says
+  // so on the button rather than in an error after the tap.
+  const ctaNeed = pairsLeft
+    ? `Pick ${pairsLeft} more`
+    : !sized
+      ? "Select a Size"
+      : !mixing && variant && !variant.availableForSale
+        ? "Sold Out — Choose Another Size"
+        : null;
   /* Free-shipping progress: exactly the bag's standing - its value after
      discounts (bagTotals) under the drawer's own rule (bagFreeShipping) - so
      the box and the bag always show the same figure. This selection is NOT
@@ -1340,11 +1354,14 @@ function ProductPage() {
                       <button
                         key={v}
                         disabled={!available}
+                        aria-label={available ? undefined : `${v}, sold out`}
                         onClick={() => setOpt(sizeOption.name, v)}
                         className={`flex h-10 items-center justify-center whitespace-nowrap rounded-control border px-1 text-[12px] transition-colors ${
-                          active
+                          active && available
                             ? "border-[#0a0a0a] bg-[#0a0a0a] text-white"
-                            : available
+                            : active
+                              ? "cursor-not-allowed border-[#0a0a0a] text-[#C4C4C4] line-through"
+                              : available
                               ? "border-[#DDDDDD] text-[#0a0a0a] hover:border-[#0a0a0a]"
                               : "cursor-not-allowed border-[#EEEEEE] text-[#C4C4C4] line-through"
                         }`}
