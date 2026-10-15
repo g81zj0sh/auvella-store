@@ -1,9 +1,9 @@
 /*
  * Klaviyo client subscribe — used by the account page's "stay in the know"
- * opt-in. Public site key + list ID are browser-safe by design (this is the
- * same API Klaviyo's own signup forms use). Adds the profile to the
- * Newsletter list with SUBSCRIBED email consent, so campaigns and new-drop
- * sends actually reach them.
+ * opt-in and the footer signup. Public site key + list ID are browser-safe by
+ * design (this is the same API Klaviyo's own signup forms use). Adds the
+ * profile to the Newsletter list with SUBSCRIBED email consent, so campaigns
+ * and new-drop sends actually reach them.
  */
 
 const KLAVIYO_COMPANY_ID = "WCXDh5";

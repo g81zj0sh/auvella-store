@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initMetaPixel, trackMetaPageView } from "../lib/metaPixel";
+import { loadKlaviyo } from "@/lib/klaviyoOnsite";
 import { usePreferences } from "../lib/preferences";
 import { CookieConsent } from "@/components/site/CookieConsent";
 import { hasMarketingConsent, onConsentChange } from "@/lib/consent";
@@ -157,6 +158,8 @@ function RootComponent() {
     const start = () => {
       if (unsubscribeRouter) return;
       initMetaPixel();
+      // Klaviyo bag tracking (v186) sits behind the same consent.
+      loadKlaviyo();
       unsubscribeRouter = router.subscribe("onResolved", () => {
         trackMetaPageView();
       });

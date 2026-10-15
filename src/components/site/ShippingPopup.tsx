@@ -192,7 +192,6 @@ export function ShippingPopup() {
                   Shipping Takes <span className="font-semibold">{transitLabel(country)}</span>{" "}
                   Business Days
                 </span>,
-                <span key="duty">Duties And Taxes Are Included</span>,
                 <span key="returns">Easy, tracked 30-day returns</span>,
               ].map((content, i) => (
                 <li

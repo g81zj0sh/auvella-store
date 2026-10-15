@@ -431,8 +431,9 @@ function GlobePicker({ light }: { light: boolean }) {
 function AnnouncementBar() {
   const { country } = useShippingCountry();
   const displayCurrency = usePreferences((s) => s.currency);
+  // No duties line (v186): nothing in Shopify includes or collects duties or
+  // taxes, so "Duties And Taxes Are Included" wasn't true. Owner: remove it.
   const messages = [
-    "Duties And Taxes Are Included",
     `${transitLabel(country)} Business Day Shipping`,
     `Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`,
   ];

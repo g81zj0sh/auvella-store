@@ -1,7 +1,9 @@
 import { SOCIAL_LINKS } from "@/lib/socialLinks";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronUp } from "lucide-react";
+import { ArrowRight, ChevronUp, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { subscribeToNewsletter } from "@/lib/klaviyo";
+import { identifyKlaviyo } from "@/lib/klaviyoOnsite";
 import paymentMethodsAssetImg from "@/assets/payment-methods.png";
 const paymentMethodsAsset = { url: paymentMethodsAssetImg };
 
@@ -80,6 +82,8 @@ const shopLinks = [
 export function Footer() {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   return (
     <footer className="border-t border-[#EBEBEB] bg-white">
@@ -116,32 +120,63 @@ export function Footer() {
           <p className="mx-auto mt-4 max-w-xs text-[13px] leading-relaxed text-[#555555]">
             Be the first to discover new drops, private offers, and all things Auvella.
           </p>
-          {done ? (
-            <p className="mt-6 text-[13px] text-[#0a0a0a]">Thank you — you're on the list.</p>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (email.trim()) setDone(true);
-              }}
-              className="mx-auto mt-6 flex max-w-xs overflow-hidden rounded-control border border-[#0a0a0a]"
-            >
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your email"
-                className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[16px] md:text-[13px] text-[#0a0a0a] placeholder:text-[#888888] focus:outline-none"
-              />
-              <button
-                aria-label="Subscribe"
-                className="flex items-center justify-center border-l border-[#0a0a0a] px-4 text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0a0a0a]"
-              >
-                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-              </button>
-            </form>
-          )}
+          {/* Signs up to the Klaviyo Newsletter list (double opt-in): the
+              confirmation email comes first, then the welcome email with the
+              WELCOME10 code the shipping popup's "10% off" points here for. */}
+          <div aria-live="polite">
+            {done ? (
+              <p className="mx-auto mt-6 max-w-xs text-[13px] leading-relaxed text-[#0a0a0a]">
+                Nearly there — check your inbox to confirm your email. Your 10% welcome code
+                follows.
+              </p>
+            ) : (
+              <>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const value = email.trim();
+                    if (!value || sending) return;
+                    setSending(true);
+                    setFailed(false);
+                    const ok = await subscribeToNewsletter({ email: value, source: "Footer" });
+                    setSending(false);
+                    if (ok) {
+                      setDone(true);
+                      // Bag tracking (v186): links this browser to the profile, consent permitting.
+                      identifyKlaviyo({ email: value });
+                    } else setFailed(true);
+                  }}
+                  className="mx-auto mt-6 flex max-w-xs overflow-hidden rounded-control border border-[#0a0a0a]"
+                >
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your email"
+                    aria-label="Email address"
+                    className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[16px] md:text-[13px] text-[#0a0a0a] placeholder:text-[#888888] focus:outline-none"
+                  />
+                  <button
+                    aria-label="Subscribe"
+                    disabled={sending}
+                    className="flex items-center justify-center border-l border-[#0a0a0a] px-4 text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0a0a0a] disabled:cursor-wait"
+                  >
+                    {sending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+                    )}
+                  </button>
+                </form>
+                {failed && (
+                  <p className="mx-auto mt-2 max-w-xs text-[12px] text-[#b42318]">
+                    Couldn't sign you up just now. Please try again.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
           <p className="mx-auto mt-4 max-w-xs text-[11px] leading-relaxed text-[#888888]">
             By subscribing you agree to receive recurring marketing emails from Auvella. View{" "}
             <Link to="/pages/$slug" params={{ slug: "terms" }} className="underline underline-offset-2">Terms</Link> &{" "}

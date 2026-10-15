@@ -50,7 +50,8 @@ export function CookieConsent() {
             </p>
             <p className="mt-1.5 text-[13px] leading-[1.7] text-[#555555]">
               We use a few to keep your bag and size preferences, which we need to run the shop. We'd also like to
-              use them to measure how our ads perform. That second part is entirely up to you, and the store works
+              use them to measure how our ads perform and to personalise our emails, like a reminder about your
+              bag. That second part is entirely up to you, and the store works
               exactly the same either way.{" "}
               <Link
                 to="/pages/$slug"

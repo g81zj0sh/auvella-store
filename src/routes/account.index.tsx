@@ -15,6 +15,7 @@ import {
   updateCustomerName,
 } from "@/lib/customerAuth";
 import { subscribeToNewsletter } from "@/lib/klaviyo";
+import { identifyKlaviyo } from "@/lib/klaviyoOnsite";
 import { useDisplayPrice } from "@/lib/preferences";
 import { ProductCard } from "@/components/site/ProductCard";
 import { fetchProductByHandle, type ShopifyProduct } from "@/lib/shopify";
@@ -146,6 +147,14 @@ function AboutYou() {
     if (profile) {
       setFirstName(profile.firstName ?? "");
       setLastName(profile.lastName ?? "");
+      // Bag tracking (v186): a signed-in shopper is a known profile, consent permitting.
+      if (profile.email) {
+        identifyKlaviyo({
+          email: profile.email,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+        });
+      }
     }
   }, [profile]);
 

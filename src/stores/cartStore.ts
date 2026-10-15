@@ -18,6 +18,7 @@ import {
   type CartLineAttributes,
 } from "@/lib/shopify";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
+import { trackAddedToCart } from "@/lib/klaviyoOnsite";
 import { announceBagAdd } from "@/lib/glueOffer";
 import { perkKindOf, type PerkKind } from "@/lib/perks";
 
@@ -190,6 +191,9 @@ export const useCartStore = create<CartStore>()(
               { id: contentId, quantity: item.quantity, item_price: unitPrice },
             ],
           });
+          // Klaviyo Added to Cart (v186) - shopper adds only: perk lines,
+          // quantity steps, swaps and checkout rebuilds don't come through here.
+          trackAddedToCart(item, get().items, get().checkoutUrl);
           // Lets the Body Adhesive popup react to strapless/backless adds.
           if (!opts?.quiet) announceBagAdd(item.product.node.handle);
         }

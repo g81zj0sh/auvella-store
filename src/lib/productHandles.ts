@@ -9,4 +9,6 @@ export const LEGACY_PRODUCT_HANDLES: Record<string, string> = {
   "pure-color-tube-top-short-skirt-slim-backless-small-dress-dress": "cowl-neck-lace-up-back-mini-dress",
   // Renamed 13 Oct 2026 from the supplier import title.
   "autumn-and-winter-pit-thickened-suit": "thick-rib-knit-lounge-set",
+  // Mirrors Shopify's own URL redirect 640507314471 (the import title).
+  "strapless-bra-with-jelly-shaped-adjustable-cups-for-a-modest-coverage": "jelly-cup-multi-way-strapless-bra",
 };

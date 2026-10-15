@@ -7,6 +7,9 @@ import { freeShippingThresholdFmt, useShippingCountry, transitLabel } from "@/li
 import { usePreferences } from "@/lib/preferences";
 import { EditorialImage } from "@/components/site/EditorialImage";
 import { smoothScrollToId } from "@/lib/smoothScroll";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProductsByHandles, type ShopifyProduct } from "@/lib/shopify";
+import { ProductCard } from "@/components/site/ProductCard";
 
 import heroVideoAssetImg from "@/assets/media/hero.mp4";
 const heroVideoAsset = { url: heroVideoAssetImg };
@@ -73,8 +76,101 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  // Server-rendered so the row is in the first paint and nothing below it
+  // shifts - but never at the hero's expense: if Shopify fails or is slow the
+  // page renders without it and the client fetches it instead.
+  loader: ({ context }): Promise<ShopifyProduct[]> =>
+    Promise.race([
+      context.queryClient.ensureQueryData(essentialsQuery).catch(() => []),
+      new Promise<ShopifyProduct[]>((resolve) => setTimeout(() => resolve([]), 2500)),
+    ]),
   component: Index,
 });
+
+/* ------------------------------------------------------------------ */
+/* Start with the essentials — the three launch bodysuits under the    */
+/* hero (v186, owner's brief 14 Oct 2026). Labels and lines are the    */
+/* owner's; each line is backed by the product's own description.      */
+/* ------------------------------------------------------------------ */
+const ESSENTIALS = [
+  {
+    handle: "one-piece-shapewear-bodysuit-with-tummy-control",
+    label: "Best for everyday",
+    line: "Open gusset. No waist seam. All-day hold.",
+  },
+  {
+    handle: "seamless-shaping-long-sleeve-bodysuit",
+    label: "Best for easy dressing",
+    line: "Front buttons. No makeup on the collar.",
+  },
+  {
+    handle: "seamless-sculpting-bodysuit",
+    label: "Best for low-back outfits",
+    line: "Low U-back. Shape without showing.",
+  },
+];
+
+const essentialsQuery = {
+  queryKey: ["home-essentials"],
+  // fetchProductsByHandles swallows errors as []; throw instead, so a failed
+  // refetch (e.g. after a Ship-to switch) keeps the cards already on screen.
+  queryFn: async () => {
+    const products = await fetchProductsByHandles(ESSENTIALS.map((e) => e.handle));
+    if (!products.length) throw new Error("essentials unavailable");
+    return products;
+  },
+  staleTime: 5 * 60_000,
+};
+
+function EssentialsSection() {
+  // Seeded from the loader; a live query so a Ship-to switch refetches it in
+  // the shopper's currency like every other price on the site (root route).
+  // An empty loader result (Shopify down/slow) seeds nothing, so it retries.
+  const initial = Route.useLoaderData();
+  const { data = [] } = useQuery({
+    ...essentialsQuery,
+    initialData: initial.length ? initial : undefined,
+  });
+  const cards = ESSENTIALS.flatMap((e) => {
+    const product = data.find((p) => p.node.handle === e.handle);
+    return product ? [{ ...e, product }] : [];
+  });
+  if (!cards.length) return null;
+
+  return (
+    <section aria-labelledby="essentials-heading" className="bg-white">
+      <div className="container-px pt-10 pb-12 md:pt-14 md:pb-16">
+        <div className="text-center">
+          <h2 id="essentials-heading" className="font-serif text-[28px] font-light text-[#0a0a0a]">
+            Start with the essentials
+          </h2>
+          <p className="mt-2 text-[13px] leading-relaxed text-[#555555]">
+            Three ways to feel held, smooth and comfortable all day.
+          </p>
+        </div>
+        {/* Phones: a swipe row with the next card peeking (pb-2 keeps the
+            selected swatch's ring from being clipped by the scroller).
+            Desktop: three columns. */}
+        <ul className="no-scrollbar -mx-5 mt-7 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto overscroll-x-contain px-5 pb-2 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 md:pb-0">
+          {cards.map(({ product, label, line }) => (
+            <li key={product.node.id} className="w-[78%] shrink-0 snap-start md:w-auto">
+              <ProductCard product={product} badge={label} note={line} />
+            </li>
+          ))}
+        </ul>
+        <div className="mt-8 text-center">
+          <Link
+            to="/collections/$handle"
+            params={{ handle: "bodysuits" }}
+            className="inline-flex items-center justify-center rounded-control border border-[#0a0a0a] px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
+          >
+            Shop all bodysuits
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /* Panel text treatments                                               */
@@ -393,6 +489,8 @@ function Index() {
         </div>
 
       </section>
+
+      <EssentialsSection />
 
       {/* SECTION 2 — TWO-PANEL EDITORIAL SPLIT */}
       <section id="bestsellers" className="grid grid-cols-1 md:grid-cols-2 scroll-mt-24">

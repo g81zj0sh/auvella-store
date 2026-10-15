@@ -34,6 +34,8 @@ interface Props {
   /** Edge-to-edge two-column grid on phones (collection pages, favourites):
       9:13 photo, text inset 16 px. Desktop is unchanged. */
   bleed?: boolean;
+  /** One short line under the title (the homepage essentials row). */
+  note?: string;
 }
 
 /* Bag with a plus at its corner - the quick-add mark. Drawn on the header
@@ -82,7 +84,7 @@ function useHoverCapable(): boolean {
   return can;
 }
 
-export function ProductCard({ product, badge, bleed = false }: Props) {
+export function ProductCard({ product, badge, bleed = false, note }: Props) {
   const node = product.node;
   const image = node.images.edges[0]?.node;
   const firstAvailable =
@@ -319,6 +321,7 @@ export function ProductCard({ product, badge, bleed = false }: Props) {
         <h3 className="text-[12px] uppercase tracking-wide text-[#0a0a0a] leading-snug">
           {node.title}
         </h3>
+        {note && <p className="mt-0.5 text-[12px] leading-snug text-[#555555]">{note}</p>}
         <div className="mt-1 flex items-baseline gap-2 text-[13px]">
           {shownOnSale && shownCompare && (
             <span className="text-[#888888] line-through">

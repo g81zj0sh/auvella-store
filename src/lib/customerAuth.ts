@@ -11,6 +11,8 @@
  * broken login.
  */
 
+import { clearKlaviyoIdentity } from "@/lib/klaviyoOnsite";
+
 export const CUSTOMER_CLIENT_ID = "b7537e6a-d931-4623-a8d6-90aaf3417392";
 export const ACCOUNTS_READY = CUSTOMER_CLIENT_ID.length > 0;
 
@@ -155,6 +157,8 @@ async function getValidAccessToken(): Promise<string | null> {
 }
 
 export function logout() {
+  // First, so the next person on this device isn't tracked as this customer (v186).
+  clearKlaviyoIdentity();
   const tokens = readTokens();
   localStorage.removeItem(TOKENS_KEY);
   const idToken = tokens?.id_token;

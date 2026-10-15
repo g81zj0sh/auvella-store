@@ -1,5 +1,6 @@
 import { PROCESSING_LABEL, COUNTRIES, transitLabel, FREE_SHIPPING_GBP } from "@/lib/shipping";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
+import { pageAlias } from "@/lib/legacyRedirects";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 
@@ -403,7 +404,9 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
         <H2 id="cookies">Cookies</H2>
         <P>
           We use essential cookies to run the site (cart, checkout, currency preferences)
-          and analytics cookies to understand site usage. You can control or delete
+          and analytics cookies to understand site usage. With your permission, we also use
+          Klaviyo cookies to personalise our emails, such as a reminder about items left in
+          your bag. You can control or delete
           cookies in your browser settings; blocking essential cookies may stop parts of
           the store (like the cart) from working.
         </P>
@@ -519,6 +522,10 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
 
 export const Route = createFileRoute("/pages/$slug")({
   loader: ({ params }) => {
+    // Old Shopify slugs (shipping-policy, faqs...): server.ts redirects them
+    // on a fresh load; this covers client-side navigation (v186).
+    const alias = pageAlias(params.slug);
+    if (alias) throw redirect({ href: alias, statusCode: 301 });
     if (!PAGES[params.slug]) throw notFound();
     return { slug: params.slug };
   },

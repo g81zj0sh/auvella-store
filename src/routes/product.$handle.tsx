@@ -50,6 +50,7 @@ import { ensurePerks } from "@/components/site/PerkSync";
 import { PerkUnlocks } from "@/components/site/PerkUnlocks";
 import { PERK_UNLOCK, perkPlan } from "@/lib/perks";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
+import { trackViewedProduct } from "@/lib/klaviyoOnsite";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, type Backdrop } from "@/lib/imageBackdrop";
@@ -256,6 +257,8 @@ function ProductPage() {
       content_ids: [contentId],
       contents: [{ id: contentId, quantity: 1, item_price: amount }],
     });
+    // Klaviyo Viewed Product (v186): consent-gated, perk products skipped.
+    trackViewedProduct({ node });
   }, [node]);
 
   // Initialize non-size options from the first variant (of the ?colour= one
@@ -1732,8 +1735,7 @@ function ProductPage() {
                     <p>
                       {isFinalSale(node.handle)
                         ? "For hygiene reasons this is final sale: it can't be returned or exchanged unless it's faulty or not what you ordered."
-                        : "Easy, tracked 30-day returns — items must be unworn with tags attached."}{" "}
-                      Duties and taxes are included.
+                        : "Easy, tracked 30-day returns — items must be unworn with tags attached."}
                     </p>
                   </div>
                 )}

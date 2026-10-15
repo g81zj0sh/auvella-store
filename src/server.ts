@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { legacyRedirect } from "./lib/legacyRedirects";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -40,6 +41,18 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // Old Shopify-theme URLs the www host forwards here (v186) go on before
+      // the router, which would 404 them. Static files are served before the
+      // Worker runs, and /_serverFn/* (POST, too) matches no rule.
+      if (request.method === "GET" || request.method === "HEAD") {
+        const legacy = legacyRedirect(new URL(request.url));
+        if (legacy) {
+          return new Response(null, {
+            status: legacy.status,
+            headers: { Location: legacy.location },
+          });
+        }
+      }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
