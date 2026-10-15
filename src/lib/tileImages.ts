@@ -10,9 +10,9 @@
 export const TILE_IMAGES: Record<string, Record<string, string>> = {
   // Test product (4 Oct 2026), pending Joshua's go for the rest.
   "one-piece-shapewear-bodysuit-with-tummy-control": {
-    Black: "/tiles/tummy-control-bodysuit-black.webp",
-    Nude: "/tiles/tummy-control-bodysuit-nude.webp",
-    Brown: "/tiles/tummy-control-bodysuit-brown.webp",
+    "Black": "/tiles/one-piece-shapewear-bodysuit-with-tummy-control-black-v2.webp",
+    "Nude": "/tiles/one-piece-shapewear-bodysuit-with-tummy-control-nude-v2.webp",
+    "Brown": "/tiles/one-piece-shapewear-bodysuit-with-tummy-control-brown-v2.webp",
   },
   "invisible-front-buckle-strapless-bra": {
     "Black": "/tiles/invisible-front-buckle-strapless-bra-black.webp",
@@ -23,10 +23,10 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/high-waist-shaping-shorts-with-lace-trim-black.webp",
   },
   "auvella-long-sleeve-sculpting-bodysuit": {
-    "Nude": "/tiles/auvella-long-sleeve-sculpting-bodysuit-nude.webp",
-    "Coffee": "/tiles/auvella-long-sleeve-sculpting-bodysuit-coffee.webp",
-    "Black": "/tiles/auvella-long-sleeve-sculpting-bodysuit-black.webp",
-    "White": "/tiles/auvella-long-sleeve-sculpting-bodysuit-white.webp",
+    "Nude": "/tiles/auvella-long-sleeve-sculpting-bodysuit-nude-v2.webp",
+    "Coffee": "/tiles/auvella-long-sleeve-sculpting-bodysuit-coffee-v2.webp",
+    "Black": "/tiles/auvella-long-sleeve-sculpting-bodysuit-black-v2.webp",
+    "White": "/tiles/auvella-long-sleeve-sculpting-bodysuit-white-v2.webp",
   },
   "auvella-seamless-comfort-bralette": {
     "Nude": "/tiles/auvella-seamless-comfort-bralette-nude.webp",
@@ -228,12 +228,12 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Watermelon Red": "/tiles/satin-tie-waist-robe-watermelon-red-v2.webp",
   },
   "seamless-shaping-long-sleeve-bodysuit": {
-    "Medium Brown": "/tiles/seamless-shaping-long-sleeve-bodysuit-medium-brown.webp",
-    "Rose Pink": "/tiles/seamless-shaping-long-sleeve-bodysuit-rose-pink.webp",
-    "Bright Red": "/tiles/seamless-shaping-long-sleeve-bodysuit-bright-red.webp",
-    "Brown": "/tiles/seamless-shaping-long-sleeve-bodysuit-brown.webp",
-    "Nude": "/tiles/seamless-shaping-long-sleeve-bodysuit-nude.webp",
-    "Black": "/tiles/seamless-shaping-long-sleeve-bodysuit-black.webp",
+    "Medium Brown": "/tiles/seamless-shaping-long-sleeve-bodysuit-medium-brown-v2.webp",
+    "Rose Pink": "/tiles/seamless-shaping-long-sleeve-bodysuit-rose-pink-v2.webp",
+    "Bright Red": "/tiles/seamless-shaping-long-sleeve-bodysuit-bright-red-v2.webp",
+    "Brown": "/tiles/seamless-shaping-long-sleeve-bodysuit-brown-v2.webp",
+    "Nude": "/tiles/seamless-shaping-long-sleeve-bodysuit-nude-v2.webp",
+    "Black": "/tiles/seamless-shaping-long-sleeve-bodysuit-black-v2.webp",
   },
   "womens-high-waisted-breathable-traceless-thong-panties": {
     "Scarlet": "/tiles/womens-high-waisted-breathable-traceless-thong-panties-scarlet-v2.webp",
