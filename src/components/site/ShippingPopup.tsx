@@ -190,7 +190,7 @@ export function ShippingPopup() {
                 <span key="pay">Secure checkout with Apple&nbsp;Pay, Google&nbsp;Pay &amp; Shop&nbsp;Pay</span>,
                 <span key="days">
                   Shipping Takes <span className="font-semibold">{transitLabel(country)}</span>{" "}
-                  Business Days
+                  Business Days (after dispatch)
                 </span>,
                 <span key="returns">Easy, tracked 30-day returns</span>,
               ].map((content, i) => (

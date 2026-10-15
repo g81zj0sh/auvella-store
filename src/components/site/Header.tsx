@@ -434,7 +434,8 @@ function AnnouncementBar() {
   // No duties line (v186): nothing in Shopify includes or collects duties or
   // taxes, so "Duties And Taxes Are Included" wasn't true. Owner: remove it.
   const messages = [
-    `${transitLabel(country)} Business Day Shipping`,
+    // Owner (v190): the days count from dispatch, so say so.
+    `${transitLabel(country)} Business Day Shipping (After Dispatch)`,
     `Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`,
   ];
   const [idx, setIdx] = useState(0);
