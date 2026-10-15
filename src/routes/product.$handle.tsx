@@ -1272,7 +1272,7 @@ function ProductPage() {
               <p className="font-medium text-[#0a0a0a]">
                 Free shipping on orders {shipThreshold}+
               </p>
-              <p>{transitLabel(shipCountry)} business day shipping</p>
+              <p>{transitLabel(shipCountry)} business day shipping (after dispatch)</p>
               <p>
                 {isFinalSale(node.handle)
                   ? "Final sale for hygiene — faulty or wrong items replaced or refunded"
