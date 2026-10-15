@@ -11,11 +11,11 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { initMetaPixel, trackMetaPageView } from "../lib/metaPixel";
-import { loadKlaviyo } from "@/lib/klaviyoOnsite";
+import { clearMetaPixelCookies, initMetaPixel, trackMetaPageView } from "../lib/metaPixel";
+import { clearKlaviyoIdentity, loadKlaviyo } from "@/lib/klaviyoOnsite";
 import { usePreferences } from "../lib/preferences";
 import { CookieConsent } from "@/components/site/CookieConsent";
-import { hasMarketingConsent, onConsentChange } from "@/lib/consent";
+import { hasMarketingConsent, onConsentChange, readConsent } from "@/lib/consent";
 import { Toaster } from "sonner";
 import { QuickAddSheet } from "@/components/site/QuickAddSheet";
 import { GlueOfferPopup } from "@/components/site/GlueOfferPopup";
@@ -138,6 +138,27 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** v188: the cookies and storage the Meta pixel and klaviyo.js leave behind. */
+function clearMarketingData() {
+  clearMetaPixelCookies();
+  clearKlaviyoIdentity();
+  // klaviyo.js's own onsite state, seen in the browser after an Accept
+  // (15 Oct 2026). Logout keeps these; a withdrawal drops everything.
+  const drop = (store: () => Storage, keys: string[]) => {
+    for (const key of keys) {
+      try {
+        store().removeItem(key);
+      } catch {
+        /* storage can be blocked */
+      }
+    }
+  };
+  drop(() => window.localStorage, ["__kl_key", "klaviyoOnsite", "kl-post-identification-sync"]);
+  // fbevents.js's referrer memo.
+  drop(() => window.localStorage, ["lastExternalReferrer", "lastExternalReferrerTime"]);
+  drop(() => window.sessionStorage, ["klaviyoPagesVisitCountV2", "klaviyoPagesVisitCount"]);
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
@@ -166,6 +187,9 @@ function RootComponent() {
     };
 
     if (hasMarketingConsent()) start();
+    // v188: after a decline none of the tags' cookies should be here. Also
+    // catches one a tag re-wrote while the withdrawal reload was under way.
+    else if (readConsent() === "declined") clearMarketingData();
 
     // Market: the server rendered GB prices. If this shopper's country is
     // anything else - or changes - refetch everything in their market.
@@ -183,6 +207,15 @@ function RootComponent() {
     const unsubscribePrefs = usePreferences.subscribe(syncMarket);
     const unsubscribeConsent = onConsentChange((state) => {
       if (state === "accepted") start();
+      if (state !== "declined") return;
+      // v188: a yes taken back via Cookie settings. fbevents.js and klaviyo.js
+      // can't be unloaded, so clear what they stored and reload once - the
+      // fresh page never injects them. If nothing started on this page (a
+      // first decline, or declining again) there is nothing to unload.
+      clearMarketingData();
+      // klaviyo.js can also arrive without start() (a bag add or signup after
+      // an Accept in another tab), so go by what's actually on the page.
+      if (unsubscribeRouter || window.fbq || window.klaviyo) window.location.reload();
     });
 
     return () => {

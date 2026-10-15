@@ -39,6 +39,17 @@ export const PREVIOUS_SHOPIFY_HANDLE: Record<string, string> = {
   "everyday-support-edit": "best-sellers",
 };
 
+// Own keys only (v188): /collections/constructor read Object's built-in and
+// 301'd to "/collections/function Object() { [native code] }".
+function own(map: Record<string, string>, key: string): string | undefined {
+  return Object.prototype.hasOwnProperty.call(map, key) ? map[key] : undefined;
+}
+
 export function canonicalCollectionHandle(handle: string): string {
-  return LEGACY_COLLECTION_HANDLES[handle] ?? handle;
+  return own(LEGACY_COLLECTION_HANDLES, handle) ?? handle;
+}
+
+/** The pre-rename Shopify handle to fall back to, if this one has one. */
+export function previousShopifyHandle(handle: string): string | undefined {
+  return own(PREVIOUS_SHOPIFY_HANDLE, handle);
 }

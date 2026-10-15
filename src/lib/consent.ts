@@ -63,6 +63,22 @@ export function onConsentChange(fn: Listener): () => void {
   return () => listeners.delete(fn);
 }
 
+/*
+ * v188: "Cookie settings" in the footer brings the banner back so a choice
+ * can be changed later - withdrawing has to be as easy as agreeing. Just a
+ * signal; the banner is the only listener and what a choice does is unchanged.
+ */
+const openers = new Set<() => void>();
+
+export function openCookieSettings(): void {
+  for (const fn of openers) fn();
+}
+
+export function onCookieSettingsOpen(fn: () => void): () => void {
+  openers.add(fn);
+  return () => openers.delete(fn);
+}
+
 /** True only on an explicit yes. Unanswered means no. */
 export function hasMarketingConsent(): boolean {
   return readConsent() === "accepted";

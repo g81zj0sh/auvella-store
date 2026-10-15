@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { setConsent, readConsent, type ConsentChoice } from "@/lib/consent";
+import { setConsent, readConsent, onCookieSettingsOpen, type ConsentChoice } from "@/lib/consent";
 
 /*
  * Cookie banner.
@@ -12,33 +12,75 @@ import { setConsent, readConsent, type ConsentChoice } from "@/lib/consent";
  *
  * Renders nothing until mounted, so the server HTML and the first client
  * render match and a returning visitor never sees it flash.
+ *
+ * v188: the footer's "Cookie settings" reopens it whatever was chosen before.
+ * Taking back a yes is handled where the tags start (__root): it clears their
+ * cookies and reloads once.
  */
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
+  // v188: bumped on each reopen so focus moves into the banner.
+  const [reopened, setReopened] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (readConsent() === null) {
       // Let the page settle first; the shipping popup takes the opening beat.
-      const t = setTimeout(() => setVisible(true), 1200);
+      // v188: re-checked, in case it was answered from Cookie settings meanwhile.
+      const t = setTimeout(() => {
+        if (readConsent() === null) setVisible(true);
+      }, 1200);
       return () => clearTimeout(t);
     }
   }, []);
 
+  useEffect(
+    () =>
+      onCookieSettingsOpen(() => {
+        clearTimeout(closeTimer.current);
+        const active = document.activeElement;
+        returnFocus.current = active instanceof HTMLElement ? active : null;
+        setClosing(false);
+        setVisible(true);
+        setReopened((n) => n + 1);
+      }),
+    [],
+  );
+
+  // Keyboard users land in the banner, not back at the top of the page.
+  useEffect(() => {
+    if (reopened) ref.current?.focus({ preventScroll: true });
+  }, [reopened]);
+
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+
   const choose = (choice: ConsentChoice) => {
     setConsent(choice);
     setClosing(true);
-    setTimeout(() => setVisible(false), 260);
+    closeTimer.current = setTimeout(() => {
+      // Hand focus back to "Cookie settings" rather than losing it to the page.
+      const back = returnFocus.current;
+      returnFocus.current = null;
+      if (back?.isConnected && ref.current?.contains(document.activeElement)) {
+        back.focus({ preventScroll: true });
+      }
+      setVisible(false);
+    }, 260);
   };
 
   if (!visible) return null;
 
   return (
     <div
+      ref={ref}
+      tabIndex={-1}
       role="dialog"
       aria-label="Cookies"
       aria-live="polite"
-      className={`fixed inset-x-0 bottom-0 z-[70] transition-all duration-300 ease-out ${
+      className={`fixed inset-x-0 bottom-0 z-[70] transition-all duration-300 ease-out focus:outline-none ${
         closing ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
       }`}
     >

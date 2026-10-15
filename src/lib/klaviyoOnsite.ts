@@ -161,7 +161,8 @@ export function identifyKlaviyo(person: {
 
 /** Drops the browser's link to a profile and its viewed-items history - on
  *  logout, so the next person on a shared device isn't tracked as the last
- *  one. Mirrors what klaviyo.js's own clearIdentity removes. */
+ *  one, and (v188) when cookie consent is withdrawn or declined. Mirrors what
+ *  klaviyo.js's own clearIdentity removes. */
 export function clearKlaviyoIdentity(): void {
   if (typeof window === "undefined") return;
   lastIdentity = null;

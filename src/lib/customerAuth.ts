@@ -55,11 +55,27 @@ function redirectUri(): string {
 
 /* ------------------------------ Login flow ---------------------------- */
 
-export async function startLogin() {
+/*
+ * Where to land after signing in (v188): a path on this site, or /account.
+ * Only "/x" - never "//host" or "/\host" (browsers read both as another
+ * site), and printable ASCII only: a browser strips tabs and newlines
+ * first, so "/\t/host" would become "//host".
+ */
+function safeReturnTo(path: unknown): string {
+  if (typeof path !== "string" || !path.startsWith("/")) return "/account";
+  if (path.startsWith("//") || path.startsWith("/\\")) return "/account";
+  return /[^\x20-\x7e]/.test(path) ? "/account" : path;
+}
+
+/** returnTo: the page to come back to afterwards (default /account). */
+export async function startLogin(returnTo?: string) {
   const verifier = randomString(64);
   const state = randomString(24);
   const challenge = b64url(await sha256(verifier));
-  localStorage.setItem(PKCE_KEY, JSON.stringify({ verifier, state }));
+  localStorage.setItem(
+    PKCE_KEY,
+    JSON.stringify({ verifier, state, returnTo: safeReturnTo(returnTo) }),
+  );
 
   const params = new URLSearchParams({
     scope: "openid email customer-account-api:full",
@@ -73,11 +89,12 @@ export async function startLogin() {
   window.location.href = `${AUTH_BASE}/oauth/authorize?${params.toString()}`;
 }
 
-export async function completeLogin(code: string, state: string): Promise<boolean> {
+/** The path to land on once signed in (see startLogin), or null if it failed. */
+export async function completeLogin(code: string, state: string): Promise<string | null> {
   const stored = localStorage.getItem(PKCE_KEY);
-  if (!stored) return false;
-  const { verifier, state: expectedState } = JSON.parse(stored);
-  if (state !== expectedState) return false;
+  if (!stored) return null;
+  const { verifier, state: expectedState, returnTo } = JSON.parse(stored);
+  if (state !== expectedState) return null;
 
   const body = new URLSearchParams({
     grant_type: "authorization_code",
@@ -91,11 +108,12 @@ export async function completeLogin(code: string, state: string): Promise<boolea
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
-  if (!res.ok) return false;
+  if (!res.ok) return null;
   const data = await res.json();
   saveTokens(data);
   localStorage.removeItem(PKCE_KEY);
-  return true;
+  // Checked again on the way out: storage can hold anything.
+  return safeReturnTo(returnTo);
 }
 
 function saveTokens(data: {

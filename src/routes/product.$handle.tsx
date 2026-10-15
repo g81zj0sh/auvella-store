@@ -43,6 +43,7 @@ import {
   fetchProductsByHandles,
   shopifyImg,
   shopifySrcSet,
+  storefrontApiRequest,
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
@@ -85,14 +86,37 @@ export const Route = createFileRoute("/product/$handle")({
   beforeLoad: ({ params }) => {
     // The multi-buy perks (lib/perks) have no page: a real 404, no tracking.
     if (isHiddenHandle(params.handle)) throw notFound();
-    const to = LEGACY_PRODUCT_HANDLES[params.handle];
+    // Own keys only (v188): /product/constructor 301'd to Object's built-in.
+    const to = Object.prototype.hasOwnProperty.call(LEGACY_PRODUCT_HANDLES, params.handle)
+      ? LEGACY_PRODUCT_HANDLES[params.handle]
+      : undefined;
     if (to) throw redirect({ to: "/product/$handle", params: { handle: to }, statusCode: 301 });
   },
-  loader: async ({ params, context }) =>
-    context.queryClient.ensureQueryData({
+  loader: async ({ params, context }) => {
+    const productQuery = {
       queryKey: ["product", params.handle],
       queryFn: () => fetchProductByHandle(params.handle),
-    }),
+    };
+    let product = await context.queryClient.ensureQueryData(productQuery);
+    // A cached miss (an earlier visit, quick add, a bundle prefetch) may be
+    // out of date - e.g. the product was published since - so ask again
+    // before calling it a 404.
+    if (!product) product = await context.queryClient.fetchQuery({ ...productQuery, staleTime: 0 });
+    if (product) return product;
+    /* v188: an unknown or draft handle is a real 404 now, not a 200 "Product
+       not found" page for Google to index. Only when Shopify actually
+       answered, though: a 402 (store billing paused) also comes back as no
+       product, and 404ing every product during that would get them dropped.
+       Any other Shopify failure already throws, so the page answers 500 -
+       which search engines retry - instead. */
+    const ping = await storefrontApiRequest(`query StoreAnswering { shop { name } }`);
+    if (!ping?.data?.shop) {
+      // Don't keep the miss: "Try again" has to ask Shopify afresh.
+      context.queryClient.removeQueries({ queryKey: ["product", params.handle], exact: true });
+      throw new Error("Shopify didn't answer for this product");
+    }
+    throw notFound();
+  },
   head: ({ params, loaderData }) => {
     const node = loaderData?.node;
     if (!node) {
@@ -625,6 +649,8 @@ function ProductPage() {
     );
   }
 
+  /* v188: the loader 404s unknown handles, so this only shows if a refetch
+     (a Ship-to switch to a market without the product) comes back empty. */
   if (!node) {
     return (
       <div className="min-h-screen bg-white">

@@ -24,9 +24,11 @@ function CallbackPage() {
       setFailed(true);
       return;
     }
-    completeLogin(code, state).then((ok) => {
-      if (ok) {
-        navigate({ to: "/account", replace: true });
+    completeLogin(code, state).then((returnTo) => {
+      if (returnTo) {
+        // v188: back where sign-in started (e.g. Share Favourites), else
+        // /account - completeLogin only hands back a path on this site.
+        navigate({ href: returnTo, replace: true });
       } else {
         setFailed(true);
       }

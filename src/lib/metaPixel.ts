@@ -6,6 +6,8 @@
 // trackMetaPageView() below is for. Path de-duplication stops the initial
 // load being counted twice when the router resolves its first route.
 
+import { readConsent } from "@/lib/consent";
+
 const PIXEL_ID = "1585250303102135";
 
 declare global {
@@ -65,7 +67,31 @@ export function trackMetaEvent(
   params?: Record<string, unknown>,
 ): void {
   if (typeof window === "undefined" || !window.fbq) return;
+  // v188: consent withdrawn in another tab - this tab's pixel is still loaded
+  // but must go quiet. An explicit "declined" only: with storage blocked the
+  // choice reads null, and that tab's Accept still counts for its own page.
+  if (readConsent() === "declined") return;
   window.fbq("track", event, params);
+}
+
+/**
+ * v188: removes the cookies fbevents.js sets - _fbp (the browser id) and _fbc
+ * (an ad click) - when a shopper withdraws consent. Meta sets them on the
+ * whole domain, so clear that as well as this host. Only ever removes data.
+ */
+export function clearMetaPixelCookies(): void {
+  if (typeof window === "undefined") return;
+  const expired = "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; path=/";
+  for (const name of ["_fbp", "_fbc"]) {
+    try {
+      document.cookie = name + expired;
+      if (window.location.hostname.endsWith("auvellawear.com")) {
+        document.cookie = `${name}${expired}; domain=.auvellawear.com`;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 /** Fires PageView for a client-side navigation, skipping repeat paths. */

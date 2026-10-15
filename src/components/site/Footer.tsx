@@ -4,6 +4,7 @@ import { ArrowRight, ChevronUp, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { subscribeToNewsletter } from "@/lib/klaviyo";
 import { identifyKlaviyo } from "@/lib/klaviyoOnsite";
+import { openCookieSettings } from "@/lib/consent";
 import paymentMethodsAssetImg from "@/assets/payment-methods.png";
 const paymentMethodsAsset = { url: paymentMethodsAssetImg };
 
@@ -255,6 +256,9 @@ export function Footer() {
             <Link to="/pages/$slug" params={{ slug: "returns" }} className="transition-colors hover:text-[#0a0a0a]">Returns</Link>
             <span className="text-[#DDDDDD]">|</span>
             <Link to="/pages/$slug" params={{ slug: "shipping" }} className="transition-colors hover:text-[#0a0a0a]">Shipping</Link>
+            <span className="text-[#DDDDDD]">|</span>
+            {/* v188: reopens the cookie banner, so a choice can be changed later. */}
+            <button type="button" onClick={openCookieSettings} className="cursor-pointer uppercase tracking-[0.16em] transition-colors hover:text-[#0a0a0a]">Cookie settings</button>
           </div>
           <img
             src={paymentMethodsAsset.url}

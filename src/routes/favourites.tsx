@@ -27,6 +27,8 @@ export const Route = createFileRoute("/favourites")({
   validateSearch: (search: Record<string, unknown>): FavSearch => ({
     shared: typeof search.shared === "string" && search.shared.length > 0 ? search.shared : undefined,
   }),
+  // v188: was the bare site title.
+  head: () => ({ meta: [{ title: "Favourites — Auvella" }] }),
   component: FavouritesPage,
 });
 

@@ -29,6 +29,10 @@ import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
  */
 
 export const Route = createFileRoute("/account/")({
+  // v188: was the bare site title. A sign-in page has nothing to index.
+  head: () => ({
+    meta: [{ title: "Your account — Auvella" }, { name: "robots", content: "noindex" }],
+  }),
   component: AccountPage,
 });
 

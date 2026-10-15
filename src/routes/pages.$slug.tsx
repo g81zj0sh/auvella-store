@@ -33,9 +33,13 @@ function Email() {
   );
 }
 
-const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
+/* description (v188): the page's meta description, a summary of what the
+   page itself says - no claim that isn't in its body. */
+const PAGES: Record<string, { title: string; description: string; body: React.ReactNode }> = {
   "size-guide": {
     title: "Size Guide",
+    description:
+      "How to measure your bust, underbust, waist and hip, how to read the size chart on each Auvella product, and how to choose your fit for each style.",
     body: (
       <>
         <p>
@@ -99,6 +103,8 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
   },
   contact: {
     title: "Contact Us",
+    description:
+      "Email support@auvellawear.com for help with orders, sizing, shipping and returns. We aim to reply within 24–48 hours, Monday to Friday.",
     body: (
       <>
         <P>
@@ -149,6 +155,8 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
 
   about: {
     title: "About Auvella",
+    description:
+      "Auvella makes sculpting essentials for real life: shapewear, bodysuits, intimates, swim and loungewear.",
     body: (
       <>
         <P>
@@ -180,6 +188,8 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
 
   shipping: {
     title: "Shipping Policy",
+    description:
+      "Processing times, shipping rates, delivery times by country, where we ship, duties and taxes, and tracking for Auvella orders.",
     body: (
       <>
         <P>
@@ -271,6 +281,8 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
 
   returns: {
     title: "Returns & Refund Policy",
+    description:
+      "You have 30 days from delivery to request a return. Return conditions, how to start a return, refunds, exchanges and faulty items.",
     body: (
       <>
         <P>
@@ -352,6 +364,8 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
 
   privacy: {
     title: "Privacy Policy",
+    description:
+      "What personal information Auvella collects through auvellawear.com, how we use it, who we share it with, and the rights you have over it.",
     body: (
       <>
         <P>
@@ -406,7 +420,8 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
           We use essential cookies to run the site (cart, checkout, currency preferences)
           and analytics cookies to understand site usage. With your permission, we also use
           Klaviyo cookies to personalise our emails, such as a reminder about items left in
-          your bag. You can control or delete
+          your bag. You can change your choice at any time with Cookie settings at the
+          bottom of every page. You can control or delete
           cookies in your browser settings; blocking essential cookies may stop parts of
           the store (like the cart) from working.
         </P>
@@ -436,6 +451,8 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
 
   terms: {
     title: "Terms of Service",
+    description:
+      "The terms that govern your use of auvellawear.com and any purchase you make from Auvella.",
     body: (
       <>
         <P>
@@ -457,8 +474,8 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
           Your order is an offer to buy. We accept it when we dispatch your items — until
           then we may decline or cancel an order (for example for suspected fraud, pricing
           errors, or stock issues), in which case you'll be refunded in full. Prices are
-          in USD; your card is charged in your selected display currency at your payment
-          provider's rate.
+          set in pounds sterling (GBP) and shown in your local currency at current
+          exchange rates; you pay the amount shown at checkout.
         </P>
         <H2>Shipping, returns &amp; cancellation</H2>
         <P>
@@ -520,14 +537,39 @@ const PAGES: Record<string, { title: string; body: React.ReactNode }> = {
   },
 };
 
+// Own keys only (v188): /pages/constructor or /pages/toString found
+// Object's built-ins and rendered a blank page with a 200.
+function pageFor(slug: string) {
+  return Object.prototype.hasOwnProperty.call(PAGES, slug) ? PAGES[slug] : undefined;
+}
+
 export const Route = createFileRoute("/pages/$slug")({
   loader: ({ params }) => {
     // Old Shopify slugs (shipping-policy, faqs...): server.ts redirects them
     // on a fresh load; this covers client-side navigation (v186).
     const alias = pageAlias(params.slug);
     if (alias) throw redirect({ href: alias, statusCode: 301 });
-    if (!PAGES[params.slug]) throw notFound();
+    if (!pageFor(params.slug)) throw notFound();
     return { slug: params.slug };
+  },
+  /* v188: every page was titled plain "Auvella" in tabs and search results. */
+  head: ({ loaderData }) => {
+    const page = loaderData ? pageFor(loaderData.slug) : undefined;
+    if (!page || !loaderData) return {};
+    // "About Auvella" already carries the name.
+    const title = page.title.includes("Auvella") ? page.title : `${page.title} — Auvella`;
+    const url = `https://auvellawear.com/pages/${loaderData.slug}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: page.description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: page.description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
   },
   component: PolicyPage,
 });

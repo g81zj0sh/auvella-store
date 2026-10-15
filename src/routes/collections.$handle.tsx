@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
-import { canonicalCollectionHandle, PREVIOUS_SHOPIFY_HANDLE } from "@/lib/collectionHandles";
+import { canonicalCollectionHandle, previousShopifyHandle } from "@/lib/collectionHandles";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import tileBodysuits from "@/assets/tiles/tile-bodysuits.jpg";
@@ -23,6 +23,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import {
   fetchCollectionByHandle,
   fetchProducts,
+  storefrontApiRequest,
   type ShopifyCollection,
   type ShopifyProduct,
 } from "@/lib/shopify";
@@ -432,15 +433,26 @@ function titleize(handle: string) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-async function loadCollection(handle: string): Promise<ShopifyCollection> {
+/* v188: handles that still get a page when Shopify has no collection behind
+   them: /collections/all (the old theme's /collections and /search land
+   there), the Pyjamas and Sleepwear search pages, and every handle the nav,
+   footer, tiles and breadcrumbs link to - so one Shopify unpublishes still
+   opens on a search grid, as before. Any other handle Shopify doesn't know is
+   a 404: /collections/<typo> used to render the whole catalogue under a
+   made-up title. */
+const SITE_HANDLES = new Set(["all", ...Object.keys(HANDLE_META), ...Object.keys(TILE_LABELS)]);
+
+/** null: Shopify has no such collection and the site doesn't serve one. */
+async function loadCollection(handle: string): Promise<ShopifyCollection | null> {
   let real = await fetchCollectionByHandle(handle, 96);
   // If Shopify hasn't been renamed yet (or a rename is rolled back), the
   // previous handle still answers — try it before falling back to a search.
   if (!real?.products.length) {
-    const prev = PREVIOUS_SHOPIFY_HANDLE[handle];
+    const prev = previousShopifyHandle(handle);
     if (prev) real = await fetchCollectionByHandle(prev, 96);
   }
   if (real && real.products.length) return real;
+  if (!real && !SITE_HANDLES.has(handle)) return null;
   const meta = HANDLE_META[handle];
   const products = await fetchProducts(96, meta?.query);
   return {
@@ -464,14 +476,36 @@ export const Route = createFileRoute("/collections/$handle")({
   component: CollectionPage,
   validateSearch: (search: Record<string, unknown>): { colour?: string } =>
     typeof search.colour === "string" ? { colour: search.colour } : {},
-  loader: ({ params, context }) => {
+  loader: async ({ params, context }) => {
     // The wash bag's own Shopify collection: the bag is a Buy 3 perk only.
     if (params.handle === "laundry-bag") throw notFound();
+    // v188: the discount app's "Buy 2, save 15% (eligible)" list. Internal
+    // (it only scopes the duo deal, lib/duoDeal) - nothing links to it.
+    if (params.handle === "duo-eligible") throw notFound();
     const canonical = canonicalCollectionHandle(params.handle);
     if (canonical !== params.handle) {
       throw redirect({ to: "/collections/$handle", params: { handle: canonical }, statusCode: 301 });
     }
-    return context.queryClient.ensureQueryData(collectionQueryOptions(canonical));
+    let collection = await context.queryClient.ensureQueryData(collectionQueryOptions(canonical));
+    // A cached miss may be out of date, so ask again before calling it a 404.
+    if (!collection) {
+      collection = await context.queryClient.fetchQuery({
+        ...collectionQueryOptions(canonical),
+        staleTime: 0,
+      });
+    }
+    if (collection) return collection;
+    /* v188: 404 only when Shopify actually answered. A 402 (store billing
+       paused) also reads as "no collection", and 404ing real collections
+       through that would get them dropped from Google; other failures
+       already throw, so the page answers 500 instead. */
+    const ping = await storefrontApiRequest(`query StoreAnswering { shop { name } }`);
+    if (!ping?.data?.shop) {
+      // Don't keep the miss: "Try again" has to ask Shopify afresh.
+      context.queryClient.removeQueries({ queryKey: ["collection", canonical], exact: true });
+      throw new Error("Shopify didn't answer for this collection");
+    }
+    throw notFound();
   },
   head: ({ params, loaderData }) => {
     const title = `${loaderData?.title ?? titleize(params.handle)} — Auvella`;
