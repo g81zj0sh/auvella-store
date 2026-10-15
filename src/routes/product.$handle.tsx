@@ -55,7 +55,8 @@ import { trackViewedProduct } from "@/lib/klaviyoOnsite";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, type Backdrop } from "@/lib/imageBackdrop";
-import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch } from "lucide-react";
+import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch, Share2 } from "lucide-react";
+import { shareLink } from "@/lib/share";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
@@ -389,6 +390,13 @@ function ProductPage() {
     [node],
   );
   const activeColour = colorOptName ? currentSelected[colorOptName] : undefined;
+  /* v193: share this piece (phone share sheet, else copy link), opening on
+     the colour being viewed via the existing ?colour= parameter. */
+  const onShare = () => {
+    if (!node) return;
+    const qs = activeColour ? `?colour=${encodeURIComponent(activeColour)}` : "";
+    void shareLink({ title: `${node.title} — Auvella`, url: `${window.location.origin}/product/${handle}${qs}` });
+  };
   /** What the gallery shows: the multi-buy row last touched, else #1. */
   const galleryColour = previewColour ?? activeColour;
 
@@ -1150,6 +1158,14 @@ function ProductPage() {
               >
                 <ScanSearch className="h-[18px] w-[18px]" strokeWidth={1.2} />
               </button>
+              <button
+                aria-label="Share this piece"
+                title="Share"
+                onClick={onShare}
+                className="text-[#0a0a0a] transition-opacity hover:opacity-60"
+              >
+                <Share2 className="h-[18px] w-[18px]" strokeWidth={1.2} />
+              </button>
             </div>
             {galleryLen > 1 && (
               <>
@@ -1189,6 +1205,13 @@ function ProductPage() {
               className="pointer-events-auto text-[#0a0a0a] transition-opacity hover:opacity-60"
             >
               <ScanSearch className="h-[18px] w-[18px]" strokeWidth={1.2} />
+            </button>
+            <button
+              aria-label="Share this piece"
+              onClick={onShare}
+              className="pointer-events-auto text-[#0a0a0a] transition-opacity hover:opacity-60"
+            >
+              <Share2 className="h-[18px] w-[18px]" strokeWidth={1.2} />
             </button>
           </div>
           <div
