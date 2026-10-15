@@ -129,6 +129,17 @@
     font-weight: 400;
     letter-spacing: 0.01em;
   }
+  /* v192: no long-press "Save to Photos" sheet on iPhone, no dragging photos
+     out, no accidental selection highlight. Right-click/Android long-press is
+     handled in src/lib/imageProtection.ts. Taps, swipes and pinch-zoom are
+     unaffected. */
+  img,
+  video {
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }
 
 @utility container-px {

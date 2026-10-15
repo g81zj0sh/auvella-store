@@ -24,6 +24,7 @@ import { useQuickAdd } from "@/stores/quickAddStore";
 import { useCartSync } from "@/hooks/useCartSync";
 import { useDomTranslation } from "@/lib/preferences";
 import { useCartStore } from "@/stores/cartStore";
+import { installImageProtection } from "@/lib/imageProtection";
 // Side-effect import: captures the session's entry path before any route renders.
 import "@/lib/landing";
 
@@ -170,6 +171,8 @@ function RootComponent() {
     void import("@/lib/preferences").then((m) => m.usePreferences.persist?.rehydrate());
     void useCartStore.persist?.rehydrate();
   }, []);
+  // v192: no right-click / long-press "Save image" or dragging on photos and videos.
+  useEffect(() => installImageProtection(), []);
   useEffect(() => {
     // The Meta pixel is non-essential tracking, so it may not load until the
     // visitor has agreed — nothing fires on an unanswered or declined banner.
