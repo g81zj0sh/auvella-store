@@ -168,9 +168,16 @@ function inferCollection(title: string): { handle: string; label: string; query:
 
 function ProductPage() {
   const { handle } = Route.useParams();
+  /* Seeded from the loader. The browser starts with an empty query cache
+     (nothing is dehydrated), so without this the first client render took
+     the loading branch while the server had rendered the product: React
+     #418, the server HTML thrown away and a spinner flash on every direct
+     visit. Still a live query, so a Ship-to switch refetches it. */
+  const loaded = Route.useLoaderData();
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", handle],
     queryFn: () => fetchProductByHandle(handle),
+    initialData: loaded,
   });
 
   const { data: recommendations = [] } = useQuery({
