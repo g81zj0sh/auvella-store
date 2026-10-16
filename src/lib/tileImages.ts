@@ -112,10 +112,10 @@ export const TILE_IMAGES: Record<string, Record<string, string>> = {
     "Black": "/tiles/womens-velvet-jumpsuit-long-sleeve-squar-black.webp",
   },
   "strapless-tummy-control-body-shaper": {
-    "White": "/tiles/strapless-tummy-control-body-shaper-white.webp",
-    "Coffee": "/tiles/strapless-tummy-control-body-shaper-coffee.webp",
-    "Nude": "/tiles/strapless-tummy-control-body-shaper-nude.webp",
-    "Black": "/tiles/strapless-tummy-control-body-shaper-black.webp",
+    "White": "/tiles/strapless-tummy-control-body-shaper-white-v2.webp",
+    "Coffee": "/tiles/strapless-tummy-control-body-shaper-coffee-v2.webp",
+    "Nude": "/tiles/strapless-tummy-control-body-shaper-nude-v2.webp",
+    "Black": "/tiles/strapless-tummy-control-body-shaper-black-v2.webp",
   },
   "lace-breathable-thong-underwear": {
     "Black Floral": "/tiles/lace-breathable-thong-underwear-black-floral-v2.webp",
