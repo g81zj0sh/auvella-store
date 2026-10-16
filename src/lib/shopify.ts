@@ -308,6 +308,9 @@ export type CartTotals = {
   total: number;
   discounts: Array<{ label: string; amount: number }>;
   linePrices: Record<string, { amount: string; currencyCode: string }>;
+  /** Each line's "was" price in the cart's market (null: none there). The
+   *  bag's product snapshot is priced in the market it was added in. */
+  lineCompareAt?: Record<string, { amount: string; currencyCode: string } | null>;
   checkoutUrl: string | null;
   /** The bag these totals were priced for (cartLineKey) and the codes on
    *  it, upper-cased and sorted: totals for any other bag are stale. */
@@ -341,7 +344,7 @@ const CART_TOTALS_QUERY = `
       lines(first: 100) {
         edges { node {
           quantity
-          merchandise { ... on ProductVariant { id price { amount currencyCode } } }
+          merchandise { ... on ProductVariant { id price { amount currencyCode } compareAtPrice { amount currencyCode } } }
           discountAllocations {
             discountedAmount { amount }
             ... on CartAutomaticDiscountAllocation { title }
@@ -364,10 +367,12 @@ export async function fetchCartTotals(cartId: string): Promise<CartTotals | null
   };
   for (const a of cart.discountAllocations ?? []) add(a);
   const linePrices: CartTotals["linePrices"] = {};
+  const lineCompareAt: NonNullable<CartTotals["lineCompareAt"]> = {};
   const lineUnits: Array<{ variantId: string; quantity: number }> = [];
   for (const e of cart.lines?.edges ?? []) {
     const n = e.node;
     if (n.merchandise?.id && n.merchandise.price) linePrices[n.merchandise.id] = n.merchandise.price;
+    if (n.merchandise?.id) lineCompareAt[n.merchandise.id] = n.merchandise.compareAtPrice ?? null;
     if (n.merchandise?.id) lineUnits.push({ variantId: n.merchandise.id, quantity: n.quantity ?? 0 });
     for (const a of n.discountAllocations ?? []) add(a);
   }
@@ -376,6 +381,7 @@ export async function fetchCartTotals(cartId: string): Promise<CartTotals | null
     total: parseFloat(cart.cost.totalAmount.amount),
     discounts: [...byLabel.entries()].filter(([, v]) => v > 0).map(([label, amount]) => ({ label, amount: Math.round(amount * 100) / 100 })),
     linePrices,
+    lineCompareAt,
     checkoutUrl: cart.checkoutUrl ? formatCheckoutUrl(cart.checkoutUrl) : null,
     lineKey: cartLineKey(lineUnits),
     // Every code on the cart, applicable or not: the total already reflects
@@ -773,8 +779,11 @@ export async function swapShopifyCartLine(
   return hit ? { lineId: hit.id, quantity: hit.quantity } : null;
 }
 
+/* v196: $codes must be [String!]! - 2025-07 declares discountCodes non-null,
+   and a nullable variable failed every apply and remove with "Nullability
+   mismatch" before Shopify looked at the code. Clearing sends [], not null. */
 const CART_DISCOUNT_CODES_MUTATION = `
-  mutation cartDiscountCodesUpdate($cartId: ID!, $codes: [String!]) {
+  mutation cartDiscountCodesUpdate($cartId: ID!, $codes: [String!]!) {
     cartDiscountCodesUpdate(cartId: $cartId, discountCodes: $codes) {
       cart {
         id
@@ -802,9 +811,20 @@ export type DiscountResult = {
  */
 export async function setShopifyDiscountCodes(cartId: string, codes: string[]): Promise<DiscountResult> {
   const run = async (list: string[]) => {
-    const data = await storefrontApiRequest(CART_DISCOUNT_CODES_MUTATION, { cartId, codes: list });
+    let data;
+    try {
+      data = await storefrontApiRequest(CART_DISCOUNT_CODES_MUTATION, { cartId, codes: list });
+    } catch (error) {
+      // v196: API/GraphQL failures stay in the console - the bag showed
+      // shoppers the raw "Nullability mismatch..." text.
+      console.error("cartDiscountCodesUpdate failed", error);
+      throw new Error("That code couldn't be applied. Please try again.");
+    }
     const errs = data?.data?.cartDiscountCodesUpdate?.userErrors ?? [];
-    if (errs.length) throw new Error(errs[0]?.message ?? "That code couldn't be applied.");
+    if (errs.length) {
+      console.error("cartDiscountCodesUpdate userErrors", errs);
+      throw new Error("That code couldn't be applied. Please try again.");
+    }
     return data?.data?.cartDiscountCodesUpdate?.cart;
   };
   const cart = await run(codes);

@@ -3,7 +3,8 @@ import { Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore, type CartItem } from "@/stores/cartStore";
 import { useDisplayPrice } from "@/lib/preferences";
-import { colorToHex } from "@/lib/colorMap";
+import { colorToHex, twoToneSwatch } from "@/lib/colorMap";
+import { indexedHex } from "@/lib/galleryIndex";
 import { cartLineImage } from "@/lib/cartImage";
 
 /*
@@ -147,7 +148,8 @@ function EditBody({ item, onDone }: { item: CartItem; onDone: () => void }) {
             </p>
             <div className="mt-2.5 flex flex-wrap gap-2.5">
               {colorOption.values.map((c) => {
-                const hex = colorToHex(c) ?? "#cccccc";
+                // v196: the measured colour, as on the tiles and product page.
+                const hex = indexedHex(node.handle, c) ?? twoToneSwatch(c) ?? colorToHex(c) ?? "#cccccc";
                 const active = c === selColor;
                 return (
                   <button

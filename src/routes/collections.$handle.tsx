@@ -452,7 +452,9 @@ async function loadCollection(handle: string): Promise<ShopifyCollection | null>
     if (prev) real = await fetchCollectionByHandle(prev, 96);
   }
   if (real && real.products.length) return real;
-  if (!real && !SITE_HANDLES.has(handle)) return null;
+  // v196: an empty Shopify collection the site doesn't serve (cool-shapewear)
+  // is a 404 too - the search fallback below showed the whole catalogue.
+  if (!SITE_HANDLES.has(handle)) return null;
   const meta = HANDLE_META[handle];
   const products = await fetchProducts(96, meta?.query);
   return {

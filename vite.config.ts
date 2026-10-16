@@ -13,6 +13,11 @@ import { nitro } from "nitro/vite";
  * `wrangler.jsonc` Worker deploy at the repo root.
  */
 export default defineConfig({
+  // v196: a fresh id per build, so the edge HTML cache (src/lib/edgeCache.ts)
+  // never serves a page that points at the previous build's asset files.
+  define: {
+    __AUVELLA_BUILD_ID__: JSON.stringify(Date.now().toString(36)),
+  },
   plugins: [
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),

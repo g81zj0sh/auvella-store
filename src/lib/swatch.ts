@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { shopifyImg } from "@/lib/shopify";
 import { indexedHex, indexedSwatch } from "@/lib/galleryIndex";
+import { twoToneSwatch } from "@/lib/colorMap";
 
 /*
  * Colour swatches, shared by the product page and the quick-add sheet so a
@@ -131,7 +132,12 @@ export function colourSwatchStyle(
       backgroundPosition: crop.position,
       backgroundSize: crop.size,
     };
-  const hex = indexedHex(node.handle, value) ?? swatchHex(value);
+  const measured = indexedHex(node.handle, value);
+  if (measured) return { backgroundColor: measured };
+  // v196: "<trim> & <body>" colours get a split dot, same helper as the tiles.
+  const split = twoToneSwatch(value);
+  if (split) return { backgroundImage: split };
+  const hex = swatchHex(value);
   if (hex) return { backgroundColor: hex };
   const imgSwatch = node.variants.edges.find(
     (vv) =>

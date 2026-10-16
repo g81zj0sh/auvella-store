@@ -522,15 +522,18 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
         <div className="relative flex h-14 items-center px-5 md:px-10">
           {/* Mobile: hamburger left */}
           <button
-            className={`lg:hidden -ml-1 p-1.5 ${light ? "text-white" : "text-[#0a0a0a]"}`}
+            className={`min-[1440px]:hidden -ml-1 p-1.5 ${light ? "text-white" : "text-[#0a0a0a]"}`}
             onClick={() => setOpen(true)}
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" strokeWidth={1.5} />
           </button>
 
-          {/* Desktop: left nav */}
-          <nav className="hidden lg:block">
+          {/* Desktop: left nav. v196: from 1440px only - the seven links need
+              about 600px, and below that they ran under the centred logo
+              (New In couldn't be clicked at 1152-1366px), so laptops get the
+              menu button, like tablets. */}
+          <nav className="hidden min-[1440px]:block">
             <ul
               className={`flex items-center gap-6 xl:gap-7 text-[11px] uppercase tracking-[0.14em] ${
                 light ? "text-white" : "text-[#0a0a0a]"
@@ -598,7 +601,7 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
 
       {/* Mobile menu — slides in from the left over a dimmed backdrop */}
       {open && (
-        <div className="fixed inset-0 z-[60] lg:hidden">
+        <div className="fixed inset-0 z-[60] min-[1440px]:hidden">
           {/* Backdrop */}
           <button
             aria-label="Close menu"

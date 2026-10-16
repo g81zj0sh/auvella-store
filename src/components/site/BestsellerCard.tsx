@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { useDisplayPrice } from "@/lib/preferences";
-import { colorToHex } from "@/lib/colorMap";
+import { colorToHex, twoToneSwatch } from "@/lib/colorMap";
+import { indexedHex } from "@/lib/galleryIndex";
 
 interface Props {
   product: ShopifyProduct;
@@ -87,7 +88,8 @@ export function BestsellerCard({ product, badge }: Props) {
         {colors.length > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {colors.map((c) => {
-              const hex = colorToHex(c.value) ?? "#cccccc";
+              // v196: the measured colour, as on the tiles and product page.
+              const hex = indexedHex(node.handle, c.value) ?? twoToneSwatch(c.value) ?? colorToHex(c.value) ?? "#cccccc";
               const active = c.value === selected;
               return (
                 <button

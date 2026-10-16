@@ -6,7 +6,7 @@ import { useQuickAdd } from "@/stores/quickAddStore";
 import { useFavorites } from "@/stores/favoritesStore";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { useDisplayPrice } from "@/lib/preferences";
-import { colorToHex } from "@/lib/colorMap";
+import { colorToHex, twoToneSwatch } from "@/lib/colorMap";
 import { EditorialImage } from "@/components/site/EditorialImage";
 import { useMemo, useState, useEffect } from "react";
 import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
@@ -364,7 +364,14 @@ export function ProductCard({ product, badge, bleed = false, note }: Props) {
                         backgroundPosition: crop.position,
                         backgroundSize: crop.size,
                       };
-                    return { background: indexedHex(node.handle, c) ?? colorToHex(c) ?? "#cccccc" };
+                    // v196: "<trim> & <body>" colours split like the product page's.
+                    return {
+                      background:
+                        indexedHex(node.handle, c) ??
+                        twoToneSwatch(c) ??
+                        colorToHex(c) ??
+                        "#cccccc",
+                    };
                   })()}
                 />
               </button>

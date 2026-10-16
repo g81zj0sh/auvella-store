@@ -269,7 +269,7 @@ export function CartDrawer() {
                 <p className="font-serif text-[22px] font-light leading-tight text-ink">Nothing in here yet.</p>
                 <p className="mx-auto mt-3 max-w-[280px] text-[13px] leading-relaxed text-cocoa">
                   Free delivery from {display(threshold, baseCurrency)}
-                  {country?.name ? ` to ${country.name}` : ""}, and easy 30-day returns either way.
+                  {country?.name ? ` to ${country.the ? "the " : ""}${country.name}` : ""}, and easy 30-day returns either way.
                 </p>
                 <div className="mx-auto mt-6 flex max-w-[300px] flex-col gap-2">
                   <Button asChild className="h-11 w-full rounded-control bg-ink text-[11px] font-medium uppercase tracking-[0.18em] text-white hover:bg-ink/85">
@@ -303,12 +303,12 @@ export function CartDrawer() {
                   {qualified ? (
                     <>
                       <span className="font-semibold text-ink">Free shipping unlocked</span>
-                      {country?.name ? ` to ${country.name}` : ""}
+                      {country?.name ? ` to ${country.the ? "the " : ""}${country.name}` : ""}
                     </>
                   ) : (
                     <>
                       You're <span className="font-semibold text-ink">{display(remaining, baseCurrency)}</span> away from free shipping
-                      {country?.name ? ` to ${country.name}` : ""}
+                      {country?.name ? ` to ${country.the ? "the " : ""}${country.name}` : ""}
                     </>
                   )}
                 </p>
@@ -359,10 +359,21 @@ export function CartDrawer() {
                       );
                     const node = item.product.node;
                     const variant = node.variants.edges.find((v) => v.node.id === item.variantId)?.node;
-                    const compare = variant?.compareAtPrice ?? null;
+                    // v196: the "was" price Shopify gives this line in the cart's
+                    // market, so it follows a Ship-to switch like the price does.
+                    // The product snapshot (priced where it was added) is only a
+                    // fallback until the totals are in.
+                    const marketCompare = totals?.lineCompareAt;
+                    const compare = marketCompare && item.variantId in marketCompare
+                      ? marketCompare[item.variantId]
+                      : variant?.compareAtPrice ?? null;
                     const onSale = !!compare && parseFloat(compare.amount) > parseFloat(item.price.amount);
                     const size = item.selectedOptions.find((o) => /size/i.test(o.name))?.value;
                     const colour = item.selectedOptions.find((o) => /colou?r/i.test(o.name))?.value;
+                    // Any other option the shopper picked (Body Adhesive "Type").
+                    const otherOptions = item.selectedOptions.filter(
+                      (o) => !/size|colou?r|title/i.test(o.name) && o.value !== "Default Title",
+                    );
                     const thumb = cartLineImage(item.product, item.variantId, item.selectedOptions, 300);
                     const qty = stock?.[item.variantId];
                     const lowStock = typeof qty === "number" && qty > 0 && qty < LOW_STOCK_BELOW;
@@ -423,6 +434,9 @@ export function CartDrawer() {
                           <div className="mt-2 space-y-0.5 text-[12px] text-cocoa">
                             {size && <p>Size <span className="text-ink">{size}</span></p>}
                             {colour && <p>Colour <span className="text-ink">{colour}</span></p>}
+                            {otherOptions.map((o) => (
+                              <p key={o.name}>{o.name} <span className="text-ink">{o.value}</span></p>
+                            ))}
                           </div>
 
                           {lowStock && (
@@ -430,7 +444,9 @@ export function CartDrawer() {
                           )}
 
                           <div className="mt-3 flex items-center justify-between gap-3">
-                            {/* SKIMS-style quantity box: bin replaces minus at qty 1 */}
+                            {/* SKIMS-style quantity box: bin replaces minus at qty 1.
+                                Off while Shopify updates the bag, so a quick second
+                                tap isn't counted from the old quantity and lost. */}
                             <div className="inline-flex h-9 items-center overflow-hidden rounded-control border border-border">
                               <button
                                 type="button"
@@ -438,7 +454,8 @@ export function CartDrawer() {
                                 onClick={() =>
                                   item.quantity === 1 ? removeItem(item.variantId) : updateQuantity(item.variantId, item.quantity - 1)
                                 }
-                                className="flex h-full w-9 items-center justify-center text-ink hover:bg-beige focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+                                disabled={isLoading}
+                                className="flex h-full w-9 items-center justify-center text-ink hover:bg-beige focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink disabled:opacity-40"
                               >
                                 {item.quantity === 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
                               </button>
@@ -447,7 +464,8 @@ export function CartDrawer() {
                                 type="button"
                                 aria-label="Increase quantity"
                                 onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                                className="flex h-full w-9 items-center justify-center text-ink hover:bg-beige focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+                                disabled={isLoading}
+                                className="flex h-full w-9 items-center justify-center text-ink hover:bg-beige focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink disabled:opacity-40"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                               </button>

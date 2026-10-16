@@ -81,6 +81,7 @@ export type DeliveryWindow = {
   label: string;
   /** Minutes until today's cutoff, or null when there is no confirmed cutoff. */
   minutesToCutoff: number | null;
+  /** Reads after "to": "the United Kingdom", "Germany". */
   countryName: string;
 };
 
@@ -126,6 +127,6 @@ export function estimateDelivery(country: Country | null | undefined, now: Date 
     to,
     label: `${fmt(from)} – ${fmt(to)}`,
     minutesToCutoff,
-    countryName: c.name,
+    countryName: `${c.the ? "the " : ""}${c.name}`,
   };
 }

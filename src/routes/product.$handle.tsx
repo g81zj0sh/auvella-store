@@ -124,10 +124,10 @@ export const Route = createFileRoute("/product/$handle")({
       return { meta: [{ title: `${params.handle} — Auvella` }] };
     }
     const title = `${node.title} — Auvella`;
-    const rawDesc = (node.description || "").replace(/\s+/g, " ").trim();
+    const rawDesc = metaText(node.descriptionHtml, node.description);
     const description =
       rawDesc.length > 0
-        ? rawDesc.slice(0, 155)
+        ? clipAtWord(rawDesc, 155)
         : `${node.title} — built to hold where it helps and stay put all day. From Auvella.`;
     const image = node.images.edges[0]?.node.url;
     const price = node.priceRange.minVariantPrice;
@@ -171,22 +171,61 @@ export const Route = createFileRoute("/product/$handle")({
   },
 });
 
+/* v196: Shopify's plain `description` glues blocks together ("still doesn't
+   show.A mid-rise brief", "Fit noteTrue to size"), so the meta text comes
+   from descriptionHtml with a space at every block edge. Only &amp; occurs
+   in the copy today; the other common entities are decoded for safety. */
+function metaText(html: string | null | undefined, plain: string | null | undefined): string {
+  const fromHtml = (html || "")
+    .replace(/<br\s*\/?>|<\/(?:p|h[1-6]|li|ul|ol|div)>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (fromHtml) return fromHtml;
+  // No HTML: at least part sentences that ran together ("show.A").
+  return (plain || "").replace(/([.!?])(?=[A-Z])/g, "$1 ").replace(/\s+/g, " ").trim();
+}
+
+/** v196: cut on a word boundary (it cut mid-word), ellipsis included in `max`. */
+function clipAtWord(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut.slice(0, max - 1)).replace(/[\s.,;:—–-]+$/, "")}…`;
+}
+
+/* v196: rules run most specific first. Dresses before "sculpt"/"short"
+   (Off-Shoulder Sculpt Midi Dress, Ribbed Short Sleeve Mini Dress), pyjamas
+   and lounge sets before "cami"/"bra" (Satin Cami Pyjama Set, Built-In Bra
+   Lounge Set), a shaping cami is a bodysuit, briefs and thongs are
+   underwear, and the jumpsuit, top, eye mask and adhesive have homes now
+   instead of the "Shop" fallback. Checked against every product's Shopify
+   collections on 16 Oct 2026. */
 function inferCollection(title: string): { handle: string; label: string; query: string } {
   const t = title.toLowerCase();
-  if (/bodysuit/.test(t)) return { handle: "bodysuits", label: "Bodysuits", query: "bodysuit" };
-  if (/bra|bralette|cami/.test(t))
-    return { handle: "bras", label: "Bras", query: "bra OR bralette OR cami" };
-  if (/legging/.test(t)) return { handle: "shapewear", label: "Shapewear", query: "legging OR shaping" };
-  if (/short|shape|sculpt|brief/.test(t))
-    return { handle: "shapewear", label: "Shapewear", query: "shape OR sculpt OR short OR control" };
+  if (/dress/.test(t)) return { handle: "dresses", label: "Dresses", query: "dress" };
+  if (/bikini|swim/.test(t)) return { handle: "swim", label: "Swim", query: "bikini OR swim" };
   if (/pyjama|pajama/.test(t))
     return { handle: "loungewear-sleepwear", label: "Loungewear", query: "pajama OR satin OR lounge" };
   if (/robe/.test(t)) return { handle: "robes", label: "Robes", query: "robe OR satin" };
-  if (/dress/.test(t)) return { handle: "dresses", label: "Dresses", query: "dress" };
-  if (/bikini|swim/.test(t)) return { handle: "swim", label: "Swim", query: "bikini OR swim" };
+  if (/lounge|sleep|fleece|jumpsuit|\bset\b|\btop\b/.test(t))
+    return { handle: "loungewear-sleepwear", label: "Loungewear", query: "lounge OR fleece OR sleep OR set" };
+  if (/bodysuit|cami/.test(t)) return { handle: "bodysuits", label: "Bodysuits", query: "bodysuit OR cami" };
+  if (/bra|bralette/.test(t)) return { handle: "bras", label: "Bras", query: "bra OR bralette" };
+  if (/brief|thong/.test(t)) return { handle: "underwear", label: "Underwear", query: "brief OR thong" };
+  if (/legging/.test(t)) return { handle: "shapewear", label: "Shapewear", query: "legging OR shaping" };
+  if (/short|shape|sculpt|waist/.test(t))
+    return { handle: "shapewear", label: "Shapewear", query: "shape OR sculpt OR short OR control" };
+  if (/mask/.test(t))
+    return { handle: "sleep-accessories", label: "Sleep Accessories", query: "satin OR silk OR pyjama OR robe" };
+  if (/adhesive|glue/.test(t)) return { handle: "accessories", label: "Accessories", query: "" };
   if (/active|sports/.test(t)) return { handle: "bras", label: "Bras", query: "sports OR bra" };
-  if (/lounge|sleep|fleece/.test(t))
-    return { handle: "loungewear-sleepwear", label: "Loungewear", query: "lounge OR fleece OR sleep" };
   return { handle: "new-in", label: "Shop", query: "" };
 }
 
@@ -521,17 +560,23 @@ function ProductPage() {
 
   /* Non-colour options (the Body Adhesive's Type, say) never changed the
      photo, so every variant looked like the first one. When the chosen
-     variant has its own linked photo in the visible gallery, jump to it. */
+     variant has its own linked photo in the visible gallery, jump to it.
+     v196: only for products that have such an option. The eye mask has no
+     size, so its variant resolved on load and the page opened on the flat
+     lay (photo 2 of 3) instead of the model shot. */
   const variantImageUrl = variant?.image?.url;
+  const hasOtherOption = !!node?.options.some(
+    (o) => !/colou?r|size|title/i.test(o.name) && o.values.length > 1,
+  );
   useEffect(() => {
-    if (!variantImageUrl) return;
+    if (!variantImageUrl || !hasOtherOption) return;
     const key = (u: string) => u.split("?")[0];
     const idx = activeImages.findIndex((i) => key(i.node.url) === key(variantImageUrl));
     if (idx >= 0) {
       setImageIdx(idx);
       mobileGalRef.current?.scrollTo({ left: idx * (mobileGalRef.current?.clientWidth ?? 0) });
     }
-  }, [variantImageUrl, activeImages]);
+  }, [variantImageUrl, activeImages, hasOtherOption]);
 
   // Desktop drag state
   const [dragX, setDragX] = useState(0);

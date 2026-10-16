@@ -18,6 +18,8 @@ import { CookieConsent } from "@/components/site/CookieConsent";
 import { hasMarketingConsent, onConsentChange, readConsent } from "@/lib/consent";
 import { Toaster } from "sonner";
 import { QuickAddSheet } from "@/components/site/QuickAddSheet";
+import { Header } from "@/components/site/Header";
+import { Footer } from "@/components/site/Footer";
 import { GlueOfferPopup } from "@/components/site/GlueOfferPopup";
 import { PerkSync } from "@/components/site/PerkSync";
 import { useQuickAdd } from "@/stores/quickAddStore";
@@ -28,24 +30,48 @@ import { installImageProtection } from "@/lib/imageProtection";
 // Side-effect import: captures the session's entry path before any route renders.
 import "@/lib/landing";
 
+/* v196: the 404 was a bare screen with no way on but "Go home". It keeps the
+   404 status; this just gives it the site's header, footer and somewhere to
+   shop. The title comes from the root head (match._notFound), not a <title>
+   here - HeadContent already prints one and React would add a second. */
+const NOT_FOUND_LINKS = [
+  { handle: "all", label: "Shop all" },
+  { handle: "shapewear", label: "Shapewear" },
+  { handle: "bras", label: "Bras" },
+];
+
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+    <div className="min-h-screen bg-white">
+      <Header />
+      <main className="container-px mx-auto max-w-2xl pb-24 pt-32 text-center md:pt-40">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#888888]">404</p>
+        <h1 className="mt-3 font-serif text-3xl font-light text-[#0a0a0a] md:text-4xl">
+          Page not found
+        </h1>
+        <p className="mx-auto mt-3 max-w-sm text-[13px] leading-relaxed text-[#888888]">
+          This page has moved or no longer exists. Everything else is still here.
         </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
+          {NOT_FOUND_LINKS.map((l) => (
+            <Link
+              key={l.handle}
+              to="/collections/$handle"
+              params={{ handle: l.handle }}
+              className="inline-flex h-11 items-center rounded-control bg-[#0a0a0a] px-6 text-[11px] uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+            >
+              {l.label}
+            </Link>
+          ))}
         </div>
-      </div>
+        <Link
+          to="/"
+          className="mt-6 inline-block text-[11px] uppercase tracking-[0.18em] text-[#0a0a0a] underline underline-offset-4 hover:opacity-60"
+        >
+          Back to home
+        </Link>
+      </main>
+      <Footer />
     </div>
   );
 }
@@ -95,11 +121,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
+  head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Auvella" },
+      // v196: the root match carries _notFound whenever the 404 page renders.
+      { title: match._notFound ? "Page not found — Auvella" : "Auvella" },
       { name: "description", content: "Shapewear, bras and lounge built to hold where it helps and stay put all day. Our shapewear runs S–4XL." },
       { name: "author", content: "Auvella" },
       { property: "og:title", content: "Auvella — Built for the day, not the photo." },

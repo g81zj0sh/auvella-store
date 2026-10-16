@@ -11,5 +11,10 @@
   "assets": {
     "binding": "ASSETS",
     "directory": ".output/public"
+  },
+  // v196: Workers Logs, so a "1102 exceeded resource limits" shows whether
+  // CPU or memory was the limit hit.
+  "observability": {
+    "enabled": true
   }
 }

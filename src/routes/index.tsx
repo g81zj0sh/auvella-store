@@ -34,9 +34,9 @@ import ugc8Img from "@/assets/ugc/ugc-8.png";
 const ugc8 = { url: ugc8Img };
 import ugc9Img from "@/assets/ugc/ugc-9.png";
 const ugc9 = { url: ugc9Img };
-import homeShapewearV7Img from "@/assets/home/shapewear-v7.png";
+import homeShapewearV7Img from "@/assets/home/shapewear-v7.webp";
 const homeShapewearV7 = { url: homeShapewearV7Img };
-import homeBestsellersV1Img from "@/assets/home/bestsellers-v1.png";
+import homeBestsellersV1Img from "@/assets/home/bestsellers-v1.webp";
 const homeBestsellersV1 = { url: homeBestsellersV1Img };
 
 /* Campaign imagery — Higgsfield editorial set (hotlinked; migrate to Shopify CDN before launch) */
