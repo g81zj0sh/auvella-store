@@ -76,6 +76,7 @@ import {
   PROCESSING_LABEL,
   transitLabel,
 } from "@/lib/shipping";
+import { canonicalColour } from "@/lib/colourAliases";
 
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
@@ -338,8 +339,13 @@ function ProductPage() {
   const initialSelected = useMemo(() => {
     if (!node) return {};
     const colourOpt = node.options.find((o) => /colou?r/i.test(o.name));
+    // v197: renamed colours match by either name (lib/colourAliases), so a
+    // link made before a rename still opens that colour.
+    const same = (a: string, b: string) =>
+      canonicalColour(node.handle, a).toLowerCase() === canonicalColour(node.handle, b).toLowerCase();
     const wanted = colourParam
-      ? colourOpt?.values.find((v) => v.toLowerCase() === colourParam.toLowerCase())
+      ? (colourOpt?.values.find((v) => v.toLowerCase() === colourParam.toLowerCase()) ??
+        colourOpt?.values.find((v) => same(v, colourParam)))
       : undefined;
     const first =
       (wanted &&

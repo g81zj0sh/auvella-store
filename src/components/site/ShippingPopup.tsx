@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { COUNTRIES, freeShippingThresholdFmt, useShippingCountry, transitLabel } from "@/lib/shipping";
+import { COUNTRIES, freeShippingThresholdFmt, inEea, useShippingCountry, transitLabel } from "@/lib/shipping";
 import { usePreferences } from "@/lib/preferences";
 import { landedOnHome } from "@/lib/landing";
 
@@ -127,6 +127,9 @@ export function ShippingPopup() {
 
   const headline = `You're shopping in ${country.the ? "the " : ""}${country.name}.`;
   const thresholdFmt = freeShippingThresholdFmt(displayCurrency);
+  // v197: Shopify shows EEA shoppers no "was" prices (lib/shipping inEea),
+  // so no percentage is promised there; the owner's wording instead.
+  const saleLine = inEea(country.code) ? "New Season Sale" : `40% Off ${season}`;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
@@ -150,9 +153,9 @@ export function ShippingPopup() {
       >
         {/* Seasonal bar. The figure must match the compare-at discount every
             product actually shows: 40% since 5 Oct 2026 (compare-at = price /
-            0.6; live check: every product 40-43% off). */}
+            0.6; live check: every product 40-43% off). EEA: "New Season Sale". */}
         <div className="-mx-4 bg-[#0a0a0a] py-1.5 pl-4 pr-9 text-center text-[9px] uppercase tracking-[0.12em] text-white md:-mx-7 md:py-2 md:text-[10px] md:tracking-[0.14em]">
-          40% Off {season} · Ending soon <span aria-hidden="true">🔥🔥</span>
+          {saleLine} · Ending soon <span aria-hidden="true">🔥🔥</span>
         </div>
         <button
           aria-label="Close"

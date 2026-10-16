@@ -1,3 +1,4 @@
+import { canonicalColour } from "@/lib/colourAliases";
 /* AUTO-GENERATED — do not edit by hand.
  *
  * Every gallery image on the store, assigned to its colourway and split into
@@ -62,7 +63,7 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
     "Cherry Red": { m: ["hf_20260903_223528_776401de-bb7d-4612-b6e2-6f1dbede6568_min.webp", "hf_20260905_104915_9d1ea5e3-c734-4bb6-bb2c-5f3b0b4c2b25_min.webp"], g: ["hf_20260905_110256_52b8cbf7-f876-4623-b1ee-a9a74ad5d562_min.webp"], hex: "#57242d" },
     "Plum Purple": { m: ["hf_20260903_223303_7c9458fd-7fb5-484c-aa8e-70c8014301c9_min.webp", "hf_20260905_104916_f6e7ba2f-5c4e-457c-a83b-ea7e7e88dd23_min.webp"], g: ["hf_20260905_105322_9c7234d9-106c-4c95-9d37-57e4c2490c9f_min.webp"], hex: "#2f1c2e" },
     "Clay": { m: ["hf_20260903_223303_cd6d6067-f77a-45e9-8a08-5afb3ca9afd7_min.webp", "hf_20260905_104915_8376a165-5585-4d2b-becf-42d9023478fb_min.webp"], g: ["hf_20260903_223753_51cf8e74-23cc-461c-9fc7-2337961fe052_min.webp"], hex: "#a69b8a" },
-    "Navy Blue": { m: ["hf_20260903_223219_78c27ee8-e0bb-498d-aee4-5497ae0a64a4_min.webp", "hf_20260905_104831_b6877e2b-6174-43a3-8c54-7ef529b3a884_min.webp"], g: ["hf_20260903_223639_28105aa0-82a5-48c7-9414-14d7b8d5f660_min.webp"], hex: "#13384e" },
+    "Petrol Blue": { m: ["hf_20260903_223219_78c27ee8-e0bb-498d-aee4-5497ae0a64a4_min.webp", "hf_20260905_104831_b6877e2b-6174-43a3-8c54-7ef529b3a884_min.webp"], g: ["hf_20260903_223639_28105aa0-82a5-48c7-9414-14d7b8d5f660_min.webp"], hex: "#13384e" },
     "Dark Grey": { m: ["hf_20260903_223219_3ea8b217-dcb8-4460-8554-22de089d04ae_min.webp", "hf_20260905_104831_d0ef08b9-6071-4476-b3ec-4aab4d5e3241_min.webp"], g: ["hf_20260903_223639_7bb9859b-4714-42af-82fd-c2ce92f958aa_min.webp"], hex: "#2d2d34" },
     "Black": { m: ["hf_20260903_222156_392b23a8-46ad-4fb1-b36d-2d4ba9002aab_min.webp", "hf_20260905_104336_0a24939d-073d-41e5-81d1-0ed483b47883_min.webp"], g: ["hf_20260903_221042_faba3805-9317-41a1-a273-1a0535d379e3_min.webp"], hex: "#171717" },
     "Brown": { m: ["hf_20260903_223219_e805c957-6a5b-4309-9328-8612f2b8a5ff_min.webp", "hf_20260905_104831_85fffb4a-3488-41e2-8272-220a393f71d8_min.webp"], g: ["hf_20260903_223639_157c9b20-3260-459c-8199-2536611b383c_min.webp"], hex: "#3c2412" }, // v196: the 223639 shot is the flat lay, not a model shot (tile had no hover garment); hex measured off it
@@ -109,7 +110,7 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
     "Green": { m: ["image_8e0587e9-7b7f-4da3-8c1f-f8ad89eb3d21.webp", "image_d35593ad-2140-4217-8a80-06e3459bbbcd.webp", "image_5291dd20-7551-473c-ad42-6662718d4865.webp"], g: ["image_090e9f1b-8de7-43c5-a3ea-117f9c579042.webp", "image_6f92457b-b1ba-4ff7-8c93-e2c2fd34b70a.webp"], hex: null, sw: { f: "image_090e9f1b-8de7-43c5-a3ea-117f9c579042.webp", x: 38, y: 58, z: 719 } },
     "Light Blue": { m: ["image_cc0f1342-3980-4a26-97db-ce191d93fb72.webp", "image_a23a6a0c-7790-4e90-8b3d-c5ae4b720143.webp", "image_ab2bcaf5-2d71-483a-97d2-69fc5cfae8c1.webp"], g: ["image_88fcb5de-1837-4b31-8bfe-caa0e3850cce.webp", "image_3ccbbc0d-ea3b-4413-8fba-ff03694134a5.webp"], hex: null, sw: { f: "image_88fcb5de-1837-4b31-8bfe-caa0e3850cce.webp", x: 18, y: 27, z: 660 } },
     "Wine Red": { m: ["image_fc4921d8-0958-42c1-96fd-bccf271965d2.webp", "image_f86ab3e3-7bfb-4a6c-9bfd-6707a06758fa.webp", "image_9a8c2a6a-8e4d-4f8e-a21a-3c64df2df85d.webp"], g: ["image_7ebaf64e-6b1a-4f35-8c05-fc9d3deee467.webp", "image_c142ae9e-8e08-4827-a843-6acf53df8713.webp"], hex: "#260c18" },
-    "Royal Blue": { m: ["image_8e38e99f-77b5-4d5d-9fa8-3a921c01391e.webp", "image_0edf0a6b-f01c-45f0-a679-a44fc198c816.webp", "image_447138d0-a78d-4f07-9849-9d658c96e92d.webp"], g: ["image_6f1534cd-f609-4f61-b3fa-343a421d1bf2.webp", "image_21a05e8c-92cc-40c8-b130-22566d33b49a.webp"], hex: null, sw: { f: "image_6f1534cd-f609-4f61-b3fa-343a421d1bf2.webp", x: 81, y: 30, z: 790 } },
+    "Navy Palm": { m: ["image_8e38e99f-77b5-4d5d-9fa8-3a921c01391e.webp", "image_0edf0a6b-f01c-45f0-a679-a44fc198c816.webp", "image_447138d0-a78d-4f07-9849-9d658c96e92d.webp"], g: ["image_6f1534cd-f609-4f61-b3fa-343a421d1bf2.webp", "image_21a05e8c-92cc-40c8-b130-22566d33b49a.webp"], hex: null, sw: { f: "image_6f1534cd-f609-4f61-b3fa-343a421d1bf2.webp", x: 81, y: 30, z: 790 } },
   },
   "high-waist-body-shaping-shorts": {
     "Black": { m: ["ice-silk-high-waist-shaping-shorts-black-1.jpg", "ice-silk-high-waist-shaping-shorts-black-2.jpg", "ice-silk-high-waist-shaping-shorts-black-3.jpg", "ice-silk-high-waist-shaping-shorts-black-4.jpg"], g: ["ice-silk-high-waist-shaping-shorts-black-5.jpg", "ice-silk-high-waist-shaping-shorts-black-6.jpg"], hex: "#141319" },
@@ -150,7 +151,7 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
   },
   "sleeveless-ribbed-midi-dress": {
     "White": { m: ["image_b41d165d-0419-4e85-a761-4167a5c281ec.webp", "image_15bb99cc-fca2-4773-b1f6-6f2a25dfd283.webp", "image_a3ea9d0e-e8d7-47f6-aa22-a675dd7342e7.webp"], g: ["image_b09f55f5-5938-4d44-ad71-73f8036ad934.webp", "image_b9c63bdf-e064-479d-9d0b-1103e6305e71.webp"], hex: null },
-    "Khaki": { m: ["image_bf90cdd7-d252-4469-947f-0b84dbcdc11e.webp", "image_00635386-b6db-4ce1-b5ec-9a66d0a140a7.webp", "image_ce2b79af-4421-4c57-893e-041fe557b865.webp"], g: ["image_bee86afb-e22a-4c26-9a1e-32f11b665dbd.webp", "image_3e03c709-60e0-4ace-8990-5501619d0713.webp"], hex: "#d8d6d2" },
+    "Beige": { m: ["image_bf90cdd7-d252-4469-947f-0b84dbcdc11e.webp", "image_00635386-b6db-4ce1-b5ec-9a66d0a140a7.webp", "image_ce2b79af-4421-4c57-893e-041fe557b865.webp"], g: ["image_bee86afb-e22a-4c26-9a1e-32f11b665dbd.webp", "image_3e03c709-60e0-4ace-8990-5501619d0713.webp"], hex: "#d8d6d2" },
     "Green": { m: ["image_87ae1139-31ab-48ef-8777-1fbc92063868.webp", "image_0150f798-1ee4-4769-9bae-a89bb4c6ef1e.webp", "image_580e9f3d-3b69-4206-843f-a3b40fbaf233.webp"], g: ["image_ec5f0d19-729f-4e64-9c60-e9c9cf333145.webp", "image_2f968c79-c32d-449f-805e-b9baa44fe41e.webp"], hex: "#12765b" },
     "Light Blue": { m: ["image_85872474-f84d-4d43-88f0-ae66d1e042a7.webp", "image_3b9c5140-5d27-4085-bcd1-d39582a87b6d.webp", "image_f07d58a1-7c8e-4cb9-8020-b52cd9292494.webp"], g: ["image_d761f33f-55fd-4945-9903-a206963a43f0.webp", "image_cf853b58-326e-4446-adbd-e10317b34ff7.webp"], hex: "#a5d1e6" },
     "Black": { m: ["image_3463c906-f8d2-466d-9ac3-93f80245314b.webp", "image_db1d517a-f194-4e27-a811-ee084a4f4ebf.webp", "image_12ac8058-1221-444a-887b-b64e8dffb279.webp"], g: ["image_4e293432-af20-44d0-bd5d-d6e0e9b85a3d.webp", "image_14e06a25-9db0-434e-b723-a788bec787c2.webp"], hex: "#0e0e0d" },
@@ -217,12 +218,12 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
   "womens-high-waisted-ruched-bikini-bottoms": {
     "Black": { m: ["image_f6dcf8cc-94ea-44be-9580-72869e54b388.webp", "image_70620719-0dde-41c7-b325-495e3e0da264.webp", "image_5a6130a8-9873-42d8-8fd6-6f3688892c6c.webp"], g: ["image_5b3f4acb-aec3-498b-ab5b-c88c688461a3.webp", "image_ee8813d9-243f-4298-8eeb-9ad2d8ae3fb8.webp"], hex: "#1c1c1c" },
     "Orange": { m: ["image_f789daa7-dc93-4a3c-8240-ab72d7489550.webp", "image_3f6d30f7-b164-48ef-85d2-de5dd9bf7400.webp", "image_1e2f2af5-cbbb-442a-995d-e8c39a6c887b.webp"], g: ["image_54768e1f-ca7e-4b38-bf2b-f9f8d826ea40.webp", "image_0c2c142f-d9e7-452d-a5b9-67708e8c6d3a.webp"], hex: "#f3a311" },
-    "Sky Blue": { m: ["image_2ef9dd4e-f8dc-4036-be15-5467f7d1b9d6.webp", "image_77937e2d-6f5d-4411-9829-a500a08b939b.webp", "image_1af2b610-5b57-4d30-9478-5f9b889c2381.webp"], g: ["image_79aec635-e7be-4740-8d3b-0e9600e2ab1d.webp", "image_75c9de35-7b34-48e3-af14-fa3f2a8f93de.webp"], hex: "#029195" },
+    "Turquoise": { m: ["image_2ef9dd4e-f8dc-4036-be15-5467f7d1b9d6.webp", "image_77937e2d-6f5d-4411-9829-a500a08b939b.webp", "image_1af2b610-5b57-4d30-9478-5f9b889c2381.webp"], g: ["image_79aec635-e7be-4740-8d3b-0e9600e2ab1d.webp", "image_75c9de35-7b34-48e3-af14-fa3f2a8f93de.webp"], hex: "#029195" },
     "Deep Red": { m: ["image_65527ff2-5b93-4674-83f4-3556651a112c.webp", "image_04ef9fe6-5b51-48cd-a7f2-b31b9827955c.webp", "image_9d1bfe5b-6e1f-4e02-9084-7b1b59b43e77.webp"], g: ["image_6eb0c1eb-bdb0-49a9-a76c-ffe0b7e0dc87.webp", "image_4a384975-763d-4303-82c2-e3ec6b6cdc57.webp"], hex: "#46040e" },
     "Army Green": { m: ["image_c29ff364-9887-46b4-898d-25f576bf9c2d.webp", "image_6a82a835-7e60-4784-a687-288be6c72793.webp", "image_f2f80600-569b-4130-9919-9e60e6cdc99e.webp"], g: ["image_173416c5-1982-4e55-b399-10ef673ca146.webp", "image_5e187fd0-8f03-44e6-88db-39b164b3f99a.webp"], hex: "#2f351c" },
     "White": { m: ["image_62f144be-3dc2-446f-ab86-e8d4c356ab01.webp", "image_4afecf4f-405c-4e45-89e4-377bf618b727.webp", "image_515503fc-d55e-4e23-8d30-48efc33b535e.webp"], g: ["image_0b491b06-ce40-4505-8b12-9e687351ee41.webp", "image_ada8bbd0-36bc-4066-b80f-99c8be2fbac9.webp"], hex: null },
-    "Glitter": { m: ["image_d3e36699-acc6-4c33-87f7-d6ba1faed9af.webp", "image_8502b56f-ba2e-4c76-bbde-fdc34cd7a7e5.webp", "image_460b98cf-dd37-421e-a469-e9f390f859a1.webp"], g: ["image_0dfcd24e-e0ae-4b93-9402-6aadb2461cfd.webp", "image_c3c64489-9c1b-4054-809a-510bb0162647.webp"], hex: null, sw: { f: "image_0dfcd24e-e0ae-4b93-9402-6aadb2461cfd.webp", x: 43, y: 62, z: 358 } },
-    "Royal Blue": { m: ["image_42b51773-f565-47a0-92bf-a7fda7746f30.webp", "image_c13bdf0d-a9bd-4145-8665-00f5eeaa0f3f.webp", "image_2ea7dbd9-0ab1-4f0a-9f9f-224f8c9f7e8d.webp"], g: ["image_1e6e1662-850d-4e49-9c0f-b1bb41ec564a.webp", "image_1f4ef491-2515-4dd6-92e0-b91a3791e3d2.webp"], hex: "#0c1b23" },
+    "Hot Pink": { m: ["image_d3e36699-acc6-4c33-87f7-d6ba1faed9af.webp", "image_8502b56f-ba2e-4c76-bbde-fdc34cd7a7e5.webp", "image_460b98cf-dd37-421e-a469-e9f390f859a1.webp"], g: ["image_0dfcd24e-e0ae-4b93-9402-6aadb2461cfd.webp", "image_c3c64489-9c1b-4054-809a-510bb0162647.webp"], hex: null, sw: { f: "image_0dfcd24e-e0ae-4b93-9402-6aadb2461cfd.webp", x: 43, y: 62, z: 358 } },
+    "Petrol Blue": { m: ["image_42b51773-f565-47a0-92bf-a7fda7746f30.webp", "image_c13bdf0d-a9bd-4145-8665-00f5eeaa0f3f.webp", "image_2ea7dbd9-0ab1-4f0a-9f9f-224f8c9f7e8d.webp"], g: ["image_1e6e1662-850d-4e49-9c0f-b1bb41ec564a.webp", "image_1f4ef491-2515-4dd6-92e0-b91a3791e3d2.webp"], hex: "#0c1b23" },
     "Leopard Print": { m: ["image_01423adf-da47-4753-8c1c-a81642ae55e9.webp", "image_e8d62c0d-2673-46e5-ade9-ed39360548d0.webp", "image_6c9797a9-e0ff-4f6c-93c2-1190399ef537.webp"], g: ["image_5a65b7f3-5559-476f-8e36-a95fecdabb85.webp", "image_b5f68193-9604-4b2b-8db7-c4694667fafb.webp"], hex: null, sw: { f: "image_5a65b7f3-5559-476f-8e36-a95fecdabb85.webp", x: 56, y: 38, z: 1123 } },
   },
   "satin-tie-waist-robe": {
@@ -286,6 +287,17 @@ export const GALLERY_INDEX: Record<string, Record<string, GalleryEntry>> = {
     "Dark Grey": { m: ["hf_20260908_183416_051ac479-564e-42e1-912a-f74ed289ddc1_min.webp", "image_5.webp", "hf_20260908_183416_8316cae4-3811-4409-9ede-50803467d826_min.webp"], g: ["hf_20260908_184119_f9feccf9-08a9-4efb-adbb-a4cbd570c534_min.webp", "hf_20260908_184120_4ebc8afe-f985-4ffe-a2f6-86c389a4e383_min.webp"], hex: "#383d43" },
     "Light Grey": { m: ["hf_20260908_183416_1357da1d-a310-42fa-8058-e9b6281c7e01_min.webp", "image_6.webp", "hf_20260908_183416_540eedbc-b609-4c17-99a9-c9041a623922_min.webp"], g: ["hf_20260908_184120_ef1a075e-42dc-4cda-be1c-bbffbd9d07b4_min.webp", "hf_20260908_184120_d4b50f51-2dd8-4805-9b02-f3f9a74be996_min.webp"], hex: "#909090" },
     "Sky Blue": { m: ["hf_20260908_183416_6b431c7f-c609-4a3c-9eec-eec7a05523b7_min.webp", "image_7.webp", "hf_20260908_183416_1555f6b9-091a-4adc-a4a0-636eae804827_min.webp"], g: ["hf_20260908_184010_c2ca21dc-7074-4816-940e-0f42c3749e85_min.webp", "hf_20260908_184119_9792ef2e-0980-4daa-99fc-fd9075ceb428_min.webp"], hex: "#77b4c5" },
+  },
+  // v197: hand-added (front, side, back on the model + the styled flat lay).
+  // Unindexed, its photos were matched to colours by alt-text words, and
+  // "Black & White" / "White & Black" share both words. hex null: the swatch
+  // is the two-tone split dot (colorMap twoToneSwatch).
+  "womens-swimwear-1": {
+    "Black & White": { m: ["image_ca956556-c567-4b65-83c1-6c7b3b37fe16.webp", "image_4c5f3c5e-2a32-4669-bb08-59a320dc4c70.webp", "image_da62ae9d-9d26-44b0-9560-f1d7d4220850.webp"], g: ["image_d7da5522-d8bf-41da-878d-ffe44604c030.webp"], hex: null },
+    "Brown & White": { m: ["brown.webp", "brown_II.webp", "brown_III.webp"], g: ["image_80df3616-62c1-41b9-a0d5-de679047234b.webp"], hex: null },
+    "White & Black": { m: ["image_bf9d3ea6-6188-451f-af38-5dfcfaadbca9.webp", "image_7199be26-121b-4cb9-93af-744d0f1d8024.webp", "image_2ec10a4c-a399-4f36-a1c4-59184ea81b02.webp"], g: ["image_5733c0b6-81ba-47d2-a393-0966fa1a28cb.webp"], hex: null },
+    "Yellow & Black": { m: ["image_e5c60611-13b7-4aac-997e-4f3e37dd5bb3.webp", "image_a2e22673-c363-4d13-856e-3f3d92090b83.webp", "image_e37d82fd-8240-4f1e-844b-7befc1a58d35.webp"], g: ["image_893f0840-2bb5-419a-ac3e-657f2722a5bb.webp"], hex: null },
+    "Brown & Blue": { m: ["image_0204d29b-289b-4ea9-b995-b2170da72764.webp", "image_96d503f3-11b5-4c02-b122-1d9385a971fe.webp", "image_b0bb7642-c66c-470f-af68-a669e36d5aab.webp"], g: ["image_5a9cddfd-1759-45c0-a535-420fad3e23eb.webp"], hex: null },
   },
   "lace-scoop-bralette-comfortable-seamless-underwear": {
     "Pink": { m: ["lace-scoop-bralette-pink-1.jpg", "lace-scoop-bralette-pink-2.jpg", "lace-scoop-bralette-pink-3.jpg", "lace-scoop-bralette-pink-4.jpg"], g: ["lace-scoop-bralette-pink-5.jpg", "lace-scoop-bralette-pink-6.jpg"], hex: "#e3c2d0" },
@@ -412,7 +424,7 @@ const fileOf = (url: string) => {
 
 export function indexedEntry(handle: string, color: string | null | undefined): GalleryEntry | null {
   if (!color) return null;
-  return GALLERY_INDEX[handle]?.[color] ?? null;
+  return GALLERY_INDEX[handle]?.[canonicalColour(handle, color)] ?? null;
 }
 
 /** Ordered model-then-garment image list for a colour, restricted to images

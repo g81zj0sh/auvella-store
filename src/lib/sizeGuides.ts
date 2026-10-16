@@ -241,7 +241,9 @@ const EXACT_MAP: Record<string, { guideType: GuideType; fitOverride?: FitOverrid
   [norm("Long Sleeve Sculpt Maxi Dress")]: { guideType: "clothing", fitOverride: "bodycon" },
   [norm("Off-Shoulder Sculpt Midi Dress")]: { guideType: "clothing", fitOverride: "bodycon" },
   [norm("Slim Fit Long Sleeve Top")]: { guideType: "clothing" },
-  [norm("Women's Velvet Jumpsuit Long Sleeve Square Neck")]: { guideType: "clothing" },
+  // v197: renamed from "Velvet Square Neck Jumpsuit"; without this key the
+  // /bodysuit/ inference would give it the shapewear guide and fit label.
+  [norm("Velvet Square Neck Bodysuit")]: { guideType: "clothing" },
   [norm("Long Sleeve Zip One-Piece Swimsuit")]: { guideType: "swim" },
   [norm("Solid Colour Bikini Set")]: { guideType: "swim" },
   [norm("Ribbed Cut-Out One-Piece Swimsuit")]: { guideType: "swim" },

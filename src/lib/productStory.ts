@@ -321,7 +321,9 @@ export function beforeYouAsk(html: string | null | undefined, title = "", produc
   const has = (re: RegExp) => re.test(all);
   // Category from the product type first, so a sleepwear cami or a
   // bikini bottom never gets shapewear questions.
-  const other = /sleep|lounge|swim|underwear|dress|accessor/i.test(productType);
+  // v197: a fashion "Bodysuit" (the velvet one) isn't shapewear; the shaping
+  // bodysuits are productType "Shapewear".
+  const other = /sleep|lounge|swim|underwear|dress|accessor|^bodysuit$/i.test(productType);
   const kind = other
     ? null
     : /^bra$/i.test(productType) || /\bbra\b|bralette/i.test(title)

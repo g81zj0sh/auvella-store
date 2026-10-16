@@ -57,7 +57,9 @@ export const PROTECTION = {
 export const WASH_BAG = {
   productId: "gid://shopify/Product/10482195464487",
   handle: "fine-mesh-laundry-bag-anti-deformation-washer-safe-for-sweaters-and-intimates",
-  /** "Large 50x60cm - Buy 3 gift", £0, same SKU as the £10 Large. */
+  /** "Large 50x60cm - Free gift" (renamed from "- Buy 3 gift" on 17 Oct
+   *  2026: it is earned with 3 of a style or 5 underwear pairs), £0, same
+   *  SKU as the £10 Large. Matched by variant id, never by name. */
   giftVariantId: "gid://shopify/ProductVariant/52326276956455",
   /** The £10 Large bag itself: its market price stands in where a market has
    *  no compare-at for the gift (usePerkValues). */

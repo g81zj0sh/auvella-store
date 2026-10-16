@@ -351,8 +351,8 @@ export const PRODUCT_FACETS: Record<string, FacetValues> = {
     material: "Polyester Blend",
   },
   "womens-velvet-jumpsuit-long-sleeve-square-neck": {
-    category: "Loungewear",
-    style: "Jumpsuit",
+    category: "Bodysuits",
+    style: "Bodysuit",
     fabric: "Velvet",
     sleeve: "Long Sleeve",
     material: "Polyester Blend",

@@ -85,14 +85,14 @@ export const PROCESSING_LABEL = `${PROCESSING_DAYS[0]} – ${PROCESSING_DAYS[1]}
 export const FREE_SHIPPING_GBP = 60;
 const FREE_SHIPPING_LOCAL: Record<string, number> = {
   GBP: FREE_SHIPPING_GBP,
-  USD: 85, // free at $80
+  USD: 80, // free at $80 (v197: quoted exactly)
   EUR: 75, // free at €70.90
-  AUD: 120, // free at A$114
+  AUD: 120, // v197: a fixed AUD zone in Shopify (A$15, free from A$120)
   CAD: 120, // free at C$114
   CHF: 70, // free at CHF 66
   SEK: 850, // free at 797 kr
   DKK: 575, // free at 532 kr
-  AED: 305, // free at AED 293
+  AED: 300, // free at AED 293-295
   NZD: 150, // free at NZ$142
   SGD: 110, // free at S$102
   PLN: 330, // free at 313 zł
@@ -137,6 +137,19 @@ const CURRENCY_BY_COUNTRY: Record<string, string> = {
 };
 
 /** The store's display currency for a country code, USD where we have no rate. */
+/* v197: the European Economic Area (the EU plus Iceland, Liechtenstein and
+   Norway). Shopify hides compare-at ("was") prices from shoppers here - EU
+   price rules only allow a "was" price actually charged in the last 30 days -
+   so nothing on the site may promise them a percentage off either. */
+const EEA = new Set([
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT",
+  "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS", "LI", "NO",
+]);
+
+export function inEea(code?: string): boolean {
+  return !!code && EEA.has(code.toUpperCase());
+}
+
 export function currencyForCountry(code?: string): string {
   return CURRENCY_BY_COUNTRY[(code ?? "").toUpperCase()] ?? "USD";
 }

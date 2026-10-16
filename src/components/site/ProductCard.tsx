@@ -1,4 +1,5 @@
 import { TILE_IMAGES, TILE_DEFAULT_COLOUR } from "@/lib/tileImages";
+import { canonicalColour } from "@/lib/colourAliases";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
@@ -157,7 +158,7 @@ export function ProductCard({ product, badge, bleed = false, note }: Props) {
      mount rather than on hover so the cost is paid early. */
   /* Posed tile shot for the active colour, when one exists: it rests on top
      and the garment comes up on hover, for every category. */
-  const posed = activeColor ? TILE_IMAGES[node.handle]?.[activeColor] : undefined;
+  const posed = activeColor ? TILE_IMAGES[node.handle]?.[canonicalColour(node.handle, activeColor)] : undefined;
   /* Every category, bras included, rests on the model (the posed shot where
      there is one, otherwise that colour's model photo) and shows the garment
      on hover. Bras used to lead with the garment; Joshua wants the model. */
