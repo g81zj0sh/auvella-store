@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { legacyRedirect } from "./lib/legacyRedirects";
+import { serveMedia } from "./lib/videoRange";
 import {
   edgeCacheKey,
   forBrowser,
@@ -64,6 +65,10 @@ export default {
       // the router, which would 404 them. Static files are served before the
       // Worker runs, and /_serverFn/* (POST, too) matches no rule.
       if (request.method === "GET" || request.method === "HEAD") {
+        // Videos, answered in byte ranges so iPhone Safari plays them (v198).
+        const media = await serveMedia(request, new URL(request.url), env);
+        if (media) return media;
+
         const legacy = legacyRedirect(new URL(request.url));
         if (legacy) {
           return new Response(null, {

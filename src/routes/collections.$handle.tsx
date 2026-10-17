@@ -104,6 +104,19 @@ import dressesHeroVideoImg from "@/assets/media/dresses-hero.mp4";
 const dressesHeroVideo = { url: dressesHeroVideoImg };
 import dressesHeroPosterImg from "@/assets/media/dresses-hero-poster.jpg";
 const dressesHeroPoster = { url: dressesHeroPosterImg };
+/* Swim + New In (v198): cut twice from the same footage — a wide 4.44:1
+   version framed for the 45vh desktop banner and a 4:3 version for
+   phones — so faces and the product stay in frame at both sizes. */
+import swimHeroVideoImg from "@/assets/media/swim-hero.mp4";
+import swimHeroMobileVideoImg from "@/assets/media/swim-hero-mobile.mp4";
+import swimHeroPosterImg from "@/assets/media/swim-hero-poster.jpg";
+import swimHeroMobilePosterImg from "@/assets/media/swim-hero-mobile-poster.jpg";
+import newInHeroVideoImg from "@/assets/media/newin-hero.mp4";
+import newInHeroMobileVideoImg from "@/assets/media/newin-hero-mobile.mp4";
+import newInHeroPosterImg from "@/assets/media/newin-hero-poster.jpg";
+import newInHeroMobilePosterImg from "@/assets/media/newin-hero-mobile-poster.jpg";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { mediaUrl } from "@/lib/videoRange";
 
 /* Sub-collections that show no hero banner — title strip only. Only these. */
 /* Parent of each hero-less sub-collection: breadcrumb and the "More from" rail. */
@@ -126,14 +139,64 @@ const HERO_POS: Record<string, string> = {
   "everyday-support-edit": "38% 36%",
 };
 
-const HERO_VIDEO: Record<string, { src: string; poster?: string }> = {
+type HeroVideoDef = {
+  src: string;
+  poster?: string;
+  /* Optional phone cut (< 768px). When set, `src` is the desktop cut. */
+  mobileSrc?: string;
+  mobilePoster?: string;
+};
+
+const HERO_VIDEO: Record<string, HeroVideoDef> = {
   shapewear: { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url },
   "loungewear-sleepwear": { src: loungewearHeroVideo.url, poster: loungewearHeroPoster.url },
   activewear: { src: activewearHeroVideo.url, poster: activewearHeroPoster.url },
   bodysuits: { src: bodysuitsHeroVideo.url, poster: bodysuitsHeroPoster.url },
   underwear: { src: underwearHeroVideo.url, poster: underwearHeroPoster.url },
   dresses: { src: dressesHeroVideo.url, poster: dressesHeroPoster.url },
+  swim: {
+    src: swimHeroVideoImg,
+    poster: swimHeroPosterImg,
+    mobileSrc: swimHeroMobileVideoImg,
+    mobilePoster: swimHeroMobilePosterImg,
+  },
+  "new-in": {
+    src: newInHeroVideoImg,
+    poster: newInHeroPosterImg,
+    mobileSrc: newInHeroMobileVideoImg,
+    mobilePoster: newInHeroMobilePosterImg,
+  },
 };
+
+/* Own keys only, same reason as collectionHandles.ts (v188). */
+function heroVideoFor(handle: string): HeroVideoDef | undefined {
+  return Object.prototype.hasOwnProperty.call(HERO_VIDEO, handle) ? HERO_VIDEO[handle] : undefined;
+}
+
+/* The browser picks the <source> whose media query matches when the video
+   loads, so a phone never downloads the desktop cut. The poster attribute
+   can't take a media query, so it switches after mount (phones show the
+   desktop poster, cropped, for a moment before that). */
+function HeroVideo({ video }: { video: HeroVideoDef }) {
+  const isMobile = useIsMobile();
+  const poster = isMobile && video.mobilePoster ? video.mobilePoster : video.poster;
+  return (
+    <video
+      key={video.src}
+      src={video.mobileSrc ? undefined : mediaUrl(video.src)}
+      poster={poster}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      className="absolute inset-0 block h-full w-full object-cover"
+    >
+      {video.mobileSrc && <source src={mediaUrl(video.src)} media="(min-width: 768px)" type="video/mp4" />}
+      {video.mobileSrc && <source src={mediaUrl(video.mobileSrc)} type="video/mp4" />}
+    </video>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /* Handle metadata + hero imagery                                      */
@@ -961,17 +1024,8 @@ function CollectionPage() {
         </section>
       ) : (
       <section className="relative h-[45vh] w-full overflow-hidden bg-[#f5f5f5]">
-        {HERO_VIDEO[handle] ? (
-          <video
-            src={HERO_VIDEO[handle].src}
-            poster={HERO_VIDEO[handle].poster}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            className="absolute inset-0 block h-full w-full object-cover"
-          />
+        {heroVideoFor(handle) ? (
+          <HeroVideo video={heroVideoFor(handle)!} />
         ) : heroImage ? (
           <EditorialImage src={heroImage} alt={title} position={HERO_POS[handle] ?? "center"} hover={false} eager />
         ) : null}

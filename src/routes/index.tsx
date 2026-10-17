@@ -11,12 +11,14 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchProductsByHandles, type ShopifyProduct } from "@/lib/shopify";
 import { ProductCard } from "@/components/site/ProductCard";
 
+import { mediaUrl } from "@/lib/videoRange";
+/* Videos load from /media/ so they're answered in byte ranges (v198). */
 import heroVideoAssetImg from "@/assets/media/hero.mp4";
-const heroVideoAsset = { url: heroVideoAssetImg };
+const heroVideoAsset = { url: mediaUrl(heroVideoAssetImg) };
 import heroPosterAssetImg from "@/assets/media/hero-poster.jpg";
 const heroPosterAsset = { url: heroPosterAssetImg };
 import madeForBodyVideoImg from "@/assets/media/made-for-your-body.mp4";
-const madeForBodyVideo = { url: madeForBodyVideoImg };
+const madeForBodyVideo = { url: mediaUrl(madeForBodyVideoImg) };
 import ugc1Img from "@/assets/ugc/ugc-1.png";
 const ugc1 = { url: ugc1Img };
 import ugc2Img from "@/assets/ugc/ugc-2.png";
