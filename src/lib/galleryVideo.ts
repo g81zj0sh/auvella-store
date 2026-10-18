@@ -10,20 +10,34 @@
  * It streams straight from Shopify's video CDN, which answers byte ranges
  * (206), so iPhones play it - unlike our own Static Assets (see videoRange.ts).
  *
- * 18 Oct 2026: the Lace Scoop Bralette only, for Joshua to review first. The
- * other underwear and bras already have their clips in Shopify; add their
- * handles here once he's happy with it.
+ * 18 Oct 2026: the Lace Scoop Bralette first (v200), then every bra and
+ * underwear piece with a clip (v201). A new clip needs its handle here and
+ * its background in imageBackdrops.ts (keyed by the 720p MP4's filename,
+ * measured off decoded frames) so the slide's edges match it exactly; the
+ * fallback reads it off the first frame in the browser.
  */
 import type { ShopifyMediaNode } from "@/lib/shopify";
 
 export const GALLERY_VIDEO_HANDLES: ReadonlySet<string> = new Set([
+  // Bras
   "lace-scoop-bralette-comfortable-seamless-underwear",
+  "invisible-front-buckle-strapless-bra",
+  "jelly-cup-multi-way-strapless-bra",
+  "auvella-seamless-comfort-bralette",
+  "seamless-sculpt-sports-bra",
+  "maternity-nursing-bra-front-opening-push-up",
+  // Underwear
+  "high-waisted-tummy-control-shaping-pants",
+  "womens-high-waisted-breathable-traceless-thong-panties",
+  "lace-breathable-thong-underwear",
+  "cotton-lace-brief",
 ]);
 
 export type GalleryVideo = {
   /** The sharpest MP4 rendition up to 1080p (Shopify makes 480p and 720p). */
   src: string;
-  /** Shopify's first-frame still: shown until the clip plays, and when it's paused. */
+  /** Shopify's first-frame still, shown only until the first frame has loaded
+      (it comes out darker than the clip plays - see GalleryVideoSlide). */
   poster: string | null;
   alt: string;
 };
