@@ -1,4 +1,5 @@
 import { isHiddenProduct, withoutHidden } from "@/lib/perks";
+import { GALLERY_VIDEO_HANDLES } from "@/lib/galleryVideo";
 import { toast } from "sonner";
 
 export const SHOPIFY_API_VERSION = "2025-07";
@@ -18,6 +19,15 @@ export const SHOPIFY_STORE_PERMANENT_DOMAIN = "bys-store-2961694-648466.myshopif
  */
 export const SHOPIFY_STOREFRONT_TOKEN = "73c1265bea52698126322f319090937c";
 export const SHOPIFY_STOREFRONT_URL = `https://${SHOPIFY_STORE_PERMANENT_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`;
+
+/** One item of a product's Shopify gallery. Only videos carry the other
+    fields; photos come back as just their content type (lib/galleryVideo). */
+export interface ShopifyMediaNode {
+  mediaContentType: string;
+  alt?: string | null;
+  previewImage?: { url: string; width?: number | null; height?: number | null } | null;
+  sources?: Array<{ url: string; mimeType: string; format: string; width?: number | null; height?: number | null }>;
+}
 
 export interface ShopifyProduct {
   node: {
@@ -46,6 +56,8 @@ export interface ShopifyProduct {
       }>;
     };
     options: Array<{ name: string; values: string[] }>;
+    /** Product-page query only, and only for GALLERY_VIDEO_HANDLES (v200). */
+    media?: { edges: Array<{ node: ShopifyMediaNode }> };
   };
 }
 
@@ -166,12 +178,27 @@ export async function fetchProducts(first = 12, query?: string): Promise<Shopify
   return withoutHidden(data?.data?.products?.edges ?? []);
 }
 
+/* $withVideo (v200): the gallery's video, for the products in
+   GALLERY_VIDEO_HANDLES only. Photos answer with just their content type, so
+   the extra list stays a few KB. */
 const PRODUCT_BY_HANDLE_QUERY = `
-  query GetProduct($handle: String!) {
+  query GetProduct($handle: String!, $withVideo: Boolean = false) {
     product(handle: $handle) {
       id title description descriptionHtml handle productType
       priceRange { minVariantPrice { amount currencyCode } }
       images(first: 120) { edges { node { url altText width height } } }
+      media(first: 250) @include(if: $withVideo) {
+        edges {
+          node {
+            mediaContentType
+            ... on Video {
+              alt
+              previewImage { url width height }
+              sources { url mimeType format width height }
+            }
+          }
+        }
+      }
       variants(first: 250) {
         edges {
           node {
@@ -192,7 +219,10 @@ const PRODUCT_BY_HANDLE_QUERY = `
 /** null for an unknown handle - and for the hidden perk products (lib/perks),
  *  which only ever reach a bag through PerkSync. */
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
-  const data = await storefrontApiRequest(PRODUCT_BY_HANDLE_QUERY, { handle });
+  const data = await storefrontApiRequest(PRODUCT_BY_HANDLE_QUERY, {
+    handle,
+    withVideo: GALLERY_VIDEO_HANDLES.has(handle),
+  });
   const node = data?.data?.product;
   return node && !isHiddenProduct(node) ? { node } : null;
 }

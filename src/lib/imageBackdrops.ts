@@ -10,6 +10,9 @@
  * [t, b] — top colour, bottom colour. Equal values mean a flat backdrop. */
 
 export const BACKDROPS: Record<string, [string, string]> = {
+  /* v200 gallery videos (lib/galleryVideo), keyed by the MP4 rendition's
+     filename and measured off decoded frames, as the browser shows them. */
+  "c52bcbdd471745a78a27bc1f04f251fc.HD-720p-1.6Mbps-97999259.mp4": ["#f5f3f4", "#f5f3f4"],
   "front-opening-nursing-bra-black-1.jpg": ["#eeeeee", "#eeeeee"],
   "front-opening-nursing-bra-black-2.jpg": ["#eeeeee", "#eeeeee"],
   "front-opening-nursing-bra-black-3.jpg": ["#eeeeee", "#eeeeee"],

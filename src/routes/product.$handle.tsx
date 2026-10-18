@@ -3,6 +3,7 @@ import { isHiddenHandle } from "@/lib/perks";
 import { LEGACY_PRODUCT_HANDLES } from "@/lib/productHandles";
 import { sizeLabel } from "@/lib/sizeLabels";
 import { galleryUrls, indexedGhost, GALLERY_INDEX } from "@/lib/galleryIndex";
+import { GALLERY_VIDEO_HANDLES, galleryVideoFrom, type GalleryVideo } from "@/lib/galleryVideo";
 import { safeDescriptionHtml, hasStructure } from "@/lib/safeDescription";
 import {
   inDuoDeal,
@@ -54,8 +55,8 @@ import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 import { trackViewedProduct } from "@/lib/klaviyoOnsite";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
-import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, type Backdrop } from "@/lib/imageBackdrop";
-import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch, Share2 } from "lucide-react";
+import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, videoBackdrop, type Backdrop } from "@/lib/imageBackdrop";
+import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch, Share2, Pause, Play } from "lucide-react";
 import { shareLink } from "@/lib/share";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -542,6 +543,24 @@ function ProductPage() {
     return set && set.length > 0 ? set : images;
   }, [images, colorImageMap, galleryColour]);
 
+  /* v200: the product's Shopify video, played as the last slide of every
+     colour's gallery, after the back flat lay (lib/galleryVideo). One
+     pause state for both galleries; it starts paused under reduced motion. */
+  const galleryVideo = useMemo(
+    () =>
+      node && GALLERY_VIDEO_HANDLES.has(node.handle)
+        ? galleryVideoFrom(node.media?.edges.map((e) => e.node), node.title)
+        : null,
+    [node],
+  );
+  const [videoPaused, setVideoPaused] = useState(false);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) setVideoPaused(true);
+  }, []);
+  /** Autoplay refused (iOS Low Power Mode): show the clip paused, so the
+      button offers Play. Stable, as the slides' play effect depends on it. */
+  const blockVideo = useCallback(() => setVideoPaused(true), []);
+
   /* Square re-shoots (v166, Skims-style 2000x2000 on flat #EEEEEE): when
      every photo in the set on show is square, the mobile slides go square
      too, so there's no padding above and below. Mixed or portrait sets keep
@@ -651,11 +670,18 @@ function ProductPage() {
    * early. `activeImages` and `imageIdx` both resolve above, so these are safe
    * here and simply compute over an empty gallery while the product loads.
    */
-  const galleryLen = activeImages.length;
+  /* v200: a gallery video is one more slide, after the colour's photos. */
+  const videoIdx = galleryVideo ? activeImages.length : -1;
+  const galleryLen = activeImages.length + (galleryVideo ? 1 : 0);
   const safeIdx = Math.min(imageIdx, Math.max(galleryLen - 1, 0));
   const prevImg = () => setImageIdx((i) => (Math.min(i, galleryLen - 1) - 1 + galleryLen) % galleryLen);
   const nextImg = () => setImageIdx((i) => (Math.min(i, galleryLen - 1) + 1) % galleryLen);
-  const mainImg = activeImages[safeIdx]?.node;
+  const onVideo = safeIdx === videoIdx;
+  /** The photo on show; on the video slide, the colour's first photo (the
+      visual-search sheet's thumbnail uses it). */
+  const mainImg = (onVideo ? activeImages[0] : activeImages[safeIdx])?.node;
+  /** What the frame's backdrop is keyed on: the photo, or the video. */
+  const frameUrl = onVideo ? galleryVideo?.src : mainImg?.url;
 
   /* Paint the gallery frame with the active shot's own backdrop, so the photo
      reads edge-to-edge instead of floating on the site's cream. Model shots and
@@ -668,9 +694,9 @@ function ProductPage() {
      server (the Worker isolate is reused between visitors) but empty in a
      fresh browser, so consulting it here made the server paint a colour the
      client's first render could not reproduce. */
-  const backdrop = backdropCss(tableBackdrop(mainImg?.url) ?? sampled);
+  const backdrop = backdropCss(tableBackdrop(frameUrl) ?? sampled);
   useEffect(() => {
-    const url = mainImg?.url;
+    const url = frameUrl;
     if (!url) return;
     /* After mount the runtime cache is safe: this runs only in the browser. */
     const hit = cachedBackdrop(url);
@@ -678,6 +704,9 @@ function ProductPage() {
       setSampled(hit);
       return;
     }
+    /* A video's backdrop is read off its own frames (GalleryVideoSlide, which
+       paints its slide itself); the image sampler would download the clip. */
+    if (onVideo) return;
     let live = true;
     sampleBackdrop(url).then((c) => {
       if (live) setSampled(c);
@@ -685,16 +714,33 @@ function ProductPage() {
     return () => {
       live = false;
     };
-  }, [mainImg?.url]);
+  }, [frameUrl, onVideo]);
 
   // Warm the next/previous shots so swiping doesn't flash the old colour.
   useEffect(() => {
     if (galleryLen < 2) return;
     [safeIdx + 1, safeIdx - 1].forEach((i) => {
-      const url = activeImages[(i + galleryLen) % galleryLen]?.node.url;
+      const j = (i + galleryLen) % galleryLen;
+      const url = j === videoIdx ? undefined : activeImages[j]?.node.url;
       if (url && !cachedBackdrop(url)) void sampleBackdrop(url);
     });
-  }, [safeIdx, galleryLen, activeImages]);
+  }, [safeIdx, galleryLen, activeImages, videoIdx]);
+
+  /* The tap itself starts the clip: iOS in Low Power Mode only plays video
+     from a user gesture, and the effect that follows the state change runs
+     too late for that. Only the gallery on show (the other is display:none). */
+  const toggleVideo = () => {
+    const next = !videoPaused;
+    setVideoPaused(next);
+    document.querySelectorAll<HTMLVideoElement>("video[data-gallery-video]").forEach((v) => {
+      if (!v.getClientRects().length) return;
+      if (next) v.pause();
+      else {
+        v.muted = true;
+        void v.play().catch(() => {});
+      }
+    });
+  };
 
   if (isLoading) {
     return (
@@ -1192,6 +1238,15 @@ function ProductPage() {
                   decoding="async"
                 />
               ))}
+              {galleryVideo && (
+                <GalleryVideoSlide
+                  video={galleryVideo}
+                  warm={safeIdx >= videoIdx - 1}
+                  paused={videoPaused}
+                  onBlocked={blockVideo}
+                  className="h-full w-full shrink-0"
+                />
+              )}
             </div>
             <div className="absolute right-5 top-5 flex flex-col items-center gap-3">
               <button
@@ -1239,6 +1294,15 @@ function ProductPage() {
                 </p>
               </>
             )}
+            {/* Outside the drag strip: the strip captures the pointer, which
+                would swallow this button's click. */}
+            {onVideo && (
+              <VideoToggle
+                paused={videoPaused}
+                onToggle={toggleVideo}
+                className="absolute bottom-5 left-5"
+              />
+            )}
           </div>
 
           {/* Mobile: swipeable snap gallery */}
@@ -1283,6 +1347,21 @@ function ProductPage() {
                 square={squareGallery}
               />
             ))}
+            {galleryVideo && (
+              <GalleryVideoSlide
+                video={galleryVideo}
+                warm={safeIdx >= videoIdx - 1}
+                paused={videoPaused}
+                onBlocked={blockVideo}
+                className={`relative ${squareGallery ? "aspect-square" : "aspect-[3/4]"} w-full shrink-0 snap-center`}
+              >
+                <VideoToggle
+                  paused={videoPaused}
+                  onToggle={toggleVideo}
+                  className="absolute bottom-3 left-3"
+                />
+              </GalleryVideoSlide>
+            )}
           </div>
           {/* Dots sit on the page colour, not the photo's backdrop: the grey
               canvas must end exactly where the photo ends, or a close crop
@@ -1290,7 +1369,7 @@ function ProductPage() {
               grey band, and full-length shots read as further away. */}
           {galleryLen > 1 && (
             <div className="flex justify-center gap-1.5 bg-background py-3 lg:hidden">
-              {activeImages.map((_, i) => (
+              {Array.from({ length: galleryLen }, (_, i) => (
                 <span
                   key={i}
                   className={`h-[5px] w-[5px] rounded-full ${i === safeIdx ? "bg-[#0a0a0a]" : "bg-[#0a0a0a]/20"}`}
@@ -2414,5 +2493,116 @@ function MobileSlide({ url, alt, eager, square = false }: { url: string; alt: st
         decoding="async"
       />
     </div>
+  );
+}
+
+/**
+ * Gallery video slide (v200): the product's Shopify clip, contained in its
+ * slide on the clip's own backdrop, like the photos. Muted, looped, inline.
+ *
+ * The desktop strip and the phone carousel are both in the page (one is
+ * display:none), and the slides off to the side sit in the same row. So the
+ * clip only starts loading once its slide is next or on show (`warm`), and
+ * only plays while at least 60% of it is really visible - never in the
+ * hidden gallery, nor once the shopper has scrolled on down the page.
+ *
+ * Shopify's still of a clip can come out a different grey from the clip as
+ * the browser plays it (the bralette's: #E3E1E2 against #F5F3F4 - the video
+ * isn't tagged full-range). A video with a poster shows the poster, not its
+ * first frame, until it plays, so the still is only used until the first
+ * frame has loaded: it covers the wait, and the Low Power Mode case where
+ * iOS loads nothing until a tap. The slide's backdrop is read off a frame.
+ */
+function GalleryVideoSlide({
+  video,
+  warm,
+  paused,
+  onBlocked,
+  className,
+  children,
+}: {
+  video: GalleryVideo;
+  warm: boolean;
+  paused: boolean;
+  onBlocked: () => void;
+  className: string;
+  children?: React.ReactNode;
+}) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [visible, setVisible] = useState(false);
+  /* Sticky: once the source is set it stays, or the clip would download again. */
+  const [load, setLoad] = useState(false);
+  const [hasFrame, setHasFrame] = useState(false);
+  const [frameBackdrop, setFrameBackdrop] = useState<Backdrop | undefined>(undefined);
+  useEffect(() => {
+    // Not in the gallery that is display:none (no boxes) - it would download too.
+    if ((warm || visible) && boxRef.current?.getClientRects().length) setLoad(true);
+  }, [warm, visible]);
+
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(([e]) => setVisible(e.intersectionRatio >= 0.6), {
+      threshold: [0, 0.6, 1],
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !load) return;
+    if (visible && !paused) {
+      v.muted = true; // iOS only plays inline video without a tap when it is muted
+      void v.play().catch((err: unknown) => {
+        if ((err as { name?: string } | null)?.name === "NotAllowedError") onBlocked();
+      });
+    } else {
+      v.pause();
+    }
+  }, [visible, paused, load, onBlocked]);
+
+  /* Build-time table first (server and first paint agree), then the frame. */
+  const backdrop = backdropCss(tableBackdrop(video.src) ?? frameBackdrop);
+
+  return (
+    <div ref={boxRef} className={className} style={{ background: backdrop }}>
+      <video
+        ref={videoRef}
+        data-gallery-video=""
+        src={load ? video.src : undefined}
+        poster={load && !hasFrame && video.poster ? shopifyImg(video.poster, 1200) : undefined}
+        crossOrigin="anonymous"
+        muted
+        loop
+        playsInline
+        preload={load ? "auto" : "none"}
+        disablePictureInPicture
+        aria-label={video.alt}
+        onLoadedData={(e) => {
+          setHasFrame(true);
+          setFrameBackdrop(videoBackdrop(e.currentTarget));
+        }}
+        className="pointer-events-none h-full w-full select-none object-contain object-center"
+      />
+      {children}
+    </div>
+  );
+}
+
+/** Pause/play for the gallery video: it loops for as long as it is on show,
+    so it needs a way to stop it (WCAG 2.2.2). */
+function VideoToggle({ paused, onToggle, className }: { paused: boolean; onToggle: () => void; className: string }) {
+  const Icon = paused ? Play : Pause;
+  return (
+    <button
+      type="button"
+      aria-label={paused ? "Play video" : "Pause video"}
+      onClick={onToggle}
+      className={`${className} text-[#0a0a0a] transition-opacity hover:opacity-60`}
+    >
+      <Icon className="h-4 w-4" strokeWidth={1.2} />
+    </button>
   );
 }

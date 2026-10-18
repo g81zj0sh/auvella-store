@@ -72,6 +72,72 @@ export function cachedBackdrop(url: string | undefined): Backdrop | undefined {
   return BACKDROPS[fileKey(url)] ?? cache.get(url);
 }
 
+/** Top and bottom backdrop colours of anything drawable - a loaded image or
+    the current frame of a video - or undefined without a 2D context. Throws
+    if the canvas is tainted (the source loaded without CORS). */
+function readBackdrop(source: CanvasImageSource): Backdrop | undefined {
+  // Downscale to a small square first: cheap to read back, and the
+  // averaging smooths out JPEG noise in flat backdrop areas.
+  const N = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = N;
+  canvas.height = N;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return undefined;
+  ctx.drawImage(source, 0, 0, N, N);
+
+  const { data } = ctx.getImageData(0, 0, N, N);
+
+  // Median per channel, not mean: if hair, a shadow or a dark garment
+  // clips the edge, the median ignores it where an average would be
+  // dragged darker.
+  const mid = (xs: number[]) => {
+    xs.sort((a, b) => a - b);
+    return xs[Math.floor(xs.length / 2)];
+  };
+  const hex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, "0");
+
+  // Read the top and bottom bands separately, and only at their outer
+  // corners — the subject is centred, so the corners stay backdrop even
+  // when a shoulder or a hem touches the frame edge.
+  const band = (ys: number[]) => {
+    const rs: number[] = [];
+    const gs: number[] = [];
+    const bs: number[] = [];
+    const edge = Math.max(2, Math.floor(N / 6));
+    for (const y of ys) {
+      for (let x = 2; x < N - 2; x++) {
+        if (x >= edge && x < N - edge) continue;
+        const i = (y * N + x) * 4;
+        rs.push(data[i]);
+        gs.push(data[i + 1]);
+        bs.push(data[i + 2]);
+      }
+    }
+    return `#${hex(mid(rs))}${hex(mid(gs))}${hex(mid(bs))}`;
+  };
+
+  return [band([2, 3, 4]), band([N - 3, N - 4, N - 5])];
+}
+
+/** v200: a gallery video's backdrop, read off the frame it is showing, so it
+    matches what the browser really displays. The video must load with
+    crossOrigin="anonymous" (Shopify's video CDN allows it). Cached under the
+    video's URL, so the gallery frame can find it with cachedBackdrop(). */
+export function videoBackdrop(video: HTMLVideoElement): Backdrop | undefined {
+  const url = video.currentSrc || video.src;
+  if (!url) return undefined;
+  const hit = cachedBackdrop(url);
+  if (hit) return hit;
+  try {
+    const pair = readBackdrop(video);
+    if (pair) cache.set(url, pair);
+    return pair;
+  } catch {
+    return undefined;
+  }
+}
+
 export function sampleBackdrop(url: string): Promise<Backdrop> {
   const hit = cachedBackdrop(url);
   if (hit) return Promise.resolve(hit);
@@ -90,49 +156,8 @@ export function sampleBackdrop(url: string): Promise<Backdrop> {
 
     img.onload = () => {
       try {
-        // Downscale to a small square first: cheap to read back, and the
-        // averaging smooths out JPEG noise in flat backdrop areas.
-        const N = 64;
-        const canvas = document.createElement("canvas");
-        canvas.width = N;
-        canvas.height = N;
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) return resolve(DEFAULT_BACKDROP_PAIR);
-        ctx.drawImage(img, 0, 0, N, N);
-
-        const { data } = ctx.getImageData(0, 0, N, N);
-
-        // Median per channel, not mean: if hair, a shadow or a dark garment
-        // clips the edge, the median ignores it where an average would be
-        // dragged darker.
-        const mid = (xs: number[]) => {
-          xs.sort((a, b) => a - b);
-          return xs[Math.floor(xs.length / 2)];
-        };
-        const hex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, "0");
-
-        // Read the top and bottom bands separately, and only at their outer
-        // corners — the subject is centred, so the corners stay backdrop even
-        // when a shoulder or a hem touches the frame edge.
-        const band = (ys: number[]) => {
-          const rs: number[] = [];
-          const gs: number[] = [];
-          const bs: number[] = [];
-          const edge = Math.max(2, Math.floor(N / 6));
-          for (const y of ys) {
-            for (let x = 2; x < N - 2; x++) {
-              if (x >= edge && x < N - edge) continue;
-              const i = (y * N + x) * 4;
-              rs.push(data[i]);
-              gs.push(data[i + 1]);
-              bs.push(data[i + 2]);
-            }
-          }
-          return `#${hex(mid(rs))}${hex(mid(gs))}${hex(mid(bs))}`;
-        };
-
-        const pair: Backdrop = [band([2, 3, 4]), band([N - 3, N - 4, N - 5])];
-
+        const pair = readBackdrop(img);
+        if (!pair) return resolve(DEFAULT_BACKDROP_PAIR);
         cache.set(url, pair);
         resolve(pair);
       } catch {
