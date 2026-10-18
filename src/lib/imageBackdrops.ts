@@ -17,7 +17,7 @@ export const BACKDROPS: Record<string, [string, string]> = {
   "a1e14df1491e43cfb4debed8b26ef348.HD-720p-1.6Mbps-98016272.mp4": ["#f4f2f3", "#f4f2f3"], // Front-Buckle Strapless Bra
   "ce9efa2034634746959a902ca0b6ea34.HD-720p-1.6Mbps-98016276.mp4": ["#f4f2f3", "#f4f2f3"], // Front-Opening Nursing Bra
   "bb838e5c223245f3bc6f249fb0922114.HD-720p-1.6Mbps-98016277.mp4": ["#f4f2f3", "#f4f2f3"], // High-Waist Tummy Control Shaping Shorts
-  "0349e5fe6cd74ceeb8654256ba9e173e.HD-720p-1.6Mbps-98016278.mp4": ["#f4f2f3", "#f4f2f3"], // Ice Silk High-Waist Thong
+  "059f45c32c6543e0a86974e9482a9853.HD-720p-1.6Mbps-98049328.mp4": ["#f4f2f3", "#f4f2f3"], // Ice Silk High-Waist Thong (replaced 18 Oct)
   "1b7ca7d42f1047499c05b37216a03d2a.HD-720p-1.6Mbps-98016273.mp4": ["#f4f2f3", "#f4f2f3"], // Jelly Cup Multi-Way Strapless Bra
   "704e05b796184f50881344099ca3a4ad.HD-720p-1.6Mbps-98016279.mp4": ["#f4f2f3", "#f4f2f3"], // Lace Thong
   "dd2bfd1eaaee4b789be7ba439fd34e99.HD-720p-1.6Mbps-98016274.mp4": ["#f4f2f3", "#f4f2f3"], // Seamless Comfort Bralette
