@@ -146,7 +146,7 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
         : "Yes — within 30 days of delivery. Email us to start a return. Return postage is paid by you unless the item is faulty.",
     },
     ...(inDuoDeal(handle)
-      ? [{ q: "Is there a multi-buy?", a: `Buy two of this product and save ${DUO_DEAL.percent}% — any sizes or colours. The saving is applied automatically in your bag.` }]
+      ? [{ q: "Is there a multi-buy?", a: `Buy two of this product and save ${DUO_DEAL.percent}%, or three or more and save ${DUO_DEAL.stockUpPercent}% — any sizes or colours. The saving is applied automatically in your bag.` }]
       : inBundleDeal(handle)
         ? [{ q: "Is there a multi-buy?", a: "It's part of our underwear 3-pack deal: add any three eligible pieces and the saving is applied automatically in your bag." }]
         : []),

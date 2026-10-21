@@ -1,12 +1,14 @@
 /*
- * The live "Buy 2, save 15%" quantity break, mirrored for the storefront.
+ * The live multi-buy quantity breaks (Buy 2 save 10%, Buy 3+ save 15%),
+ * mirrored for the storefront.
  *
  * Shopify DiscountAutomaticNode/1738478518567, an app-managed automatic
  * discount from Simple Discounts (type "Tier/Quantity break discount"),
  * scoped to the "Buy 2, save 15% (eligible)" collection (duo-eligible) with
- * "Same product only": 15% off a product once 2+ units OF THAT PRODUCT are
- * in the cart. Counted per product, not across the bag - two different
- * products at one each get nothing. Verified at checkout 25 Sept 2026.
+ * "Same product only": 10% off a product once 2 units OF THAT PRODUCT are
+ * in the cart, 15% once 3+ are (v204, owner 21 Oct 2026; it was 15% at 2+,
+ * verified at checkout 25 Sept 2026). Counted per product, not across the
+ * bag - two different products at one each get nothing.
  * Keyed by handle so it survives product-ID changes; keep this list and the
  * collection in step.
  *
@@ -18,8 +20,13 @@
  * If the Shopify rule changes, this file must change with it.
  */
 export const DUO_DEAL = {
-  percent: 15,
+  percent: 10,
   minQuantity: 2,
+  /* v204 (owner, 21 Oct 2026): 2 units save 10%, 3+ units of the same product
+     save 15%. Two breaks in the same Simple Discounts rule (same product
+     only); Shopify gives the higher break, not both. */
+  stockUpPercent: 15,
+  stockUpQuantity: 3,
   handles: [
     "auvella-long-sleeve-sculpting-bodysuit",
     "auvella-seamless-comfort-bralette",
@@ -55,12 +62,32 @@ export function inDuoDeal(handle: string | undefined | null): boolean {
   return !!handle && DUO_DEAL.handles.includes(handle);
 }
 
+/** The rate Shopify gives each unit when the bag holds `quantity` units of one
+ *  Buy 2 product: 0 below 2, 10% at 2, 15% at 3 or more. */
+export function duoPercentFor(quantity: number): number {
+  if (quantity >= DUO_DEAL.stockUpQuantity) return DUO_DEAL.stockUpPercent;
+  if (quantity >= DUO_DEAL.minQuantity) return DUO_DEAL.percent;
+  return 0;
+}
+
+/** Titles the Simple Discounts rule has carried, as Shopify reports them on
+ *  cart lines (lower case). The bag swaps them for the rate actually in play. */
+export const DUO_SHOPIFY_TITLES = ["buy 2, save 15%", "multi-buy saving"];
+
+/** Bag label for the multi-buy saving at the rates in play. */
+export function duoLabel(percents: number[]): string {
+  const rates = [...new Set(percents.filter((p) => p > 0))];
+  if (rates.length === 1 && rates[0] === DUO_DEAL.stockUpPercent) return `Buy 3+, save ${DUO_DEAL.stockUpPercent}%`;
+  if (rates.length === 1) return `Buy 2, save ${rates[0]}%`;
+  return "Multi-buy savings";
+}
+
 /** Price of two once the discount lands, from one unit price. */
-/** Per-item saving exactly as Shopify computes it: 15%, rounded DOWN to the
+/** Per-item saving exactly as Shopify computes it: the rate, rounded DOWN to the
  *  penny (GBP19.99 -> GBP2.99 off, not GBP3.00). QA 28 Sept 2026: the page said
  *  GBP33.98 for two while checkout charged GBP34.00. */
-export function duoUnitOff(unit: number): number {
-  return unitOffAt(unit, DUO_DEAL.percent);
+export function duoUnitOff(unit: number, percent: number = DUO_DEAL.percent): number {
+  return unitOffAt(unit, percent);
 }
 
 /** Per-item saving at any rate, rounded DOWN to the penny like the app. */
@@ -77,12 +104,12 @@ export function duoPrice(unit: number, second: number = unit): number {
  * The product-page multi-buy "power cards": Just One / Buy 2 / Buy 3+.
  *
  * Each tier must be what checkout charges for that many units of ONE product
- * under the Shopify rule above: 15% once 2+ units are in the bag, so the 3+
- * card is 15% too (v158; a 20% 3+ break in Simple Discounts was deleted on
- * 10 Oct 2026). To offer 20% on 3+, add that break in Simple Discounts, run a
- * test checkout, then change the 3+ tier's `percent` here in the same change
- * - never before. The cards build their labels, savings and badges from this
- * list, so no saving can be shown that checkout doesn't give.
+ * under the Shopify rule above: 10% at 2 units, 15% at 3+ (v204, owner 21 Oct
+ * 2026 - the breaks were changed in Simple Discounts and checked with a test
+ * cart before this changed; before v204 both cards were 15%). If the Simple
+ * Discounts breaks change, change DUO_DEAL in the same release - never before.
+ * The cards build their labels, savings and badges from this list, so no
+ * saving can be shown that checkout doesn't give.
  */
 export interface MultiBuyTier {
   /** Units of this product the tier puts in the bag. */
@@ -96,7 +123,7 @@ export interface MultiBuyTier {
 export const MULTI_BUY_TIERS: MultiBuyTier[] = [
   { quantity: 1, percent: 0 },
   { quantity: 2, percent: DUO_DEAL.percent },
-  { quantity: 3, percent: DUO_DEAL.percent, orMore: true },
+  { quantity: 3, percent: DUO_DEAL.stockUpPercent, orMore: true },
 ];
 
 /*

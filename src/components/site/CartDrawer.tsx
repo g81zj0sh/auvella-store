@@ -19,7 +19,7 @@ import {
   bundleLabel,
   inBundleDeal,
 } from "@/lib/bundleDeal";
-import { DUO_DEAL } from "@/lib/duoDeal";
+import { DUO_DEAL, DUO_SHOPIFY_TITLES, duoLabel } from "@/lib/duoDeal";
 import { bagTotals } from "@/lib/bagTotals";
 import { estimateDelivery, DISPATCH_CUTOFF_LONDON } from "@/lib/deliveryEstimate";
 import {
@@ -138,7 +138,7 @@ export function CartDrawer() {
      bag quotes in the shopper's currency, like the header. */
   const displayCurrency = usePreferences((s) => s.currency);
   const totals = useCartStore((s) => s.totals);
-  const { baseCurrency, duoSaving, duoOneShort, bundleSaving, shopifyTotals, payable, pending } =
+  const { baseCurrency, duoSaving, duoOneShort, duoPercents, bundleSaving, shopifyTotals, payable, pending } =
     bagTotals(items, totals, displayCurrency, discountCodes);
   /* Bundle: how many eligible underwear lines are in the bag. */
   const bundleQty = items.filter((i) => inBundleDeal(i.product.node.handle)).reduce((s, i) => s + i.quantity, 0);
@@ -148,11 +148,15 @@ export function CartDrawer() {
           ? { ...d, label: bundleLabel(baseCurrency) }
           : d.label.toLowerCase() === BUNDLE5_SHOPIFY_TITLE.toLowerCase()
             ? { ...d, label: bundleLabel(baseCurrency, 5) }
-            : d,
+            : /* The Simple Discounts rule keeps one title for both breaks, so
+                 name the rate actually in play (v204). */
+              DUO_SHOPIFY_TITLES.includes(d.label.toLowerCase()) && duoPercents.length > 0
+              ? { ...d, label: duoLabel(duoPercents) }
+              : d,
       )
     : [
         ...(bundleSaving > 0 ? [{ label: bundleLabel(baseCurrency, bundleQty), amount: bundleSaving }] : []),
-        ...(duoSaving > 0 ? [{ label: `Buy 2, save ${DUO_DEAL.percent}%`, amount: duoSaving }] : []),
+        ...(duoSaving > 0 ? [{ label: duoLabel(duoPercents), amount: duoSaving }] : []),
       ];
 
   const { country } = useShippingCountry();
