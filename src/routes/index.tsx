@@ -302,6 +302,7 @@ function useVideoInView() {
 
 function Index() {
   const [videoReady, setVideoReady] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [introGone, setIntroGone] = useState(true);
   const [minIntroDone, setMinIntroDone] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -337,9 +338,10 @@ function Index() {
       try {
         const p = v.play();
         if (p && typeof p.catch === "function") {
-          p.catch(() => {
+          p.catch((e: unknown) => {
             // Autoplay blocked (common on mobile) — reveal the page so the user
             // can see the poster + tap-to-play overlay instead of being stuck on intro.
+            if ((e as { name?: string } | null)?.name === "NotAllowedError" && !cancelled) setAutoplayBlocked(true);
             markReady();
           });
         }
@@ -355,6 +357,7 @@ function Index() {
       if (v.currentTime > 0.05 && !v.paused) markReady();
     };
     const onPlaying = () => {
+      if (!cancelled) setAutoplayBlocked(false);
       window.setTimeout(() => {
         if (v.currentTime > 0.05 && !v.paused) markReady();
       }, 120);
@@ -429,17 +432,11 @@ function Index() {
       {/* HERO */}
       <section className="relative w-full overflow-hidden">
         {/* Full-width landscape video */}
-        <div className="relative w-full h-screen md:aspect-[21/9] md:h-auto lg:aspect-auto lg:h-screen">
-          {/* Poster image shown until the video can play — avoids the black box on slow mobile connections */}
-          <img
-            src={heroPoster}
-            alt=""
-            aria-hidden="true"
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+        {/* v203 (owner): straight into the video - no still poster first. Until
+            the first frame arrives the box is the video's own opening colour
+            (average of frame 0); the still shows only if the browser refuses
+            to autoplay (iPhone Low Power Mode, data saver). */}
+        <div className="relative w-full h-screen bg-[#7c6952] md:aspect-[21/9] md:h-auto lg:aspect-auto lg:h-screen">
           <video
             ref={videoRef}
             src={heroVideo}
@@ -448,9 +445,17 @@ function Index() {
             loop
             playsInline
             preload="auto"
-            poster={heroPoster}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? "opacity-100" : "opacity-0"}`}
+            className="absolute inset-0 h-full w-full object-cover"
           />
+          {autoplayBlocked && (
+            <img
+              src={heroPoster}
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+            />
+          )}
           {/* Bottom-right gradient for text readability */}
           <div className="absolute inset-0 bg-gradient-to-l from-ink/70 via-ink/30 to-transparent" />
         </div>

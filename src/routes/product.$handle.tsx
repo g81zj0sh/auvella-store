@@ -56,7 +56,7 @@ import { trackViewedProduct } from "@/lib/klaviyoOnsite";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, videoBackdrop, type Backdrop } from "@/lib/imageBackdrop";
-import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch, Share2, Pause, Play } from "lucide-react";
+import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch, Share2, Pause, Play, Ruler } from "lucide-react";
 import { shareLink } from "@/lib/share";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -1528,9 +1528,10 @@ function ProductPage() {
                   {showSizeGuide && (
                     <button
                       onClick={() => setSizeGuideOpen(true)}
-                      className="text-[12px] font-semibold text-[#0a0a0a] underline underline-offset-4 transition-opacity hover:opacity-60"
+                      className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#0a0a0a] transition-opacity hover:opacity-60"
                     >
-                      Size Guide
+                      <Ruler aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                      <span className="underline underline-offset-4">Size Guide</span>
                     </button>
                   )}
                 </div>

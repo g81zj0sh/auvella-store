@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { canonicalCollectionHandle, previousShopifyHandle } from "@/lib/collectionHandles";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import tileBodysuits from "@/assets/tiles/tile-bodysuits.jpg";
 import tileShapewear from "@/assets/tiles/tile-shapewear.jpg";
@@ -141,30 +141,37 @@ const HERO_POS: Record<string, string> = {
 
 type HeroVideoDef = {
   src: string;
+  /* Still shown ONLY if the browser refuses to autoplay (v203). */
   poster?: string;
   /* Optional phone cut (< 768px). When set, `src` is the desktop cut. */
   mobileSrc?: string;
   mobilePoster?: string;
+  /* Average colour of the video's first frame: the banner's colour for the
+     moment before that frame arrives, so it goes straight into the video
+     with no flash (most of these open on black). */
+  tone: string;
 };
 
 const HERO_VIDEO: Record<string, HeroVideoDef> = {
-  shapewear: { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url },
-  "loungewear-sleepwear": { src: loungewearHeroVideo.url, poster: loungewearHeroPoster.url },
-  activewear: { src: activewearHeroVideo.url, poster: activewearHeroPoster.url },
-  bodysuits: { src: bodysuitsHeroVideo.url, poster: bodysuitsHeroPoster.url },
-  underwear: { src: underwearHeroVideo.url, poster: underwearHeroPoster.url },
-  dresses: { src: dressesHeroVideo.url, poster: dressesHeroPoster.url },
+  shapewear: { src: shapewearHeroVideo.url, poster: shapewearPosterAsset.url, tone: "#040304" },
+  "loungewear-sleepwear": { src: loungewearHeroVideo.url, poster: loungewearHeroPoster.url, tone: "#000000" },
+  activewear: { src: activewearHeroVideo.url, poster: activewearHeroPoster.url, tone: "#000000" },
+  bodysuits: { src: bodysuitsHeroVideo.url, poster: bodysuitsHeroPoster.url, tone: "#7a6551" },
+  underwear: { src: underwearHeroVideo.url, poster: underwearHeroPoster.url, tone: "#000000" },
+  dresses: { src: dressesHeroVideo.url, poster: dressesHeroPoster.url, tone: "#000000" },
   swim: {
     src: swimHeroVideoImg,
     poster: swimHeroPosterImg,
     mobileSrc: swimHeroMobileVideoImg,
     mobilePoster: swimHeroMobilePosterImg,
+    tone: "#000000",
   },
   "new-in": {
     src: newInHeroVideoImg,
     poster: newInHeroPosterImg,
     mobileSrc: newInHeroMobileVideoImg,
     mobilePoster: newInHeroMobilePosterImg,
+    tone: "#a08c76",
   },
 };
 
@@ -174,27 +181,68 @@ function heroVideoFor(handle: string): HeroVideoDef | undefined {
 }
 
 /* The browser picks the <source> whose media query matches when the video
-   loads, so a phone never downloads the desktop cut. The poster attribute
-   can't take a media query, so it switches after mount (phones show the
-   desktop poster, cropped, for a moment before that). */
+   loads, so a phone never downloads the desktop cut.
+   v203 (owner): the banner goes straight into the video - no still poster
+   first. The video has no poster attribute and starts loading at once; until
+   its first frame arrives the banner is the video's own opening colour
+   (`tone`). The still appears only if the browser refuses to autoplay
+   (iPhone Low Power Mode, data saver), so the banner is never an empty box,
+   and the first tap anywhere starts the video. */
 function HeroVideo({ video }: { video: HeroVideoDef }) {
   const isMobile = useIsMobile();
+  const ref = useRef<HTMLVideoElement>(null);
+  const [blocked, setBlocked] = useState(false);
   const poster = isMobile && video.mobilePoster ? video.mobilePoster : video.poster;
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    setBlocked(false);
+    const tryPlay = () => {
+      const p = v.play();
+      if (p && typeof p.catch === "function") {
+        p.catch((e: unknown) => {
+          if ((e as { name?: string } | null)?.name === "NotAllowedError") setBlocked(true);
+        });
+      }
+    };
+    const onPlaying = () => setBlocked(false);
+    tryPlay();
+    v.addEventListener("loadeddata", tryPlay);
+    v.addEventListener("playing", onPlaying);
+    window.addEventListener("touchstart", tryPlay, { once: true, passive: true });
+    window.addEventListener("click", tryPlay, { once: true });
+    return () => {
+      v.removeEventListener("loadeddata", tryPlay);
+      v.removeEventListener("playing", onPlaying);
+      window.removeEventListener("touchstart", tryPlay);
+      window.removeEventListener("click", tryPlay);
+    };
+  }, [video.src]);
   return (
-    <video
-      key={video.src}
-      src={video.mobileSrc ? undefined : mediaUrl(video.src)}
-      poster={poster}
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      className="absolute inset-0 block h-full w-full object-cover"
-    >
-      {video.mobileSrc && <source src={mediaUrl(video.src)} media="(min-width: 768px)" type="video/mp4" />}
-      {video.mobileSrc && <source src={mediaUrl(video.mobileSrc)} type="video/mp4" />}
-    </video>
+    <div className="absolute inset-0" style={{ backgroundColor: video.tone }}>
+      <video
+        ref={ref}
+        key={video.src}
+        src={video.mobileSrc ? undefined : mediaUrl(video.src)}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        className="absolute inset-0 block h-full w-full object-cover"
+      >
+        {video.mobileSrc && <source src={mediaUrl(video.src)} media="(min-width: 768px)" type="video/mp4" />}
+        {video.mobileSrc && <source src={mediaUrl(video.mobileSrc)} type="video/mp4" />}
+      </video>
+      {blocked && poster && (
+        <img
+          src={poster}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        />
+      )}
+    </div>
   );
 }
 
