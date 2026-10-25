@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { SizeRegion } from "@/lib/sizeRegions";
@@ -364,33 +364,56 @@ function handleExternalMutation(node: Text) {
 export function useDomTranslation() {
   const language = useAppliedLanguage(usePreferences((s) => s.language));
   const hydrated = usePreferencesHydrated();
+  /* v207: the first pass waits for the browser's first idle moment. This
+     effect runs once the root has hydrated, but React hydrates the page's
+     Suspense boundaries (the route content) in later tasks; text translated
+     before then no longer matched the server HTML, and React threw #418 and
+     re-rendered that part (every non-English visit). Idle comes only after
+     React's queued hydration work. Later language changes apply at once. */
+  const firstPass = useRef(true);
   useEffect(() => {
     if (!hydrated) return;
     if (typeof document === "undefined") return;
-    currentLang = language;
-    document.documentElement.lang = language;
-    document.documentElement.dir = "ltr";
+    let mo: MutationObserver | undefined;
+    const start = () => {
+      firstPass.current = false;
+      currentLang = language;
+      document.documentElement.lang = language;
+      document.documentElement.dir = "ltr";
 
-    walkAndTranslate(document.body);
+      walkAndTranslate(document.body);
 
-    const mo = new MutationObserver((records) => {
-      for (const r of records) {
-        if (r.type === "characterData" && r.target.nodeType === 3) {
-          handleExternalMutation(r.target as Text);
-        } else if (r.type === "childList") {
-          r.addedNodes.forEach((n) => {
-            if (n.nodeType === 3) translateNode(n as Text);
-            else if (n.nodeType === 1) walkAndTranslate(n);
-          });
+      mo = new MutationObserver((records) => {
+        for (const r of records) {
+          if (r.type === "characterData" && r.target.nodeType === 3) {
+            handleExternalMutation(r.target as Text);
+          } else if (r.type === "childList") {
+            r.addedNodes.forEach((n) => {
+              if (n.nodeType === 3) translateNode(n as Text);
+              else if (n.nodeType === 1) walkAndTranslate(n);
+            });
+          }
         }
-      }
-    });
-    mo.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-    return () => mo.disconnect();
+      });
+      mo.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    };
+    let cancel = () => {};
+    if (!firstPass.current) start();
+    else if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(start);
+      cancel = () => window.cancelIdleCallback(id);
+    } else {
+      const id = window.setTimeout(start, 300);
+      cancel = () => window.clearTimeout(id);
+    }
+    return () => {
+      cancel();
+      mo?.disconnect();
+    };
   }, [hydrated, language]);
 }
 

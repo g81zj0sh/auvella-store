@@ -5,6 +5,7 @@ import { FULL_CATALOG_TABLES } from "./lib/catalogTablesFull";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { legacyRedirect } from "./lib/legacyRedirects";
+import { adLandingTarget, canSwapAddress, withAddressSwap } from "./lib/adLanding";
 import { serveMedia } from "./lib/videoRange";
 import {
   edgeCacheKey,
@@ -63,6 +64,42 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
+/** A page: a recent render from the edge cache, or a fresh one. */
+async function renderPage(request: Request, env: unknown, ctx: unknown): Promise<Response> {
+  // v196: reuse a recent render from the edge (lib/edgeCache) - most
+  // visitors then cost no render at all, which is what kept tipping the
+  // Worker over its resource limits (Cloudflare 1102) under load.
+  const url = new URL(request.url);
+  const cache = isCacheableRequest(request, url) ? edgeCache() : null;
+  const key = cache ? edgeCacheKey(url) : null;
+  if (cache && key) {
+    try {
+      const hit = await cache.match(key);
+      if (hit) return forBrowser(hit, "HIT");
+    } catch (error) {
+      console.error("edge cache read failed", error);
+    }
+  }
+
+  const handler = await getServerEntry();
+  const response = await normalizeCatastrophicSsrResponse(
+    await handler.fetch(request, env, ctx),
+  );
+
+  if (cache && key && isCacheableResponse(response)) {
+    try {
+      const put = cache.put(key, forEdge(response.clone()));
+      const wait = (ctx as WaitUntil | undefined)?.waitUntil;
+      if (wait) wait.call(ctx, put.catch((e) => console.error("edge cache write failed", e)));
+      else void put.catch(() => {});
+    } catch (error) {
+      console.error("edge cache write failed", error);
+    }
+    return forBrowser(response, "MISS");
+  }
+  return response;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
@@ -70,50 +107,30 @@ export default {
       // the router, which would 404 them. Static files are served before the
       // Worker runs, and /_serverFn/* (POST, too) matches no rule.
       if (request.method === "GET" || request.method === "HEAD") {
+        const url = new URL(request.url);
         // Videos, answered in byte ranges so iPhone Safari plays them (v198).
-        const media = await serveMedia(request, new URL(request.url), env);
+        const media = await serveMedia(request, url, env);
         if (media) return media;
 
-        const legacy = legacyRedirect(new URL(request.url));
+        const legacy = legacyRedirect(url);
         if (legacy) {
+          // v207: an ad click on /products/<handle> skips the redirect's round
+          // trip; the page swaps its own address bar (lib/adLanding).
+          const inPlace = adLandingTarget(url, legacy.location);
+          if (inPlace) {
+            const target = new Request(new URL(legacy.location, url.origin), request);
+            const page = await renderPage(target, env, ctx);
+            if (canSwapAddress(page)) return withAddressSwap(page, inPlace);
+            // A 404, error or redirect: answer exactly as before, with the 301.
+            void page.body?.cancel().catch(() => {});
+          }
           return new Response(null, {
             status: legacy.status,
             headers: { Location: legacy.location },
           });
         }
       }
-      // v196: reuse a recent render from the edge (lib/edgeCache) - most
-      // visitors then cost no render at all, which is what kept tipping the
-      // Worker over its resource limits (Cloudflare 1102) under load.
-      const url = new URL(request.url);
-      const cache = isCacheableRequest(request, url) ? edgeCache() : null;
-      const key = cache ? edgeCacheKey(url) : null;
-      if (cache && key) {
-        try {
-          const hit = await cache.match(key);
-          if (hit) return forBrowser(hit, "HIT");
-        } catch (error) {
-          console.error("edge cache read failed", error);
-        }
-      }
-
-      const handler = await getServerEntry();
-      const response = await normalizeCatastrophicSsrResponse(
-        await handler.fetch(request, env, ctx),
-      );
-
-      if (cache && key && isCacheableResponse(response)) {
-        try {
-          const put = cache.put(key, forEdge(response.clone()));
-          const wait = (ctx as WaitUntil | undefined)?.waitUntil;
-          if (wait) wait.call(ctx, put.catch((e) => console.error("edge cache write failed", e)));
-          else void put.catch(() => {});
-        } catch (error) {
-          console.error("edge cache write failed", error);
-        }
-        return forBrowser(response, "MISS");
-      }
-      return response;
+      return await renderPage(request, env, ctx);
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
