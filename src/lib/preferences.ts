@@ -200,32 +200,35 @@ function translate(text: string, lang: LanguageCode): string {
 function getEnglishSource(text: string): string | null {
   return dict ? dict.getEnglishSource(text) : null;
 }
-/** Re-renders the caller once the table has arrived for a non-English pick. */
-function useDict(language: LanguageCode): boolean {
-  const [ready, setReady] = useState(() => language === "en" || dict !== null);
+/**
+ * The language to show: the chosen one once its table is here, and until then
+ * the one already on screen (v206). Keeping the old language fully in charge
+ * while the table downloads means the page translator never pauses, so it
+ * can't write stale text back over a price or count React changed meanwhile.
+ * If the table can't be downloaded the page simply stays in English.
+ */
+function useAppliedLanguage(language: LanguageCode): LanguageCode {
+  const ready = language === "en" || dict !== null;
+  const [applied, setApplied] = useState<LanguageCode>(() => (ready ? language : "en"));
+  if (ready && applied !== language) setApplied(language);
   useEffect(() => {
-    if (language === "en" || dict) {
-      setReady(true);
-      return;
-    }
-    setReady(false);
+    if (ready) return;
     let live = true;
     loadDict().then(
       () => {
-        if (live) setReady(true);
+        if (live) setApplied(language);
       },
       () => {},
     );
     return () => {
       live = false;
     };
-  }, [language]);
-  return ready;
+  }, [language, ready]);
+  return ready ? language : applied;
 }
 
 export function useT() {
-  const language = usePreferences((s) => s.language);
-  useDict(language);
+  const language = useAppliedLanguage(usePreferences((s) => s.language));
   return (key: string) => translate(key, language);
 }
 
@@ -359,11 +362,10 @@ function handleExternalMutation(node: Text) {
  * language. Layout always stays LTR.
  */
 export function useDomTranslation() {
-  const language = usePreferences((s) => s.language);
+  const language = useAppliedLanguage(usePreferences((s) => s.language));
   const hydrated = usePreferencesHydrated();
-  const dictReady = useDict(language);
   useEffect(() => {
-    if (!hydrated || !dictReady) return;
+    if (!hydrated) return;
     if (typeof document === "undefined") return;
     currentLang = language;
     document.documentElement.lang = language;
@@ -389,7 +391,7 @@ export function useDomTranslation() {
       characterData: true,
     });
     return () => mo.disconnect();
-  }, [hydrated, language, dictReady]);
+  }, [hydrated, language]);
 }
 
 

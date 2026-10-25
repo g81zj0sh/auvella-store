@@ -1,4 +1,4 @@
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 
 /**
  * v193: share a link the way "Share Favourites" does. The phone's own share

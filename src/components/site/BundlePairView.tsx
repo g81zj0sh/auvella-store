@@ -67,7 +67,6 @@ export function BundlePairView({
   onAfterRemove,
   ...rest
 }: Props) {
-  useCatalogTables(); // v205: other styles' rows come with the full tables
   /* On close, focus goes back to the pair's picture (data-pair-view, in
      BundleMixer) - Radix only does that for its own Dialog.Trigger. If the
      pair was removed its card is gone, so the bundle heading takes it. */
@@ -151,7 +150,9 @@ function PairViewBody({
   const allImages = useMemo(() => node?.images.edges.map((e) => e.node) ?? [], [node]);
   /* The colour's model shots, then its garment shots. Waits for the full
      product: the builder's copy has 6 photos, which would show a partial
-     (or another colour's) set for a moment. */
+     (or another colour's) set for a moment. v206: and again once the full
+     catalogue tables land, since other styles' rows come with them. */
+  const tablesReady = useCatalogTables();
   const photos = useMemo(() => {
     if (!photoSource) return [];
     const n = photoSource.node;
@@ -160,7 +161,8 @@ function PairViewBody({
     if (indexed && indexed.length) return indexed;
     const set = buildColorImageMap(n).get(colour);
     return set && set.length ? set.map((s) => s.node) : imgs;
-  }, [photoSource, colour]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoSource, colour, tablesReady]);
 
   if (!product || !node) {
     return (

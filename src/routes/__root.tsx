@@ -16,7 +16,7 @@ import { clearKlaviyoIdentity, loadKlaviyo } from "@/lib/klaviyoOnsite";
 import { usePreferences } from "../lib/preferences";
 import { CookieConsent } from "@/components/site/CookieConsent";
 import { hasMarketingConsent, onConsentChange, readConsent } from "@/lib/consent";
-import { Toaster } from "@/lib/toast";
+import { Toaster } from "sonner";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { GlueOfferPopup } from "@/components/site/GlueOfferPopup";

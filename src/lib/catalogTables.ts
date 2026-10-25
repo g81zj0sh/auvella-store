@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { GALLERY_INDEX, type GalleryEntry } from "@/lib/galleryIndex";
 import { addBackdrops, backdropEntries, type Backdrop } from "@/lib/imageBackdrop";
 import { addCharts, rawChart, type ProductChart } from "@/lib/productSizeCharts";
+import { fetchCatalogTables } from "@/lib/catalogTables.functions";
 
 /*
  * v205: the catalogue lookup tables - gallery colourways (galleryIndexData),
@@ -18,6 +19,9 @@ import { addCharts, rawChart, type ProductChart } from "@/lib/productSizeCharts"
  *    the bag button, which every page has), and whatever shows OTHER products
  *    - the rail, the bag, quick add, the bundle mixer - waits for them or
  *    re-renders when they land;
+ *  - v206: if their chunk can't be downloaded, the same tables come from the
+ *    Worker instead (catalogTables.functions), and failed tries are retried,
+ *    so a dropped request on a poor signal can't leave a page without them;
  *  - pages built from product tiles (home, collections, favourites, account)
  *    get the full tables with ProductCard, before they render.
  */
@@ -48,14 +52,40 @@ export function catalogTablesLoaded(): boolean {
 /** The full tables, fetched once (again after a failed try). Instant where they are already in. */
 export function loadCatalogTables(): Promise<void> {
   if (loaded) return Promise.resolve();
-  loading ??= import("@/lib/catalogTablesFull").then(
-    (m) => installCatalogTables(m.FULL_CATALOG_TABLES),
-    (err: unknown) => {
+  loading ??= import("@/lib/catalogTablesFull")
+    .then((m) => m.FULL_CATALOG_TABLES)
+    // A browser remembers a failed chunk download for the life of the page,
+    // so asking for the chunk again can't work: ask the Worker instead.
+    .catch(() => fetchCatalogTables())
+    .then(installCatalogTables, (err: unknown) => {
       loading = null;
       throw err;
-    },
-  );
+    });
   return loading;
+}
+
+let retries = 0;
+let retryTimer: ReturnType<typeof setTimeout> | undefined;
+let retryOnline = false;
+
+/** Loads the full tables in the background, retrying a few times (and when the signal comes back). */
+function loadInBackground(): void {
+  if (loaded || retryTimer) return;
+  loadCatalogTables().catch(() => {
+    if (!retryOnline) {
+      retryOnline = true;
+      window.addEventListener("online", () => {
+        retries = 0;
+        loadInBackground();
+      });
+    }
+    if (retries >= 4) return;
+    retries += 1;
+    retryTimer = setTimeout(() => {
+      retryTimer = undefined;
+      loadInBackground();
+    }, 4000 * retries);
+  });
 }
 
 /** One product's rows, for its page (runs where the full tables are in). */
@@ -101,7 +131,7 @@ export function useCatalogTables(): boolean {
   const ready = useSyncExternalStore(subscribe, () => loaded, () => false);
   useEffect(() => {
     if (loaded) return;
-    const start = () => void loadCatalogTables().catch(() => {});
+    const start = loadInBackground;
     if (typeof window.requestIdleCallback === "function") {
       const id = window.requestIdleCallback(start, { timeout: 1000 });
       return () => window.cancelIdleCallback(id);

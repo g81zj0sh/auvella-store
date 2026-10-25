@@ -60,7 +60,7 @@ import { catalogSeedFor, loadCatalogTables, seedCatalog, useCatalogTables } from
 import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch, Share2, Pause, Play, Ruler } from "lucide-react";
 import { shareLink } from "@/lib/share";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
 import {
   BUNDLE_DEAL,
@@ -253,6 +253,8 @@ function ProductPage() {
   /* v205: this product's catalogue rows, in place before anything renders, so
      the browser's first render matches the server's (lib/catalogTables). */
   seedCatalog(loaded.catalogSeed);
+  // v206: re-derive what reads the tables if the full set lands after this renders.
+  const tablesReady = useCatalogTables();
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", handle],
     queryFn: () => fetchProductByHandle(handle),
@@ -548,7 +550,8 @@ function ProductPage() {
       map.set(value, set);
     }
     return map;
-  }, [node, colorOptName, images]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node, colorOptName, images, tablesReady]);
 
   const activeImages = useMemo(() => {
     if (!galleryColour) return images;
