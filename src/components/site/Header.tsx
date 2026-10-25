@@ -9,6 +9,8 @@ import { FavouritesButton } from "@/components/site/FavouritesButton";
 import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES, transitLabel } from "@/lib/shipping";
 import { SearchDrawer } from "@/components/site/SearchDrawer";
 import auvellaWordmarkImg from "@/assets/auvella-wordmark.png";
+import { editorialSrc, editorialSrcSet } from "@/lib/editorialImages";
+import { shopifySrcSet } from "@/lib/shopify";
 const auvellaWordmark = { url: auvellaWordmarkImg };
 import {
   Popover,
@@ -41,18 +43,19 @@ type NavItem = {
   images?: MegaImage[]; // captioned editorial tiles
 };
 
-// Campaign imagery (Higgsfield editorial set — migrate to Shopify CDN before launch)
+// Campaign imagery (Higgsfield editorial set). v205: the tiles in use are
+// self-hosted WebP (lib/editorialImages), not the 4-6 MB CloudFront PNGs.
 const IMG = {
-  bodysuits: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012320_e7dab76a-eaa0-438e-b764-1fbb07097dec.png",
-  newArrivals: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_015341_8a13aeec-7d58-42a9-9d96-ff9803b8d85b.png",
-  lounge: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012342_32782653-7841-41de-b44f-631c287717c6.png",
-  pyjamas: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012828_d1cd52c3-f6dd-4d96-a269-28600a7f8b8c.png",
-  bras: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012334_ccd0b28e-a5d8-4d56-8b2d-b2811c93455b.png",
+  bodysuits: editorialSrc("bodysuits"),
+  newArrivals: editorialSrc("new-arrivals"),
+  lounge: editorialSrc("lounge"),
+  pyjamas: editorialSrc("pyjamas"),
+  bras: editorialSrc("bras"),
   braSet: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_015323_7426e476-b793-4f04-b6b1-e7f4787b6f61.png",
-  shorts: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012327_9f7ade51-18e3-42c3-a333-a171ebff66f4.png",
+  shorts: editorialSrc("shorts"),
   activewear: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012834_6c3f6143-0be7-40b7-8dd8-587b1a5c5845.png",
-  sculpt: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_015314_d1d265c5-5ef9-47f1-898d-3f92b2facce2.png",
-  swimOnePiece: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260705_003232_97564614-1ab8-457c-9100-e556851449f4.png",
+  sculpt: editorialSrc("sculpt"),
+  swimOnePiece: editorialSrc("swim-one-piece"),
   swimBikini: "https://cdn.shopify.com/s/files/1/0988/0738/2311/collections/hf_20260705_003242_2023938c-1211-4052-aa92-b7febbde4279.png?v=1783297139",
   robe: "https://cdn.shopify.com/s/files/1/0988/0738/2311/collections/hf_20260705_233801_c1d750cb-1ce8-4b98-bfa1-6c1a82e7d58e.png?v=1783295099",
 };
@@ -288,6 +291,8 @@ function MegaPanel({ item }: { item: NavItem }) {
                   <div className="aspect-[3/4] overflow-hidden bg-[#f5f5f5]">
                     <img
                       src={img.src}
+                      srcSet={editorialSrcSet(img.src) ?? shopifySrcSet(img.src, 800)}
+                      sizes="(min-width: 1280px) 224px, 192px"
                       alt={img.label}
                       loading="lazy"
                       className="block h-full w-full scale-[1.12] object-cover object-[center_top] transition-transform duration-[400ms] ease-out group-hover/tile:scale-[1.16]"

@@ -56,10 +56,11 @@ import { trackViewedProduct } from "@/lib/klaviyoOnsite";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, videoBackdrop, type Backdrop } from "@/lib/imageBackdrop";
+import { catalogSeedFor, loadCatalogTables, seedCatalog, useCatalogTables } from "@/lib/catalogTables";
 import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch, Share2, Pause, Play, Ruler } from "lucide-react";
 import { shareLink } from "@/lib/share";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
 import {
   BUNDLE_DEAL,
@@ -96,6 +97,10 @@ export const Route = createFileRoute("/product/$handle")({
     if (to) throw redirect({ to: "/product/$handle", params: { handle: to }, statusCode: 301 });
   },
   loader: async ({ params, context }) => {
+    /* v205: on a visit from another page the full catalogue tables come with
+       the product (usually they're in already); on the server they always are. */
+    const tables = loadCatalogTables();
+    tables.catch(() => undefined); // awaited below only when there is a product
     const productQuery = {
       queryKey: ["product", params.handle],
       queryFn: () => fetchProductByHandle(params.handle),
@@ -105,7 +110,12 @@ export const Route = createFileRoute("/product/$handle")({
     // out of date - e.g. the product was published since - so ask again
     // before calling it a 404.
     if (!product) product = await context.queryClient.fetchQuery({ ...productQuery, staleTime: 0 });
-    if (product) return product;
+    if (product) {
+      // Without them (a failed download) the page still renders from its seed.
+      await tables.catch(() => undefined);
+      // This product's table rows travel in the page (lib/catalogTables).
+      return { product, catalogSeed: catalogSeedFor(params.handle, product.node) };
+    }
     /* v188: an unknown or draft handle is a real 404 now, not a 200 "Product
        not found" page for Google to index. Only when Shopify actually
        answered, though: a 402 (store billing paused) also comes back as no
@@ -121,7 +131,7 @@ export const Route = createFileRoute("/product/$handle")({
     throw notFound();
   },
   head: ({ params, loaderData }) => {
-    const node = loaderData?.node;
+    const node = loaderData?.product.node;
     if (!node) {
       return { meta: [{ title: `${params.handle} — Auvella` }] };
     }
@@ -240,10 +250,13 @@ function ProductPage() {
      #418, the server HTML thrown away and a spinner flash on every direct
      visit. Still a live query, so a Ship-to switch refetches it. */
   const loaded = Route.useLoaderData();
+  /* v205: this product's catalogue rows, in place before anything renders, so
+     the browser's first render matches the server's (lib/catalogTables). */
+  seedCatalog(loaded.catalogSeed);
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", handle],
     queryFn: () => fetchProductByHandle(handle),
-    initialData: loaded,
+    initialData: loaded.product,
   });
 
   const { data: recommendations = [] } = useQuery({
@@ -2216,7 +2229,10 @@ function Rail({
     queryFn,
     staleTime: 5 * 60 * 1000,
   });
+  // v205: other products' cards read the full catalogue tables.
+  const tablesReady = useCatalogTables();
   const items = useMemo(() => {
+    if (!tablesReady) return [];
     const src = [...(products ?? []), ...fetched];
     const seen = new Set<string>();
     const clothing = src.filter((p) => {
@@ -2230,7 +2246,7 @@ function Rail({
     // Whole rows only: 6 or 12. Under six, show what there is.
     const whole = Math.min(12, Math.floor(clothing.length / PER_PAGE) * PER_PAGE);
     return whole > 0 ? clothing.slice(0, whole) : clothing;
-  }, [products, fetched, excludeHandle]);
+  }, [products, fetched, excludeHandle, tablesReady]);
 
   /* One continuous strip: swipe on mobile, trackpad-scroll on desktop, and
      the arrows scroll a full view at a time. The counter follows the

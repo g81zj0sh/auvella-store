@@ -1,4 +1,6 @@
 import { TILE_IMAGES, TILE_DEFAULT_COLOUR } from "@/lib/tileImages";
+import { installCatalogTables } from "@/lib/catalogTables";
+import { FULL_CATALOG_TABLES } from "@/lib/catalogTablesFull";
 import { canonicalColour } from "@/lib/colourAliases";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2 } from "lucide-react";
@@ -15,6 +17,9 @@ import { findGhostForColor } from "@/lib/imageBackdrop";
 import { indexedEntry, indexedGhost, indexedHex, indexedRestImage, indexedSwatch } from "@/lib/galleryIndex";
 import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
 import { inBundleDeal, SALE_STICKER_HANDLES, useBundleLabel } from "@/lib/bundleDeal";
+
+// v205: the full catalogue tables (lib/catalogTables), in before this renders.
+installCatalogTables(FULL_CATALOG_TABLES);
 
 /*
  * Product card — SKIMS spec:

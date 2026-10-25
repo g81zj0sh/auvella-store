@@ -3,6 +3,7 @@ import { metaContentId } from "@/lib/metaPixel";
 import { isHiddenProduct, perkKindOf } from "@/lib/perks";
 import { shopifyImg, type ShopifyProduct } from "@/lib/shopify";
 import { cartLineImage } from "@/lib/cartImage";
+import { catalogTablesLoaded, loadCatalogTables } from "@/lib/catalogTables";
 // Type-only: cartStore imports this file, so a runtime import back would cycle.
 import type { CartItem } from "@/stores/cartStore";
 
@@ -276,9 +277,19 @@ export function trackAddedToCart(
   added: BagLine,
   items: BagLine[],
   checkoutUrl: string | null,
+  waited = false,
 ): void {
   try {
     if (isPerkLine(added) || !klaviyoReady()) return;
+    /* v205: line images come from the catalogue tables; in the moment before
+       they've loaded, send the event once they have, so it's unchanged (and
+       send it regardless if they can't be fetched). */
+    if (!waited && !catalogTablesLoaded()) {
+      void loadCatalogTables()
+        .catch(() => undefined)
+        .then(() => trackAddedToCart(added, items, checkoutUrl, true));
+      return;
+    }
     const lines = items.filter((i) => !isPerkLine(i));
     const lineImage = (l: BagLine) =>
       cartLineImage(l.product, l.variantId, l.selectedOptions ?? [], 800)?.url;

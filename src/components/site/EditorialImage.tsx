@@ -17,6 +17,7 @@
  *    run to 2x the painted size, so retina screens lose nothing.
  */
 import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
+import { editorialSrcSet } from "@/lib/editorialImages";
 export function EditorialImage({
   src,
   alt = "",
@@ -43,10 +44,12 @@ export function EditorialImage({
 }) {
   const base = scale ?? (zoom ? 1.12 : 1);
   void hover;
+  // v205: self-hosted campaign shots carry their own renditions.
+  const localSrcSet = editorialSrcSet(src);
   return (
     <img
-      src={shopifyImg(src, Math.min(maxWidth, 1200))}
-      srcSet={shopifySrcSet(src, maxWidth)}
+      src={localSrcSet ? src : shopifyImg(src, Math.min(maxWidth, 1200))}
+      srcSet={localSrcSet ?? shopifySrcSet(src, maxWidth)}
       sizes={sizes}
       alt={alt}
       loading={eager ? "eager" : "lazy"}

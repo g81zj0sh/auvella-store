@@ -6,6 +6,7 @@ import { ShippingPopup } from "@/components/site/ShippingPopup";
 import { freeShippingThresholdFmt, useShippingCountry, transitLabel } from "@/lib/shipping";
 import { usePreferences } from "@/lib/preferences";
 import { EditorialImage } from "@/components/site/EditorialImage";
+import { editorialSrc } from "@/lib/editorialImages";
 import { smoothScrollToId } from "@/lib/smoothScroll";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProductsByHandles, type ShopifyProduct } from "@/lib/shopify";
@@ -41,22 +42,23 @@ const homeShapewearV7 = { url: homeShapewearV7Img };
 import homeBestsellersV1Img from "@/assets/home/bestsellers-v1.webp";
 const homeBestsellersV1 = { url: homeBestsellersV1Img };
 
-/* Campaign imagery — Higgsfield editorial set (hotlinked; migrate to Shopify CDN before launch) */
+/* Campaign imagery — Higgsfield editorial set. v205: self-hosted WebP
+   (lib/editorialImages) instead of the 4-6 MB PNGs hotlinked from CloudFront. */
 const PANEL_IMG = {
   bestsellers: homeBestsellersV1.url,
   shapewear: homeShapewearV7.url,
-  bodysuits: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012320_e7dab76a-eaa0-438e-b764-1fbb07097dec.png",
-  loungewear: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012342_32782653-7841-41de-b44f-631c287717c6.png",
-  bras: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012334_ccd0b28e-a5d8-4d56-8b2d-b2811c93455b.png",
+  bodysuits: editorialSrc("bodysuits"),
+  loungewear: editorialSrc("lounge"),
+  bras: editorialSrc("bras"),
   /* Soul 2.0, 11 Oct 2026 — replaces the old activewear shot (crop top and
      leggings) that had been standing in on the Dresses tile. Has a thin 35mm
      film border like the rest of the set; the tile's scale crops it out. */
-  dresses: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20261011_035325_daf9361d-575c-4ab4-8b42-a7876a7f91c0.png",
+  dresses: editorialSrc("dresses"),
   banner: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012841_d9e4e8cc-9579-40e2-9d11-f97a5a5596ba.png",
-  sets: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_015333_ecdc5dfe-2246-4570-8b3f-4be0d5336583.png",
-  shorts: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012327_9f7ade51-18e3-42c3-a333-a171ebff66f4.png",
-  pyjamas: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_012828_d1cd52c3-f6dd-4d96-a269-28600a7f8b8c.png",
-  newArrivals: "https://d8j0ntlcm91z4.cloudfront.net/user_3Dp2fhCoTBHUndmGqb1QOGhGNcb/hf_20260703_015341_8a13aeec-7d58-42a9-9d96-ff9803b8d85b.png",
+  sets: editorialSrc("sets"),
+  shorts: editorialSrc("shorts"),
+  pyjamas: editorialSrc("pyjamas"),
+  newArrivals: editorialSrc("new-arrivals"),
 };
 
 const heroVideo = heroVideoAsset.url;

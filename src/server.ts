@@ -1,4 +1,6 @@
 import "./lib/error-capture";
+import { installCatalogTables } from "./lib/catalogTables";
+import { FULL_CATALOG_TABLES } from "./lib/catalogTablesFull";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
@@ -11,6 +13,9 @@ import {
   isCacheableRequest,
   isCacheableResponse,
 } from "./lib/edgeCache";
+
+// v205: every server render sees the full catalogue tables (lib/catalogTables).
+installCatalogTables(FULL_CATALOG_TABLES);
 
 type WaitUntil = { waitUntil?: (promise: Promise<unknown>) => void };
 

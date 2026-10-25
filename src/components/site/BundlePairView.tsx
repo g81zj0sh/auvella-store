@@ -7,6 +7,7 @@ import { StarRow } from "@/components/site/RatingBadge";
 import { SizeGuide } from "@/components/site/SizeGuide";
 import { fetchProductByHandle, shopifyImg, type ShopifyProduct } from "@/lib/shopify";
 import { galleryUrls } from "@/lib/galleryIndex";
+import { useCatalogTables } from "@/lib/catalogTables";
 import { backdropCss, cachedBackdrop, sampleBackdrop, type Backdrop } from "@/lib/imageBackdrop";
 import { buildColorImageMap } from "@/lib/colorImages";
 import { colourSwatchStyle } from "@/lib/swatch";
@@ -66,6 +67,7 @@ export function BundlePairView({
   onAfterRemove,
   ...rest
 }: Props) {
+  useCatalogTables(); // v205: other styles' rows come with the full tables
   /* On close, focus goes back to the pair's picture (data-pair-view, in
      BundleMixer) - Radix only does that for its own Dialog.Trigger. If the
      pair was removed its card is gone, so the bundle heading takes it. */

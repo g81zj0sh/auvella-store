@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Minus, Plus, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cartStore";
 import { useDisplayPrice, usePreferences } from "@/lib/preferences";
@@ -13,6 +13,11 @@ import { colourSwatchStyle } from "@/lib/swatch";
 import { SizeGuide } from "@/components/site/SizeGuide";
 import { resolveGuide } from "@/lib/sizeGuides";
 import { chartForHandle, isGuideHidden } from "@/lib/productSizeCharts";
+import { installCatalogTables } from "@/lib/catalogTables";
+import { FULL_CATALOG_TABLES } from "@/lib/catalogTablesFull";
+
+// v205: the full catalogue tables (lib/catalogTables), in before this renders.
+installCatalogTables(FULL_CATALOG_TABLES);
 
 /*
  * QuickAddSheet — richer quick add opened from product cards.

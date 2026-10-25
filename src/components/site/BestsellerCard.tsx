@@ -4,6 +4,11 @@ import type { ShopifyProduct } from "@/lib/shopify";
 import { useDisplayPrice } from "@/lib/preferences";
 import { colorToHex, twoToneSwatch } from "@/lib/colorMap";
 import { indexedHex } from "@/lib/galleryIndex";
+import { installCatalogTables } from "@/lib/catalogTables";
+import { FULL_CATALOG_TABLES } from "@/lib/catalogTablesFull";
+
+// v205: the full catalogue tables (lib/catalogTables), in before this renders.
+installCatalogTables(FULL_CATALOG_TABLES);
 
 interface Props {
   product: ShopifyProduct;

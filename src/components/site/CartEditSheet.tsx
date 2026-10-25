@@ -6,6 +6,7 @@ import { useDisplayPrice } from "@/lib/preferences";
 import { colorToHex, twoToneSwatch } from "@/lib/colorMap";
 import { indexedHex } from "@/lib/galleryIndex";
 import { cartLineImage } from "@/lib/cartImage";
+import { useCatalogTables } from "@/lib/catalogTables";
 
 /*
  * CartEditSheet — change the colour or size of a line already in the bag.
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export function CartEditSheet({ item, open, onOpenChange }: Props) {
+  useCatalogTables(); // v205: re-render once the full tables are in
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent

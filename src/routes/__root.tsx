@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -16,8 +16,7 @@ import { clearKlaviyoIdentity, loadKlaviyo } from "@/lib/klaviyoOnsite";
 import { usePreferences } from "../lib/preferences";
 import { CookieConsent } from "@/components/site/CookieConsent";
 import { hasMarketingConsent, onConsentChange, readConsent } from "@/lib/consent";
-import { Toaster } from "sonner";
-import { QuickAddSheet } from "@/components/site/QuickAddSheet";
+import { Toaster } from "@/lib/toast";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { GlueOfferPopup } from "@/components/site/GlueOfferPopup";
@@ -139,10 +138,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://auvellawear.com/og-image.png" },
     ],
     links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "preconnect", href: "https://connect.facebook.net" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" },
+      // v205: the fonts are self-hosted (styles.css), not fonts.googleapis.com.
       { rel: "stylesheet", href: appCss },
     ],
   }),
@@ -267,10 +264,41 @@ function RootComponent() {
 }
 
 
+/* v205: quick add is its own chunk, warmed once the page is idle and mounted
+   from the first time it opens - not part of the main bundle. Closed, it
+   rendered nothing, so the page is the same. */
+const loadQuickAdd = () => import("@/components/site/QuickAddSheet");
+const QuickAddSheet = lazy(() =>
+  loadQuickAdd().then(
+    (m) => ({ default: m.QuickAddSheet }),
+    // A failed download (bad signal, or a page left open across a deploy)
+    // must not take the page down: quick add just doesn't open.
+    () => ({ default: () => null }),
+  ),
+);
+
 function GlobalQuickAdd() {
   const product = useQuickAdd((s) => s.product);
   const color = useQuickAdd((s) => s.color);
   const open = useQuickAdd((s) => s.open);
   const setOpen = useQuickAdd((s) => s.setOpen);
-  return <QuickAddSheet product={product} color={color} open={open} onOpenChange={setOpen} />;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    if (open) setMounted(true);
+  }, [open]);
+  useEffect(() => {
+    const warm = () => void loadQuickAdd().catch(() => {});
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(warm, { timeout: 3000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(warm, 1500);
+    return () => clearTimeout(t);
+  }, []);
+  if (!mounted && !open) return null;
+  return (
+    <Suspense fallback={null}>
+      <QuickAddSheet product={product} color={color} open={open} onOpenChange={setOpen} />
+    </Suspense>
+  );
 }

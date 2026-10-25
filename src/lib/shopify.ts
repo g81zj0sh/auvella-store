@@ -1,6 +1,6 @@
 import { isHiddenProduct, withoutHidden } from "@/lib/perks";
 import { GALLERY_VIDEO_HANDLES } from "@/lib/galleryVideo";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 export const SHOPIFY_API_VERSION = "2025-07";
 export const SHOPIFY_STORE_PERMANENT_DOMAIN = "bys-store-2961694-648466.myshopify.com";

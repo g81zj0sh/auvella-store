@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
 import { fetchProductByHandle, shopifyImg, type ShopifyProduct } from "@/lib/shopify";
 import { indexedGhost } from "@/lib/galleryIndex";
+import { useCatalogTables } from "@/lib/catalogTables";
 import { backdropCss, tableBackdrop } from "@/lib/imageBackdrop";
 import { BUNDLE_TIERS } from "@/lib/bundleDeal";
 import { fetchJudgemeData } from "@/lib/judgeme";
@@ -234,6 +235,7 @@ export function BundleMixer({
   /** A pair's colour or size changed in its quick view. */
   onUpdate: (i: number, pick: BundlePick) => void;
 }) {
+  useCatalogTables(); // v205: other styles' rows come with the full tables
   const [tab, setTab] = useState(current);
   const [fullTap, setFullTap] = useState(false);
   const pairsRef = useRef<HTMLOListElement>(null);

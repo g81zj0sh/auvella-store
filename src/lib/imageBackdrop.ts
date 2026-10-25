@@ -12,7 +12,6 @@
  * `access-control-allow-origin: *`, so the canvas stays untainted.
  */
 
-import { BACKDROPS } from "./imageBackdrops";
 
 export const DEFAULT_BACKDROP = "#F6F3EF";
 
@@ -23,6 +22,26 @@ const cache = new Map<string, Backdrop>();
 const pending = new Map<string, Promise<Backdrop>>();
 
 export const DEFAULT_BACKDROP_PAIR: Backdrop = [DEFAULT_BACKDROP, DEFAULT_BACKDROP];
+
+/* v205: the build-time table (lib/imageBackdrops), filled in full on the server,
+   and in the browser from the page's own seed and then the whole table once the
+   page is interactive (lib/catalogTables). Starts empty in the browser. */
+const BACKDROPS: Record<string, Backdrop> = {};
+
+export function addBackdrops(entries: Record<string, Backdrop>): void {
+  Object.assign(BACKDROPS, entries);
+}
+
+/** Table entries for these images or videos, keyed as the table keys them. */
+export function backdropEntries(urls: Iterable<string>): Record<string, Backdrop> {
+  const out: Record<string, Backdrop> = {};
+  for (const url of urls) {
+    const key = fileKey(url);
+    const hit = BACKDROPS[key];
+    if (hit) out[key] = hit;
+  }
+  return out;
+}
 
 /** CSS paint for a backdrop pair: a flat fill when both stops match, a vertical
     gradient when the shot was lit with a falloff. Painting the same ramp the

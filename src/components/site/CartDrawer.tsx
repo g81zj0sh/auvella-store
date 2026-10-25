@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShoppingBag, Minus, Plus, Trash2, Loader2, ChevronDown, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useCartStore, type CartItem } from "@/stores/cartStore";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
@@ -12,6 +12,7 @@ import { useQuickAdd } from "@/stores/quickAddStore";
 import { useDisplayPrice, usePreferences, useT } from "@/lib/preferences";
 import { bagFreeShipping, useShippingCountry } from "@/lib/shipping";
 import { cartLineImage } from "@/lib/cartImage";
+import { useCatalogTables } from "@/lib/catalogTables";
 import {
   BUNDLE_DEAL,
   BUNDLE5_SHOPIFY_TITLE,
@@ -70,6 +71,9 @@ import {
 const LOW_STOCK_BELOW = 40;
 
 export function CartDrawer() {
+  /* v205: lines from other products than this page's need the full catalogue
+     tables; this also starts loading them once the page is idle. */
+  useCatalogTables();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CartItem | null>(null);
   const {

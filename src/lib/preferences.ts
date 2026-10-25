@@ -178,10 +178,54 @@ export function useDisplayPrice() {
 }
 
 // ---------------- i18n ----------------
-import { getEnglishSource, translate } from "./translations";
+/* v205: the translation table (lib/translations, ~40 KB) loads only once a
+   language other than English is chosen. English - the server render and
+   nearly every visitor - never needs it, and it was in the main bundle. */
+type Dict = typeof import("./translations");
+let dict: Dict | null = null;
+let dictLoading: Promise<Dict> | null = null;
+function loadDict(): Promise<Dict> {
+  dictLoading ??= import("./translations").then(
+    (m) => (dict = m),
+    (err: unknown) => {
+      dictLoading = null; // try again on the next language change
+      throw err;
+    },
+  );
+  return dictLoading;
+}
+function translate(text: string, lang: LanguageCode): string {
+  return dict ? dict.translate(text, lang) : text;
+}
+function getEnglishSource(text: string): string | null {
+  return dict ? dict.getEnglishSource(text) : null;
+}
+/** Re-renders the caller once the table has arrived for a non-English pick. */
+function useDict(language: LanguageCode): boolean {
+  const [ready, setReady] = useState(() => language === "en" || dict !== null);
+  useEffect(() => {
+    if (language === "en" || dict) {
+      setReady(true);
+      return;
+    }
+    setReady(false);
+    let live = true;
+    loadDict().then(
+      () => {
+        if (live) setReady(true);
+      },
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [language]);
+  return ready;
+}
 
 export function useT() {
   const language = usePreferences((s) => s.language);
+  useDict(language);
   return (key: string) => translate(key, language);
 }
 
@@ -317,8 +361,9 @@ function handleExternalMutation(node: Text) {
 export function useDomTranslation() {
   const language = usePreferences((s) => s.language);
   const hydrated = usePreferencesHydrated();
+  const dictReady = useDict(language);
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !dictReady) return;
     if (typeof document === "undefined") return;
     currentLang = language;
     document.documentElement.lang = language;
@@ -344,7 +389,7 @@ export function useDomTranslation() {
       characterData: true,
     });
     return () => mo.disconnect();
-  }, [hydrated, language]);
+  }, [hydrated, language, dictReady]);
 }
 
 
