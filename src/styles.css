@@ -239,6 +239,19 @@
 }
 
 @theme inline {
+  /* v209: the "viewed in the last 24 hours" badge's live dot - a slow,
+     soft on/off, not a strobe (ViewedBadge.tsx). */
+  --animate-live-blink: live-blink 1.8s ease-in-out infinite;
+  @keyframes live-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.2;
+    }
+  }
+
   --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 

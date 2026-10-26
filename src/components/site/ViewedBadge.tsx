@@ -43,13 +43,18 @@ export function ViewedBadge({ count, className = "" }: { count: number | null; c
   if (count === null || count < VIEWED_MIN) return null;
   return (
     <p
-      className={`pointer-events-none flex items-center gap-1.5 rounded-pill bg-white/95 px-3 py-1.5 text-[11px] leading-none text-[#555555] shadow-[0_1px_4px_rgba(0,0,0,0.08)] ${className}`}
+      className={`pointer-events-none flex items-center gap-1 rounded-pill bg-white/95 px-2.5 py-[5px] text-[10px] leading-none text-[#555555] shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${className}`}
     >
       <span aria-hidden="true">🔥</span>
       <span>
         <span className="font-semibold text-[#0a0a0a]">{formatViews(count)}</span> people viewed this in the
         last 24 hours
       </span>
+      {/* v209: a green "live" light, softly on and off (still if the visitor asks for less motion). */}
+      <span
+        aria-hidden="true"
+        className="ml-0.5 h-[5px] w-[5px] shrink-0 animate-live-blink rounded-full bg-[#22c55e] shadow-[0_0_0_2px_rgba(34,197,94,0.18)] motion-reduce:animate-none"
+      />
     </p>
   );
 }

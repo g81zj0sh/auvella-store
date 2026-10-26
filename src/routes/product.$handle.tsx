@@ -1267,7 +1267,7 @@ function ProductPage() {
                 />
               )}
             </div>
-            <ViewedBadge count={viewers} className="absolute left-5 top-5 z-10" />
+            <ViewedBadge count={viewers} className="absolute left-4 top-4 z-10" />
             <div className="absolute right-5 top-5 flex flex-col items-center gap-3">
               <button
                 aria-label={liked ? "Remove from favourites" : "Add to favourites"}
@@ -1326,7 +1326,7 @@ function ProductPage() {
           </div>
 
           {/* Mobile: swipeable snap gallery */}
-          <ViewedBadge count={viewers} className="absolute left-4 top-4 z-10 lg:hidden" />
+          <ViewedBadge count={viewers} className="absolute left-3 top-3 z-10 lg:hidden" />
           <div className="pointer-events-none absolute right-4 top-4 z-10 flex flex-col items-center gap-3 lg:hidden">
             <button
               aria-label={liked ? "Remove from favourites" : "Add to favourites"}
