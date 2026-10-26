@@ -57,6 +57,7 @@ import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
 import { sampleBackdrop, cachedBackdrop, tableBackdrop, backdropCss, videoBackdrop, type Backdrop } from "@/lib/imageBackdrop";
 import { catalogSeedFor, loadCatalogTables, seedCatalog, useCatalogTables } from "@/lib/catalogTables";
+import { useProductViews, ViewedBadge } from "@/components/site/ViewedBadge";
 import { Loader2, Heart, ChevronLeft, ChevronRight, ScanSearch, Share2, Pause, Play, Ruler } from "lucide-react";
 import { shareLink } from "@/lib/share";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -255,6 +256,8 @@ function ProductPage() {
   seedCatalog(loaded.catalogSeed);
   // v206: re-derive what reads the tables if the full set lands after this renders.
   const tablesReady = useCatalogTables();
+  // v208: real 24-hour viewer count; the badge shows from 1,000 up.
+  const viewers = useProductViews(handle);
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", handle],
     queryFn: () => fetchProductByHandle(handle),
@@ -1264,6 +1267,7 @@ function ProductPage() {
                 />
               )}
             </div>
+            <ViewedBadge count={viewers} className="absolute left-5 top-5 z-10" />
             <div className="absolute right-5 top-5 flex flex-col items-center gap-3">
               <button
                 aria-label={liked ? "Remove from favourites" : "Add to favourites"}
@@ -1322,6 +1326,7 @@ function ProductPage() {
           </div>
 
           {/* Mobile: swipeable snap gallery */}
+          <ViewedBadge count={viewers} className="absolute left-4 top-4 z-10 lg:hidden" />
           <div className="pointer-events-none absolute right-4 top-4 z-10 flex flex-col items-center gap-3 lg:hidden">
             <button
               aria-label={liked ? "Remove from favourites" : "Add to favourites"}

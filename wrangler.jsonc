@@ -8,6 +8,14 @@
   "rules": [
     { "type": "ESModule", "globs": ["**/*.mjs", "**/*.js"] }
   ],
+  // v208: "people viewed this in the last 24 hours" counts (lib/productViewsApi).
+  "d1_databases": [
+    {
+      "binding": "VIEWS_DB",
+      "database_name": "auvella-product-views",
+      "database_id": "6d67a92d-11e4-4a69-8a54-338670220d29"
+    }
+  ],
   "assets": {
     "binding": "ASSETS",
     "directory": ".output/public"

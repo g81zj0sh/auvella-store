@@ -6,6 +6,7 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { legacyRedirect } from "./lib/legacyRedirects";
 import { adLandingTarget, canSwapAddress, withAddressSwap } from "./lib/adLanding";
+import { productViews } from "./lib/productViewsApi";
 import { serveMedia } from "./lib/videoRange";
 import {
   edgeCacheKey,
@@ -103,6 +104,10 @@ async function renderPage(request: Request, env: unknown, ctx: unknown): Promise
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // v208: "people viewed this in the last 24 hours" counts (D1).
+      const views = await productViews(request, new URL(request.url), env);
+      if (views) return views;
+
       // Old Shopify-theme URLs the www host forwards here (v186) go on before
       // the router, which would 404 them. Static files are served before the
       // Worker runs, and /_serverFn/* (POST, too) matches no rule.
