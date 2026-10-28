@@ -33,7 +33,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Reviews } from "@/components/site/Reviews";
-import { useJudgemeReviews } from "@/lib/judgeme";
+import { fetchJudgemeData, useJudgemeReviews } from "@/lib/judgeme";
+import { ssrReviews } from "@/lib/ssrReviews";
 import { SizeGuide } from "@/components/site/SizeGuide";
 import { resolveGuide, fitLabel, SIZE_GUIDES } from "@/lib/sizeGuides";
 import { chartForHandle, isGuideHidden } from "@/lib/productSizeCharts";
@@ -74,6 +75,7 @@ import {
 } from "@/lib/bundleDeal";
 import {
   bagFreeShipping,
+  freeShippingThreshold,
   freeShippingThresholdFmt,
   useShippingCountry,
   PROCESSING_LABEL,
@@ -102,6 +104,15 @@ export const Route = createFileRoute("/product/$handle")({
        the product (usually they're in already); on the server they always are. */
     const tables = loadCatalogTables();
     tables.catch(() => undefined); // awaited below only when there is a product
+    /* v210: a visit from another page starts on the reviews straight away
+       (the server render already has them - ssrReviews). */
+    if (typeof window !== "undefined") {
+      void context.queryClient.prefetchQuery({
+        queryKey: ["judgeme-reviews", params.handle],
+        queryFn: () => fetchJudgemeData(params.handle),
+        staleTime: 5 * 60 * 1000,
+      });
+    }
     const productQuery = {
       queryKey: ["product", params.handle],
       queryFn: () => fetchProductByHandle(params.handle),
@@ -115,7 +126,12 @@ export const Route = createFileRoute("/product/$handle")({
       // Without them (a failed download) the page still renders from its seed.
       await tables.catch(() => undefined);
       // This product's table rows travel in the page (lib/catalogTables).
-      return { product, catalogSeed: catalogSeedFor(params.handle, product.node) };
+      return {
+        product,
+        catalogSeed: catalogSeedFor(params.handle, product.node),
+        // v210: the page arrives with its stars and reviews (lib/reviewsServer).
+        reviews: ssrReviews(params.handle),
+      };
     }
     /* v188: an unknown or draft handle is a real 404 now, not a 200 "Product
        not found" page for Google to index. Only when Shopify actually
@@ -281,7 +297,7 @@ function ProductPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: judgeme, isLoading: reviewsLoading } = useJudgemeReviews(handle);
+  const { data: judgeme, isLoading: reviewsLoading } = useJudgemeReviews(handle, loaded.reviews);
   const reviewAvg = judgeme?.average ?? 0;
   const reviewCount = judgeme?.count ?? 0;
 
@@ -1190,7 +1206,7 @@ function ProductPage() {
           {/* Breadcrumb and rating share one fixed-height line directly
               above the title, so the badge arriving after the reviews load
               doesn't push the page down. */}
-          <div className="flex min-h-[28px] items-center justify-between gap-3">
+          <div className="flex min-h-[34px] items-center justify-between gap-3">
             <Link
               to="/collections/$handle"
               params={{ handle: crumb.handle }}
@@ -1198,7 +1214,7 @@ function ProductPage() {
             >
               {crumb.label}
             </Link>
-            <RatingBadge average={reviewAvg} count={badgeCount} />
+            <RatingBadge average={reviewAvg} count={badgeCount} large />
           </div>
           <h1 className="mt-2 text-[18px] font-semibold uppercase leading-snug tracking-[0.06em] text-[#0a0a0a]">
             {node.title}
@@ -1406,7 +1422,7 @@ function ProductPage() {
             <div className="hidden lg:block">
             {/* Breadcrumb and rating on one fixed-height line directly above
                 the title (no jump when the reviews load). */}
-            <div className="flex min-h-[28px] items-center justify-between gap-4">
+            <div className="flex min-h-[34px] items-center justify-between gap-4">
               <Link
                 to="/collections/$handle"
                 params={{ handle: crumb.handle }}
@@ -1414,7 +1430,7 @@ function ProductPage() {
               >
                 {crumb.label}
               </Link>
-              <RatingBadge average={reviewAvg} count={badgeCount} />
+              <RatingBadge average={reviewAvg} count={badgeCount} large />
             </div>
 
             <h1 className="mt-2 text-[20px] font-semibold uppercase leading-snug tracking-[0.06em] text-[#0a0a0a] md:text-[22px]">
@@ -1549,9 +1565,10 @@ function ProductPage() {
                   {showSizeGuide && (
                     <button
                       onClick={() => setSizeGuideOpen(true)}
-                      className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#0a0a0a] transition-opacity hover:opacity-60"
+                      className="-my-2 inline-flex min-h-[44px] items-center gap-2 text-[14px] font-semibold text-[#0a0a0a] transition-opacity hover:opacity-60"
                     >
-                      <Ruler aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                      {/* v210: bigger, with a full-size tap target (owner's ask). */}
+                      <Ruler aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={1.75} />
                       <span className="underline underline-offset-4">Size Guide</span>
                     </button>
                   )}
@@ -1687,6 +1704,9 @@ function ProductPage() {
                       saving: t.percent ? cur(Math.round((full - total) * 100) / 100) : null,
                     };
                   }}
+                  freeShipping={(t) =>
+                    tierTotal(tierUnitPrices(t), t.percent) >= freeShippingThreshold(currency)
+                  }
                 />
                 {tier.quantity > 1 && (
                   <div className="mt-3 space-y-2 rounded-card border border-[#e6e4e0] bg-[#faf9f7] p-3">

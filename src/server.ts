@@ -7,6 +7,8 @@ import { renderErrorPage } from "./lib/error-page";
 import { legacyRedirect } from "./lib/legacyRedirects";
 import { adLandingTarget, canSwapAddress, withAddressSwap } from "./lib/adLanding";
 import { productViews } from "./lib/productViewsApi";
+import { primeReviews, productPageHandle, reviewsApi } from "./lib/reviewsServer";
+import { workerBindings, workerWaitUntil } from "./lib/workerEnv";
 import { serveMedia } from "./lib/videoRange";
 import {
   edgeCacheKey,
@@ -65,8 +67,9 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
-/** A page: a recent render from the edge cache, or a fresh one. */
-async function renderPage(request: Request, env: unknown, ctx: unknown): Promise<Response> {
+/** A page: a recent render from the edge cache, or a fresh one. `source` is
+ *  the request as it arrived (bindings ride on it) when `request` is a rewrite. */
+async function renderPage(request: Request, env: unknown, ctx: unknown, source: Request = request): Promise<Response> {
   // v196: reuse a recent render from the edge (lib/edgeCache) - most
   // visitors then cost no render at all, which is what kept tipping the
   // Worker over its resource limits (Cloudflare 1102) under load.
@@ -80,6 +83,12 @@ async function renderPage(request: Request, env: unknown, ctx: unknown): Promise
     } catch (error) {
       console.error("edge cache read failed", error);
     }
+  }
+
+  // v210: a product page renders with its reviews (lib/reviewsServer).
+  const reviewHandle = productPageHandle(url);
+  if (reviewHandle) {
+    await primeReviews(reviewHandle, workerBindings(source, env), workerWaitUntil(source, ctx));
   }
 
   const handler = await getServerEntry();
@@ -107,6 +116,9 @@ export default {
       // v208: "people viewed this in the last 24 hours" counts (D1).
       const views = await productViews(request, new URL(request.url), env);
       if (views) return views;
+      // v210: a product's reviews, parsed and cached (lib/reviewsServer).
+      const reviews = await reviewsApi(request, new URL(request.url), env, ctx);
+      if (reviews) return reviews;
 
       // Old Shopify-theme URLs the www host forwards here (v186) go on before
       // the router, which would 404 them. Static files are served before the
@@ -124,7 +136,7 @@ export default {
           const inPlace = adLandingTarget(url, legacy.location);
           if (inPlace) {
             const target = new Request(new URL(legacy.location, url.origin), request);
-            const page = await renderPage(target, env, ctx);
+            const page = await renderPage(target, env, ctx, request);
             if (canSwapAddress(page)) return withAddressSwap(page, inPlace);
             // A 404, error or redirect: answer exactly as before, with the 301.
             void page.body?.cancel().catch(() => {});

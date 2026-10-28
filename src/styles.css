@@ -300,6 +300,7 @@
   --color-zone-strong: var(--zone-strong);
   --color-cta: var(--cta);
   --color-cta-hover: var(--cta-hover);
+  --color-star: var(--star);
 }
 
 :root {
@@ -339,6 +340,14 @@
    */
   --cta: var(--ink);
   --cta-hover: #262626;
+
+  /*
+   * Review stars (v210): the one colour outside the monochrome system, at the
+   * owner's ask (more pop than black, after Smooche's rose stars). Deep enough
+   * to hold 3:1 against white and the zone greys. Every star on the store
+   * follows this line.
+   */
+  --star: #d66b86;
 
   --background: var(--cream);
   --foreground: var(--ink);
