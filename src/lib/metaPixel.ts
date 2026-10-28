@@ -115,8 +115,13 @@ function loadPixel(): void {
 
   // v215: one PageView per page change, and it's the router's
   // (trackMetaPageView, with our event ID). Meta's own history tracking sent
-  // one on every pushState and swallowed ours as a duplicate.
-  (window.fbq as unknown as { disablePushState?: boolean }).disablePushState = true;
+  // one on every pushState and swallowed ours as a duplicate. v216: with that
+  // off, fbevents counts the whole visit as one page and drops every later
+  // PageView, so it's told they aren't duplicates (trackMetaPageView already
+  // skips a repeat of the same path).
+  const flags = window.fbq as unknown as { disablePushState?: boolean; allowDuplicatePageViews?: boolean };
+  flags.disablePushState = true;
+  flags.allowDuplicatePageViews = true;
   window.fbq?.("init", PIXEL_ID);
   window.fbq?.("track", "PageView", {}, { eventID: newEventId() });
 }
