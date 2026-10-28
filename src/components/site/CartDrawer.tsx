@@ -23,6 +23,7 @@ import {
 import { DUO_DEAL, DUO_SHOPIFY_TITLES, duoLabel } from "@/lib/duoDeal";
 import { bagTotals } from "@/lib/bagTotals";
 import { trackCheckoutTap } from "@/lib/metaCheckout";
+import { checkoutInSameTab, openCheckoutHere } from "@/lib/checkoutTab";
 import { estimateDelivery, DISPATCH_CUTOFF_LONDON } from "@/lib/deliveryEstimate";
 import {
   fetchProductRecommendations,
@@ -221,13 +222,19 @@ export function CartDrawer() {
     setIsCheckingOut(true);
     // v214: Meta's InitiateCheckout, before checkout opens.
     trackCheckoutTap();
+    // v218: phones and the in-app browsers stay in this tab (lib/checkoutTab).
+    const sameTab = checkoutInSameTab();
     // Synchronous window.open inside the gesture: mobile Safari blocks it after an await.
-    const win = window.open("", "_blank");
+    const win = sameTab ? null : window.open("", "_blank");
     try {
       // Perks in step with the bag before Shopify sees it.
       await ensurePerks();
       const url = (await resolveCheckoutUrl()) ?? getCheckoutUrl();
       if (!url) { win?.close(); return; }
+      if (sameTab) {
+        await openCheckoutHere(url);
+        return;
+      }
       if (win) win.location.href = url; else window.location.href = url;
       setOpen(false);
     } catch {
