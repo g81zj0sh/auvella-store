@@ -20,6 +20,15 @@ declare global {
 let initialised = false;
 let lastTrackedPath: string | null = null;
 
+/* v211: the pixel only runs on the live store. Local and preview builds
+   (localhost, 127.0.0.1, *.workers.dev) log what they would have sent
+   instead, so test traffic never reaches Meta. */
+const LIVE_HOST = "auvellawear.com";
+
+function isLiveSite(): boolean {
+  return window.location.hostname === LIVE_HOST;
+}
+
 function currentPath(): string {
   return window.location.pathname + window.location.search;
 }
@@ -28,6 +37,11 @@ function currentPath(): string {
 export function initMetaPixel(): void {
   if (typeof window === "undefined" || initialised) return;
   initialised = true;
+  if (!isLiveSite()) {
+    console.debug(`[meta pixel] not the live site, so not loaded. Would send: init ${PIXEL_ID}, PageView`);
+    lastTrackedPath = currentPath();
+    return;
+  }
 
   /* eslint-disable */
   // Meta's own loader stub, transcribed from the snippet in Events Manager.
@@ -66,7 +80,14 @@ export function trackMetaEvent(
   event: string,
   params?: Record<string, unknown>,
 ): void {
-  if (typeof window === "undefined" || !window.fbq) return;
+  if (typeof window === "undefined") return;
+  if (!isLiveSite()) {
+    if (initialised && readConsent() !== "declined") {
+      console.debug(`[meta pixel] not the live site. Would send: ${event}`, params ?? {});
+    }
+    return;
+  }
+  if (!window.fbq) return;
   // v188: consent withdrawn in another tab - this tab's pixel is still loaded
   // but must go quiet. An explicit "declined" only: with storage blocked the
   // choice reads null, and that tab's Accept still counts for its own page.
