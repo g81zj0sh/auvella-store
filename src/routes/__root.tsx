@@ -11,7 +11,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { clearMetaPixelCookies, initMetaPixel, trackMetaPageView } from "../lib/metaPixel";
+import { clearMetaPixelCookies, dropHeldMetaEvents, initMetaPixel, trackMetaPageView } from "../lib/metaPixel";
 import { clearKlaviyoIdentity, loadKlaviyo } from "@/lib/klaviyoOnsite";
 import { usePreferences } from "../lib/preferences";
 import { CookieConsent } from "@/components/site/CookieConsent";
@@ -235,6 +235,8 @@ function RootComponent() {
     const unsubscribeConsent = onConsentChange((state) => {
       if (state === "accepted") start();
       if (state !== "declined") return;
+      // v213: nothing held from before the answer ever goes out.
+      dropHeldMetaEvents();
       // v188: a yes taken back via Cookie settings. fbevents.js and klaviyo.js
       // can't be unloaded, so clear what they stored and reload once - the
       // fresh page never injects them. If nothing started on this page (a
