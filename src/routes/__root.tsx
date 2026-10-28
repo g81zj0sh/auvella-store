@@ -138,7 +138,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://auvellawear.com/og-image.png" },
     ],
     links: [
-      { rel: "preconnect", href: "https://connect.facebook.net" },
+      // v217: no preconnect to connect.facebook.net - nothing contacts Meta
+      // before a cookie choice; the pixel's script loads only after Accept.
       // v205: the fonts are self-hosted (styles.css), not fonts.googleapis.com.
       { rel: "stylesheet", href: appCss },
     ],
