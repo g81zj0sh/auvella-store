@@ -113,6 +113,10 @@ function loadPixel(): void {
   );
   /* eslint-enable */
 
+  // v215: one PageView per page change, and it's the router's
+  // (trackMetaPageView, with our event ID). Meta's own history tracking sent
+  // one on every pushState and swallowed ours as a duplicate.
+  (window.fbq as unknown as { disablePushState?: boolean }).disablePushState = true;
   window.fbq?.("init", PIXEL_ID);
   window.fbq?.("track", "PageView", {}, { eventID: newEventId() });
 }
