@@ -28,6 +28,34 @@ type HeldEvent = { event: string; params: Record<string, unknown>; eventID: stri
 const HELD_MAX = 20;
 let held: HeldEvent[] = [];
 
+/* v219: an ad click's fbclid, kept in page memory from landing until the
+   cookie choice - the first in-site page change drops it from the address
+   bar, and with it the click. On Accept it becomes Meta's _fbc cookie (when
+   there isn't one already); on Decline it's forgotten. */
+let landingClick: { fbclid: string; at: number } | null = (() => {
+  if (typeof window === "undefined") return null;
+  try {
+    const fbclid = new URLSearchParams(window.location.search).get("fbclid");
+    // A visitor who declined before: nothing to keep.
+    if (!fbclid || readConsent() === "declined") return null;
+    return { fbclid, at: Math.round(performance.timeOrigin || Date.now()) };
+  } catch {
+    return null;
+  }
+})();
+
+function keepLandingClick(): void {
+  const click = landingClick;
+  landingClick = null;
+  if (!click || /(?:^|;\s*)_fbc=/.test(document.cookie)) return;
+  const value = `fb.1.${click.at}.${click.fbclid}`;
+  if (!isLiveSite()) {
+    console.debug(`[meta pixel] not the live site. Would set the _fbc cookie: ${value}`);
+    return;
+  }
+  document.cookie = `_fbc=${value}; domain=.${LIVE_HOST}; path=/; max-age=${90 * 24 * 60 * 60}; SameSite=Lax; Secure`;
+}
+
 /* v211: the pixel only runs on the live store. Local and preview builds
    (localhost, 127.0.0.1, *.workers.dev) log what they would have sent
    instead, so test traffic never reaches Meta. */
@@ -78,11 +106,14 @@ export function initMetaPixel(): void {
   const queued = held;
   held = [];
   for (const e of queued) send(e);
+  // v219: before fbevents.js has loaded, so these events carry the click too.
+  keepLandingClick();
 }
 
-/** v213: a Decline drops whatever was held for an Accept. */
+/** v213: a Decline drops whatever was held for an Accept (v219: and the ad click). */
 export function dropHeldMetaEvents(): void {
   held = [];
+  landingClick = null;
 }
 
 /**
@@ -155,6 +186,7 @@ export function trackMetaEvent(
   // choice reads null, and that tab's Accept still counts for its own page.
   if (readConsent() === "declined") {
     held = [];
+    landingClick = null;
     return null;
   }
   const e: HeldEvent = { event, params: params ?? {}, eventID: newEventId() };
