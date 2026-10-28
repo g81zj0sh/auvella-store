@@ -54,6 +54,7 @@ import { PerkUnlocks } from "@/components/site/PerkUnlocks";
 import { PERK_UNLOCK, perkPlan } from "@/lib/perks";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
 import { trackCheckoutTap } from "@/lib/metaCheckout";
+import { checkoutInSameTab, openCheckoutHere } from "@/lib/checkoutTab";
 import { trackViewedProduct } from "@/lib/klaviyoOnsite";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
@@ -1131,7 +1132,9 @@ function ProductPage() {
   const handleBuyNow = async () => {
     if (buyingNow || !readyToAdd()) return;
     setBuyingNow(true);
-    const win = window.open("", "_blank");
+    // v218: phones and the in-app browsers stay in this tab (lib/checkoutTab).
+    const sameTab = checkoutInSameTab();
+    const win = sameTab ? null : window.open("", "_blank");
     if (win) {
       try {
         win.document.title = "Checkout";
@@ -1164,6 +1167,10 @@ function ProductPage() {
           "We couldn't open checkout. Your items are in your bag — open it to check out.",
           { position: "top-center" },
         );
+        return;
+      }
+      if (sameTab) {
+        await openCheckoutHere(url);
         return;
       }
       if (win) win.location.href = url;
@@ -2017,7 +2024,13 @@ function ProductPage() {
       <div
         ref={mobileBarRef}
         inert={!barVisible}
-        className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#EBEBEB] bg-white pb-[env(safe-area-inset-bottom)] transition-transform duration-300 md:hidden ${
+        // v218: just above the cookie banner while it's up (CookieConsent sets
+        // these), so the banner never covers Add to bag / Buy now.
+        style={{
+          bottom: "var(--cookie-banner-h, 0px)",
+          paddingBottom: "var(--cookie-banner-safe, env(safe-area-inset-bottom))",
+        }}
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#EBEBEB] bg-white transition-transform duration-300 md:hidden ${
           barVisible ? "translate-y-0" : "translate-y-full"
         }`}
       >

@@ -85,6 +85,20 @@ export function dropHeldMetaEvents(): void {
   held = [];
 }
 
+/**
+ * v218: resolves once what was just sent has had time to leave the page - for
+ * checkout opening in this same tab right after its InitiateCheckout. Just
+ * after an Accept fbevents.js can still be loading, with the event queued.
+ * At once when the pixel isn't running here.
+ */
+export async function metaEventsSent(maxWaitMs = 1500): Promise<void> {
+  if (typeof window === "undefined" || !initialised || !isLiveSite()) return;
+  const started = Date.now();
+  const loaded = () => typeof (window.fbq as unknown as { callMethod?: unknown } | undefined)?.callMethod === "function";
+  while (!loaded() && Date.now() - started < maxWaitMs) await new Promise((r) => setTimeout(r, 50));
+  await new Promise((r) => setTimeout(r, 250));
+}
+
 function loadPixel(): void {
   /* eslint-disable */
   // Meta's own loader stub, transcribed from the snippet in Events Manager.

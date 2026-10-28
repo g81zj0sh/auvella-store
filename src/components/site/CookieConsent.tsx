@@ -57,6 +57,33 @@ export function CookieConsent() {
 
   useEffect(() => () => clearTimeout(closeTimer.current), []);
 
+  // v218: while the banner is up, phones' sticky buy bar sits just above it
+  // (it was hidden underneath), so Add to bag and Buy now stay tappable. The
+  // bar reads the banner's height from these two properties.
+  useEffect(() => {
+    const el = ref.current;
+    const root = document.documentElement;
+    const clear = () => {
+      root.style.removeProperty("--cookie-banner-h");
+      root.style.removeProperty("--cookie-banner-safe");
+    };
+    if (!visible || closing || !el) {
+      clear();
+      return;
+    }
+    const measure = () => {
+      root.style.setProperty("--cookie-banner-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+      root.style.setProperty("--cookie-banner-safe", "0px");
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      clear();
+    };
+  }, [visible, closing]);
+
   const choose = (choice: ConsentChoice) => {
     setConsent(choice);
     setClosing(true);
@@ -85,12 +112,14 @@ export function CookieConsent() {
       }`}
     >
       <div className="border-t border-[#e6e4e0] bg-[#faf9f7]">
-        <div className="mx-auto flex max-w-[1100px] flex-col gap-5 px-6 py-6 md:flex-row md:items-center md:justify-between md:gap-10 md:px-10 md:py-7">
+        {/* v218: tighter on phones (same words, same two equal buttons), so
+            less of the page sits under it. */}
+        <div className="mx-auto flex max-w-[1100px] flex-col gap-3.5 px-5 py-4 md:flex-row md:items-center md:justify-between md:gap-10 md:px-10 md:py-7">
           <div className="max-w-[640px]">
-            <p className="font-serif text-[17px] font-light leading-snug text-[#0a0a0a] md:text-[18px]">
+            <p className="font-serif text-[16px] font-light leading-snug text-[#0a0a0a] md:text-[18px]">
               A note about cookies
             </p>
-            <p className="mt-1.5 text-[13px] leading-[1.7] text-[#555555]">
+            <p className="mt-1 text-[12.5px] leading-[1.6] text-[#555555] md:mt-1.5 md:text-[13px] md:leading-[1.7]">
               We use a few to keep your bag and size preferences, which we need to run the shop. We'd also like to
               use them to measure how our ads perform and to personalise our emails, like a reminder about your
               bag. That second part is entirely up to you, and the store works

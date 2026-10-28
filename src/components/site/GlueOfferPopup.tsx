@@ -18,6 +18,7 @@ import { fetchProductByHandle, shopifyImg } from "@/lib/shopify";
 import { unitOffAt } from "@/lib/duoDeal";
 import { ensurePerks } from "@/components/site/PerkSync";
 import { trackCheckoutTap } from "@/lib/metaCheckout";
+import { checkoutInSameTab, openCheckoutHere } from "@/lib/checkoutTab";
 import {
   BAG_ADD_EVENT,
   GLUE_CLAIMS,
@@ -232,12 +233,18 @@ function GlueOfferBody({ noun, onClose }: { noun: string; onClose: () => void })
     setLeaving(true);
     // v214: Meta's InitiateCheckout, before checkout opens.
     trackCheckoutTap();
-    const win = window.open("", "_blank");
+    // v218: phones and the in-app browsers stay in this tab (lib/checkoutTab).
+    const sameTab = checkoutInSameTab();
+    const win = sameTab ? null : window.open("", "_blank");
     try {
       await ensurePerks();
       const url = (await resolveCheckoutUrl()) ?? getCheckoutUrl();
       if (!url) {
         win?.close();
+        return;
+      }
+      if (sameTab) {
+        await openCheckoutHere(url);
         return;
       }
       if (win) win.location.href = url;
