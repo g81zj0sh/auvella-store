@@ -33,12 +33,26 @@ function currentPath(): string {
   return window.location.pathname + window.location.search;
 }
 
+/* v212: every event Meta gets carries its own event ID (eid), so a later
+   server-side copy of the same event can be matched to it and counted once. */
+function newEventId(): string {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  // Older in-app browsers: the same 128-bit random v4 shape.
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
 /** Injects fbevents.js and fires the first PageView. Safe to call repeatedly. */
 export function initMetaPixel(): void {
   if (typeof window === "undefined" || initialised) return;
   initialised = true;
   if (!isLiveSite()) {
-    console.debug(`[meta pixel] not the live site, so not loaded. Would send: init ${PIXEL_ID}, PageView`);
+    console.debug(`[meta pixel] not the live site, so not loaded. Would send: init ${PIXEL_ID}, PageView`, {
+      eventID: newEventId(),
+    });
     lastTrackedPath = currentPath();
     return;
   }
@@ -71,28 +85,34 @@ export function initMetaPixel(): void {
   /* eslint-enable */
 
   window.fbq?.("init", PIXEL_ID);
-  window.fbq?.("track", "PageView");
+  window.fbq?.("track", "PageView", {}, { eventID: newEventId() });
   lastTrackedPath = currentPath();
 }
 
-/** Fires a standard or custom Meta event. No-ops before the pixel loads. */
+/**
+ * Fires a standard or custom Meta event. No-ops before the pixel loads.
+ * Returns the event's ID (v212), or null when nothing was sent.
+ */
 export function trackMetaEvent(
   event: string,
   params?: Record<string, unknown>,
-): void {
-  if (typeof window === "undefined") return;
+): string | null {
+  if (typeof window === "undefined") return null;
+  const eventID = newEventId();
   if (!isLiveSite()) {
     if (initialised && readConsent() !== "declined") {
-      console.debug(`[meta pixel] not the live site. Would send: ${event}`, params ?? {});
+      console.debug(`[meta pixel] not the live site. Would send: ${event}`, params ?? {}, { eventID });
+      return eventID;
     }
-    return;
+    return null;
   }
-  if (!window.fbq) return;
+  if (!window.fbq) return null;
   // v188: consent withdrawn in another tab - this tab's pixel is still loaded
   // but must go quiet. An explicit "declined" only: with storage blocked the
   // choice reads null, and that tab's Accept still counts for its own page.
-  if (readConsent() === "declined") return;
-  window.fbq("track", event, params);
+  if (readConsent() === "declined") return null;
+  window.fbq("track", event, params ?? {}, { eventID });
+  return eventID;
 }
 
 /**
