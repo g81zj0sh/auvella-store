@@ -1,3 +1,4 @@
+import { Truck } from "lucide-react";
 import type { MultiBuyTier } from "@/lib/duoDeal";
 import { shopifyImg } from "@/lib/shopify";
 import { PROTECTION, WASH_BAG } from "@/lib/perks";
@@ -25,6 +26,11 @@ import { usePerkValues } from "@/lib/usePerkValues";
  * the card, each with its value struck on the right (the gift variant's
  * compare-at, £3.49 / £10); the selected card's band turns ink, so what the
  * shopper is getting stands out.
+ *
+ * v210 (owner): "You unlock free shipping" heads the band on a card whose own
+ * total - after its multi-buy saving, the figure Shopify checks - reaches the
+ * free-shipping threshold in the shopper's currency. A card that doesn't get
+ * there on its own says nothing, so the line is always true.
  */
 
 const PERKS: Record<
@@ -48,6 +54,8 @@ interface Props {
   price: (tier: MultiBuyTier) => { total: string; full: string | null; saving: string | null };
   /** Radio group name, unique on the page. */
   name: string;
+  /** True when this tier alone, after its saving, ships free (v210). */
+  freeShipping?: (tier: MultiBuyTier) => boolean;
 }
 
 const NAMES: Record<MultiBuyTier["quantity"], { title: string; sub?: string }> = {
@@ -61,7 +69,7 @@ function badgeFor(t: MultiBuyTier): string | null {
   return t.quantity >= 3 ? `🔥 Best value · Save ${t.percent}%` : `Save ${t.percent}%`;
 }
 
-export function MultiBuySelector({ tiers, value, onChange, price, name }: Props) {
+export function MultiBuySelector({ tiers, value, onChange, price, name, freeShipping }: Props) {
   const worth = usePerkValues();
   return (
     <fieldset className="mt-7">
@@ -78,6 +86,7 @@ export function MultiBuySelector({ tiers, value, onChange, price, name }: Props)
           const label = NAMES[t.quantity];
           const badge = badgeFor(t);
           const bold = t.quantity >= 3;
+          const shipsFree = !!freeShipping?.(t);
           return (
             <label
               key={t.quantity}
@@ -162,6 +171,16 @@ export function MultiBuySelector({ tiers, value, onChange, price, name }: Props)
                       : "divide-[#0a0a0a]/10 bg-[#f3f1ee] text-[#0a0a0a]"
                   }`}
                 >
+                  {shipsFree && (
+                    <span className="flex items-center gap-3 px-4 py-2.5">
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] bg-white text-[#0a0a0a]">
+                        <Truck aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
+                      </span>
+                      <span className="min-w-0 flex-1 text-[12px] font-semibold uppercase leading-snug tracking-[0.04em]">
+                        You unlock free shipping
+                      </span>
+                    </span>
+                  )}
                   {PERKS[t.quantity].map((p) => (
                     <span key={p.title} className="flex items-center gap-3 px-4 py-2.5">
                       {p.key === "protection" ? (

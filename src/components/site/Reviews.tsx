@@ -1,5 +1,6 @@
 import { Star, Loader2, ImagePlus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { StarRow } from "@/components/site/RatingBadge";
 import { submitJudgemeReview } from "@/lib/judgeme";
 import { uploadReviewPhoto } from "@/lib/reviewPhoto.functions";
 
@@ -23,16 +24,12 @@ export interface Review {
   imported?: boolean;
 }
 
+/* v210: the same rose stars as the rating badge, filled to the exact average
+   (4.7 shows four and most of the fifth) rather than rounded to whole stars. */
 function Stars({ rating, size = 3 }: { rating: number; size?: number }) {
   return (
-    <span className="inline-flex" aria-label={`${rating} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={`${i < Math.round(rating) ? "fill-[#0a0a0a] text-[#0a0a0a]" : "fill-[#0a0a0a]/10 text-[#0a0a0a]/10"}`}
-          style={{ height: size * 4, width: size * 4 }}
-        />
-      ))}
+    <span className="inline-flex" role="img" aria-label={`${rating} out of 5 stars`}>
+      <StarRow rating={rating} size={size * 4} />
     </span>
   );
 }
@@ -87,8 +84,8 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
           <Star
             className={
               n <= shown
-                ? "fill-[#0a0a0a] text-[#0a0a0a]"
-                : "fill-[#0a0a0a]/10 text-[#0a0a0a]/10"
+                ? "fill-star text-star"
+                : "fill-star/15 text-star/15"
             }
             style={{ height: 20, width: 20 }}
           />
@@ -315,7 +312,7 @@ export function Reviews({
                     {average.toFixed(1)}
                   </span>
                   <div>
-                    <Stars rating={average} size={3.5} />
+                    <Stars rating={average} size={5} />
                     <p className="mt-1 text-[11px] text-[#888888]">
                       Based on {count} {count === 1 ? "review" : "reviews"}
                     </p>
@@ -391,7 +388,7 @@ export function Reviews({
                     ) : (
                       <>
                         {n}
-                        <Star className="h-3 w-3" fill="currentColor" strokeWidth={0} />
+                        <Star className="h-3 w-3 text-star" fill="currentColor" strokeWidth={0} />
                       </>
                     )}
                     <span className={active ? "text-white/70" : "text-[#999999]"}>({count})</span>
@@ -450,7 +447,7 @@ export function Reviews({
                   {/* Review content */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <Stars rating={r.rating} />
+                      <Stars rating={r.rating} size={3.5} />
                       {r.date && <span className="text-[11px] text-[#888888]">{r.date}</span>}
                     </div>
                     {r.title && (
