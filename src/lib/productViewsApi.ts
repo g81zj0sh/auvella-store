@@ -16,13 +16,7 @@
  * turned back into either - and rows are deleted after about two days.
  */
 
-type D1Statement = {
-  bind(...values: unknown[]): D1Statement;
-  run(): Promise<unknown>;
-  first<T>(): Promise<T | null>;
-};
-type D1Database = { prepare(sql: string): D1Statement };
-type ViewsEnv = { VIEWS_DB?: D1Database; SHOPIFY_CLIENT_SECRET?: string };
+import { workerBindings, type D1Database } from "@/lib/workerEnv";
 
 const PATH = /^\/api\/views\/([a-z0-9][a-z0-9-]{0,150})$/;
 /** Ten-minute buckets; the window is the last 144 of them (24 hours). */
@@ -66,20 +60,6 @@ async function visitorKey(request: Request, secret: string): Promise<string> {
   return [...new Uint8Array(mac).slice(0, 16)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** The Worker's bindings, wherever this runtime hands them over (as videoRange's getAssets). */
-function bindings(request: Request, env: unknown): ViewsEnv {
-  const candidates = [
-    env as ViewsEnv | undefined,
-    (request as unknown as { runtime?: { cloudflare?: { env?: ViewsEnv } } }).runtime?.cloudflare?.env,
-    (globalThis as unknown as { __env__?: ViewsEnv }).__env__,
-  ];
-  const db = candidates.find((c) => c?.VIEWS_DB)?.VIEWS_DB;
-  const secret =
-    candidates.find((c) => c?.SHOPIFY_CLIENT_SECRET)?.SHOPIFY_CLIENT_SECRET ??
-    (typeof process !== "undefined" ? process.env?.SHOPIFY_CLIENT_SECRET : undefined);
-  return { VIEWS_DB: db, SHOPIFY_CLIENT_SECRET: secret };
-}
-
 function sameSite(request: Request): boolean {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
@@ -103,7 +83,7 @@ export async function productViews(request: Request, url: URL, env: unknown): Pr
   const match = url.pathname.match(PATH);
   if (!match) return null;
   if (request.method !== "GET" && request.method !== "POST") return json({ error: "method" }, 405);
-  const { VIEWS_DB: db, SHOPIFY_CLIENT_SECRET: secret } = bindings(request, env);
+  const { VIEWS_DB: db, SHOPIFY_CLIENT_SECRET: secret } = workerBindings(request, env);
   if (!db) return json({ count: 0 });
   const handle = match[1];
   const now = Math.floor(Date.now() / BUCKET_MS);
