@@ -22,6 +22,7 @@ import {
 } from "@/lib/bundleDeal";
 import { DUO_DEAL, DUO_SHOPIFY_TITLES, duoLabel } from "@/lib/duoDeal";
 import { bagTotals } from "@/lib/bagTotals";
+import { trackCheckoutTap } from "@/lib/metaCheckout";
 import { estimateDelivery, DISPATCH_CUTOFF_LONDON } from "@/lib/deliveryEstimate";
 import {
   fetchProductRecommendations,
@@ -218,6 +219,8 @@ export function CartDrawer() {
   const handleCheckout = async () => {
     if (isCheckingOut) return;
     setIsCheckingOut(true);
+    // v214: Meta's InitiateCheckout, before checkout opens.
+    trackCheckoutTap();
     // Synchronous window.open inside the gesture: mobile Safari blocks it after an await.
     const win = window.open("", "_blank");
     try {

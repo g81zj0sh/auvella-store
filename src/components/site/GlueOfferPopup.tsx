@@ -17,6 +17,7 @@ import { fetchJudgemeData, useJudgemeReviews } from "@/lib/judgeme";
 import { fetchProductByHandle, shopifyImg } from "@/lib/shopify";
 import { unitOffAt } from "@/lib/duoDeal";
 import { ensurePerks } from "@/components/site/PerkSync";
+import { trackCheckoutTap } from "@/lib/metaCheckout";
 import {
   BAG_ADD_EVENT,
   GLUE_CLAIMS,
@@ -229,6 +230,8 @@ function GlueOfferBody({ noun, onClose }: { noun: string; onClose: () => void })
   const onCheckout = async () => {
     if (leaving) return;
     setLeaving(true);
+    // v214: Meta's InitiateCheckout, before checkout opens.
+    trackCheckoutTap();
     const win = window.open("", "_blank");
     try {
       await ensurePerks();

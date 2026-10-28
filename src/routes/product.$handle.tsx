@@ -53,6 +53,7 @@ import { ensurePerks } from "@/components/site/PerkSync";
 import { PerkUnlocks } from "@/components/site/PerkUnlocks";
 import { PERK_UNLOCK, perkPlan } from "@/lib/perks";
 import { metaContentId, trackMetaEvent } from "@/lib/metaPixel";
+import { trackCheckoutTap } from "@/lib/metaCheckout";
 import { trackViewedProduct } from "@/lib/klaviyoOnsite";
 import { useFavorites } from "@/stores/favoritesStore";
 import { useRecentlyViewed } from "@/stores/recentlyViewedStore";
@@ -1152,6 +1153,8 @@ function ProductPage() {
         }
         setAddedKey(unitsKey);
       }
+      // v214: Meta's InitiateCheckout, with this add already in the bag.
+      trackCheckoutTap();
       // The Buy 2 / Buy 3 perks in the bag before checkout opens.
       await ensurePerks();
       const url = (await resolveCheckoutUrl()) ?? getCheckoutUrl();
