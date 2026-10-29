@@ -10,11 +10,12 @@ import { useCartStore } from "@/stores/cartStore";
  * other event (lib/metaPixel): held until an Accept, never sent after a
  * Decline.
  *
- * The one place the event is named: if Shopify's Facebook & Instagram app
- * starts sending its own InitiateCheckout from the checkout page, this
- * becomes a custom "CheckoutTap" (fbq trackCustom) so nothing is counted twice.
+ * The one place the event is named. v220: a custom "CheckoutTap" (fbq
+ * trackCustom). Shopify now gets the cookie choice (lib/shopifyConsent), so
+ * its "Meta Purchase" pixel sends the real InitiateCheckout from the checkout
+ * page - keeping ours too would count every checkout twice.
  */
-export const CHECKOUT_EVENT = "InitiateCheckout";
+export const CHECKOUT_EVENT = "CheckoutTap";
 
 /** Sends CHECKOUT_EVENT for the bag as it stands. Returns the event ID, or null. */
 export function trackCheckoutTap(): string | null {
@@ -29,12 +30,16 @@ export function trackCheckoutTap(): string | null {
     quantity: i.quantity,
     item_price: Number(i.price.amount) || 0,
   }));
-  return trackMetaEvent(CHECKOUT_EVENT, {
-    value: Math.round(payable * 100) / 100,
-    currency: baseCurrency,
-    content_type: "product",
-    content_ids: contents.map((c) => c.id),
-    contents,
-    num_items: lines.reduce((n, i) => n + i.quantity, 0),
-  });
+  return trackMetaEvent(
+    CHECKOUT_EVENT,
+    {
+      value: Math.round(payable * 100) / 100,
+      currency: baseCurrency,
+      content_type: "product",
+      content_ids: contents.map((c) => c.id),
+      contents,
+      num_items: lines.reduce((n, i) => n + i.quantity, 0),
+    },
+    { custom: true },
+  );
 }

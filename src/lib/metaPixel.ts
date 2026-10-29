@@ -24,7 +24,7 @@ let lastTrackedPath: string | null = null;
    an early Add to bag - wait here, in page memory only (never storage or a
    cookie), and go out in order once the pixel starts after an Accept. A
    Decline drops them, and so does leaving the site. */
-type HeldEvent = { event: string; params: Record<string, unknown>; eventID: string };
+type HeldEvent = { event: string; params: Record<string, unknown>; eventID: string; custom?: boolean };
 const HELD_MAX = 20;
 let held: HeldEvent[] = [];
 
@@ -81,12 +81,14 @@ function newEventId(): string {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
-function send({ event, params, eventID }: HeldEvent): void {
+function send({ event, params, eventID, custom }: HeldEvent): void {
+  // v220: a custom event (CheckoutTap) goes out with trackCustom.
+  const method = custom ? "trackCustom" : "track";
   if (!isLiveSite()) {
-    console.debug(`[meta pixel] not the live site. Would send: ${event}`, params, { eventID });
+    console.debug(`[meta pixel] not the live site. Would send: ${method} ${event}`, params, { eventID });
     return;
   }
-  window.fbq?.("track", event, params, { eventID });
+  window.fbq?.(method, event, params, { eventID });
 }
 
 /**
@@ -118,7 +120,7 @@ export function dropHeldMetaEvents(): void {
 
 /**
  * v218: resolves once what was just sent has had time to leave the page - for
- * checkout opening in this same tab right after its InitiateCheckout. Just
+ * checkout opening in this same tab right after its checkout event. Just
  * after an Accept fbevents.js can still be loading, with the event queued.
  * At once when the pixel isn't running here.
  */
@@ -172,13 +174,14 @@ function loadPixel(): void {
 }
 
 /**
- * Fires a standard or custom Meta event. Before the pixel has started it is
- * held for an Accept (v213). Returns the event's ID (v212), or null when it
- * was dropped.
+ * Fires a standard Meta event, or (v220) a custom one with { custom: true }.
+ * Before the pixel has started it is held for an Accept (v213). Returns the
+ * event's ID (v212), or null when it was dropped.
  */
 export function trackMetaEvent(
   event: string,
   params?: Record<string, unknown>,
+  options?: { custom?: boolean },
 ): string | null {
   if (typeof window === "undefined") return null;
   // v188: consent withdrawn in another tab - this tab's pixel is still loaded
@@ -189,7 +192,7 @@ export function trackMetaEvent(
     landingClick = null;
     return null;
   }
-  const e: HeldEvent = { event, params: params ?? {}, eventID: newEventId() };
+  const e: HeldEvent = { event, params: params ?? {}, eventID: newEventId(), custom: options?.custom };
   if (initialised) {
     send(e);
     return e.eventID;

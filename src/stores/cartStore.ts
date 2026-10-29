@@ -10,6 +10,7 @@ import {
   updateShopifyCartLine,
   recreateShopifyCart,
   formatCheckoutUrl,
+  withoutVisitorConsent,
   swapShopifyCartLine,
   setShopifyDiscountCodes,
   updateShopifyCartCountry,
@@ -382,15 +383,22 @@ export const useCartStore = create<CartStore>()(
       resolveCheckoutUrl: async () => {
         const { cartId, items, checkoutUrl } = get();
 
+        // v220: this tap's link carries the cookie choice (lib/shopify,
+        // visitorConsent). The stored copy doesn't: it can outlive a change
+        // of mind, and Klaviyo's bag emails use it.
+        const linkFor = async (id: string) => {
+          const data = await storefrontApiRequest(CART_QUERY, { id }, { visitorConsent: true });
+          const cart = data?.data?.cart;
+          if (!cart?.checkoutUrl || !(cart.totalQuantity > 0)) return null;
+          const fresh = formatCheckoutUrl(cart.checkoutUrl);
+          set({ checkoutUrl: withoutVisitorConsent(fresh) });
+          return fresh;
+        };
+
         if (cartId) {
           try {
-            const data = await storefrontApiRequest(CART_QUERY, { id: cartId });
-            const cart = data?.data?.cart;
-            if (cart?.checkoutUrl && cart.totalQuantity > 0) {
-              const fresh = formatCheckoutUrl(cart.checkoutUrl);
-              set({ checkoutUrl: fresh });
-              return fresh;
-            }
+            const fresh = await linkFor(cartId);
+            if (fresh) return fresh;
           } catch (e) {
             // Network failure is not proof the cart is dead — fall back to the
             // stored URL rather than rebuilding and orphaning a good cart.
@@ -418,7 +426,8 @@ export const useCartStore = create<CartStore>()(
             lineId: rebuilt.lineIdByVariant[i.variantId] ?? i.lineId,
           })),
         });
-        return rebuilt.checkoutUrl;
+        // v220: the rebuilt cart's link with the choice too.
+        return (await linkFor(rebuilt.cartId).catch(() => null)) ?? rebuilt.checkoutUrl;
       },
 
       syncCart: async () => {
