@@ -1156,7 +1156,7 @@ function ProductPage() {
         }
         setAddedKey(unitsKey);
       }
-      // v214: Meta's InitiateCheckout, with this add already in the bag.
+      // v214: Meta's checkout event (v220: CheckoutTap), with this add already in the bag.
       trackCheckoutTap();
       // The Buy 2 / Buy 3 perks in the bag before checkout opens.
       await ensurePerks();

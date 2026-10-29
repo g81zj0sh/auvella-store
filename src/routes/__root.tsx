@@ -16,6 +16,7 @@ import { clearKlaviyoIdentity, loadKlaviyo } from "@/lib/klaviyoOnsite";
 import { usePreferences } from "../lib/preferences";
 import { CookieConsent } from "@/components/site/CookieConsent";
 import { hasMarketingConsent, onConsentChange, readConsent } from "@/lib/consent";
+import { passChoiceToShopify } from "@/lib/shopifyConsent";
 import { Toaster } from "sonner";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
@@ -234,6 +235,8 @@ function RootComponent() {
     syncMarket();
     const unsubscribePrefs = usePreferences.subscribe(syncMarket);
     const unsubscribeConsent = onConsentChange((state) => {
+      // v220: Shopify's checkout gets the choice too (lib/shopifyConsent).
+      const passed = state ? passChoiceToShopify(state) : Promise.resolve();
       if (state === "accepted") start();
       if (state !== "declined") return;
       // v213: nothing held from before the answer ever goes out.
@@ -245,7 +248,8 @@ function RootComponent() {
       clearMarketingData();
       // klaviyo.js can also arrive without start() (a bag add or signup after
       // an Accept in another tab), so go by what's actually on the page.
-      if (unsubscribeRouter || window.fbq || window.klaviyo) window.location.reload();
+      // v220: once Shopify has the decline, so checkout hears it too.
+      if (unsubscribeRouter || window.fbq || window.klaviyo) void passed.then(() => window.location.reload());
     });
 
     return () => {
