@@ -2,6 +2,8 @@
 // ‘size chart’-tagged gallery images on each active Shopify product.
 // Generated 2026-07-29. 45 products with charts; 5 without (see NO_CHART_HIDE_GUIDE).
 // Cells marked [CHECK: …] are printed values that failed a sanity check — verify with supplier, never guess.
+// Only the sizes the store sells (Joshua, 29 Oct 2026): a supplier row for a size
+// with no variant is left out, and nothing points to sizes we don't stock.
 
 /* v205: the data only - the helpers are in lib/productSizeCharts.ts. The browser
    loads this once the page is interactive (lib/catalogTables); a product page
@@ -129,13 +131,12 @@ export const PRODUCT_SIZE_CHARTS = {
     guideType: "sports-bra",
     columns: ["Size", "Length", "Waist", "Bust", "Hem Width"],
     rows: [
-      ["XS/6", "–", "–", "–", "–"],
       ["S/8", "19 cm (7.5\")", "–", "62 cm (24.5\")", "56 cm (22\")"],
       ["M/10", "20 cm (8\")", "–", "67 cm (26.5\")", "60 cm (23.5\")"],
       ["L/12", "21 cm (8.5\")", "–", "72 cm (28.5\")", "64 cm (25\")"],
       ["XL/14", "22 cm (8.5\")", "–", "77 cm (30.5\")", "68 cm (27\")"],
     ],
-    fitNote: "Snug performance fit. Unit not printed on chart (values consistent with cm). XS/6 row and Waist column are printed blank (–) on the supplier chart. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+    fitNote: "Snug performance fit. Unit not printed on chart (values consistent with cm). The Waist column is printed blank (–) on the supplier chart. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
   "v-neck-bodycon-mini-dress": {
     guideType: "clothing",
@@ -177,7 +178,6 @@ export const PRODUCT_SIZE_CHARTS = {
       ["S", "34 cm (13.4\")", "127 cm (50\")", "32 cm (12.5\")", "56 cm (22\")", "40–50 kg"],
       ["M", "36 cm (14.2\")", "128 cm (50.5\")", "33 cm (13\")", "57 cm (22.5\")", "50–57.5 kg"],
       ["L", "38 cm (15\")", "129 cm (51\")", "34 cm (13.5\")", "58 cm (23\")", "58–65 kg"],
-      ["XL", "40 cm (15.7\")", "130 cm (51\")", "35 cm (14\")", "59 cm (23\")", "65–75 kg"],
     ],
     fitNote: "True to size. Units confirmed as centimetres by the supplier; bust is measured laid flat across the garment — roughly double it for the full-body equivalent, and the stretch fabric sculpts to fit. Chart notes 2–4 cm manual-measurement discrepancy.",
   },
@@ -338,14 +338,9 @@ export const PRODUCT_SIZE_CHARTS = {
     guideType: "clothing",
     columns: ["Size", "Height", "Weight", "Bust", "Waist"],
     rows: [
-      ["XXS", "150–155 cm (59–61\")", "40–45 kg", "76–79 cm (30–31\")", "58–61 cm (23–24\")"],
-      ["XS", "150–160 cm (59–63\")", "45–50 kg", "80–85 cm (31.5–33.5\")", "61–66 cm (24–26\")"],
       ["S", "155–160 cm (61–63\")", "50–55 kg", "86–91 cm (34–36\")", "67–73 cm (26.5–28.5\")"],
       ["M", "155–165 cm (61–65\")", "55–60 kg", "92–98 cm (36–38.5\")", "74–79 cm (29–31\")"],
       ["L", "160–165 cm (63–65\")", "60–65 kg", "99–104 cm (39–41\")", "80–88 cm (31.5–34.5\")"],
-      ["XL", "160–170 cm (63–67\")", "65–70 kg", "105–113 cm (41.5–44.5\")", "89–97 cm (35–38\")"],
-      ["2XL", "165–175 cm (65–69\")", "70–75 kg", "114–122 cm (45–48\")", "98–106 cm (38.5–41.5\")"],
-      ["3XL", "165–180 cm (65–71\")", "75–80 kg", "123–132 cm (48.5–52\")", "107–116 cm (42–45.5\")"],
     ],
     fitNote: "True to size. Units inferred (not printed on the supplier chart): height/bust/waist values consistent with cm, weight with kg.",
   },
@@ -368,8 +363,6 @@ export const PRODUCT_SIZE_CHARTS = {
       ["S", "68 cm (27\")", "62–66 cm (24.5–26\")", "76–78 cm (30–30.5\")"],
       ["M", "72 cm (28.5\")", "66–70 cm (26–27.5\")", "80–82 cm (31.5–32.5\")"],
       ["L", "76 cm (30\")", "70–74 cm (27.5–29\")", "84–86 cm (33–34\")"],
-      ["XL", "80 cm (31.5\")", "74–78 cm (29–30.5\")", "88–90 cm (34.5–35.5\")"],
-      ["2XL", "82 cm (32.5\")", "78–82 cm (30.5–32.5\")", "92–94 cm (36–37\")"],
     ],
     fitNote: "Size up for more coverage. Dimensions in cm, manual measurement may vary by 1–3 cm. Size ranges refer to body measurements in centimetres.",
   },
@@ -391,7 +384,6 @@ export const PRODUCT_SIZE_CHARTS = {
       ["S", "36 cm (14\")", "32 cm (12.5\")", "40 cm (15.5\")", "28.5 cm (11\")", "31 cm (12\")", "7 cm (3\")"],
       ["M", "38 cm (15\")", "34 cm (13.5\")", "42 cm (16.5\")", "30 cm (12\")", "31.5 cm (12.5\")", "7 cm (3\")"],
       ["L", "40 cm (15.5\")", "36 cm (14\")", "44 cm (17.5\")", "31.5 cm (12.5\")", "32 cm (12.5\")", "7 cm (3\")"],
-      ["XL", "42 cm (16.5\")", "38 cm (15\")", "46 cm (18\")", "32.5 cm (13\")", "32.5 cm (13\")", "7 cm (3\")"],
     ],
     fitNote: "Size up for more coverage. Chart gives half (‘2/1’) measurements; unit not printed, values consistent with cm. ‘Leg Opening 1/2’ printed as ‘2/1 foot’ on chart. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
@@ -439,7 +431,6 @@ export const PRODUCT_SIZE_CHARTS = {
       ["L", "66 cm (26\")", "52 cm (20.5\")", "33 cm (13\")", "34 cm (13.5\")", "28 cm (11\")", "32 cm (12.5\")"],
       ["XL", "67 cm (26.5\")", "52.5 cm (20.5\")", "35 cm (14\")", "36 cm (14\")", "30 cm (12\")", "34 cm (13.5\")"],
       ["2XL", "68 cm (27\")", "53 cm (21\")", "35 cm (14\")", "38 cm (15\")", "32 cm (12.5\")", "36 cm (14\")"],
-      ["3XL", "68 cm (27\")", "53 cm (21\")", "35 cm (14\")", "38 cm (15\")", "34 cm (13.5\")", "38 cm (15\")"],
     ],
     fitNote: "Cut close to the body — size up if between sizes. Flat measurements, cm; manual measurement may vary by 1–2 cm. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
   },
@@ -447,7 +438,6 @@ export const PRODUCT_SIZE_CHARTS = {
     guideType: "underwear",
     columns: ["Size", "Waist", "Length"],
     rows: [
-      ["XS", "47 cm (18.5\")", "23.5 cm (9.5\")"],
       ["S", "51 cm (20\")", "24.7 cm (9.5\")"],
       ["M", "55 cm (21.5\")", "25.9 cm (10\")"],
       ["L", "59 cm (23\")", "27.1 cm (10.5\")"],
@@ -462,9 +452,6 @@ export const PRODUCT_SIZE_CHARTS = {
       ["S", "U.S. 4 / Europe 38", "Australia 8", "84–88 cm (33–34.5\")", "72 cm (28.5\")", "68–74 cm (27–29\")", "78–94 cm (30.5–37\")"],
       ["M", "U.S. 6 / Europe 40", "Australia 10", "88–92 cm (34.5–36\")", "76 cm (30\")", "74–78 cm (29–30.5\")", "82–98 cm (32.5–38.5\")"],
       ["L", "U.S. 8 / Europe 42", "Australia 12", "92–96 cm (36–38\")", "80 cm (31.5\")", "78–82 cm (30.5–32.5\")", "86–102 cm (34–40\")"],
-      ["XL", "U.S. 10 / Europe 44", "Australia 14", "96–100 cm (38–39.5\")", "84 cm (33\")", "82–86 cm (32.5–34\")", "90–106 cm (35.5–41.5\")"],
-      ["2XL", "U.S. 12 / Europe 46", "Australia 16", "100–104 cm (39.5–41\")", "88 cm (34.5\")", "86–90 cm (34–35.5\")", "94–110 cm (37–43.5\")"],
-      ["3XL", "U.S. 14 / Europe 48", "Australia 18", "104–108 cm (41–42.5\")", "92 cm (36\")", "90–94 cm (35.5–37\")", "98–114 cm (38.5–45\")"],
     ],
     fitNote: "Size up for more coverage. Measurements are in centimetres.; US/Europe/Australia size columns are printed on the supplier chart. Size ranges refer to body measurements in centimetres.",
   },
@@ -555,8 +542,8 @@ export const PRODUCT_SIZE_CHARTS = {
   },
   /* SUWOCIB00460: TeemDrop's corrected chart (29 Oct 2026) - band x cup grid
      read off by size. It replaces the 24 Sept chart that printed 34DD under
-     both M and L and measured up to E. 42DD/44C/44D map to a 4XL we don't
-     stock; 44DD and 46C-DD have no size. */
+     both M and L and measured up to E. Its 4XL (42DD, 44C, 44D) is left out:
+     the store sells S-3XL, and charts show only the sizes it sells. */
   "seamless-wireless-full-cup-bra": {
     guideType: "bra",
     columns: ["Size", "Fits Bra Sizes"],
@@ -569,7 +556,7 @@ export const PRODUCT_SIZE_CHARTS = {
       ["3XL", "40DD, 42C, 42D, 44B, 46B"],
     ],
     fitNote:
-      "Find your usual bra size in the right-hand column. Not sure of it? Measure snugly under your bust for the band: 69–74 cm (27–29\") is a 32, 74–79 cm (29–31\") a 34, 79–84 cm (31–33\") a 36, 84–89 cm (33–35\") a 38, 89–94 cm (35–37\") a 40, 94–99 cm (37–39\") a 42, 99–104 cm (39–41\") a 44, 104–109 cm (41–43\") a 46. Then take your fullest bust measurement minus that underbust for the cup: 11.5–14 cm (4.5–5.5\") is B, 14–16.5 cm (5.5–6.5\") C, 16.5–19 cm (6.5–7.5\") D, 19–21.5 cm (7.5–8.5\") DD. The chart puts 42DD, 44C and 44D in a 4XL, which we don't stock in this style. If you have a larger bust, the chart recommends going one size up. The straps are fixed, so size for the band.",
+      "Find your usual bra size in the right-hand column. Not sure of it? Measure snugly under your bust for the band: 69–74 cm (27–29\") is a 32, 74–79 cm (29–31\") a 34, 79–84 cm (31–33\") a 36, 84–89 cm (33–35\") a 38, 89–94 cm (35–37\") a 40, 94–99 cm (37–39\") a 42, 99–104 cm (39–41\") a 44, 104–109 cm (41–43\") a 46. Then take your fullest bust measurement minus that underbust for the cup: 11.5–14 cm (4.5–5.5\") is B, 14–16.5 cm (5.5–6.5\") C, 16.5–19 cm (6.5–7.5\") D, 19–21.5 cm (7.5–8.5\") DD. If you have a larger bust, the chart recommends going one size up. The straps are fixed, so size for the band.",
   },
   "women-waist-training-compression-garment": {
     guideType: "shapewear",
@@ -615,9 +602,6 @@ export const PRODUCT_SIZE_CHARTS = {
       ["S", "81–86 cm (32–34\")", "61–66 cm (24–26\")", "86–91 cm (34–36\")", "A–B"],
       ["M", "86–91 cm (34–36\")", "66–71 cm (26–28\")", "91–96 cm (36–38\")", "B–C"],
       ["L", "91–96 cm (36–38\")", "71–76 cm (28–30\")", "96–101 cm (38–40\")", "B–C"],
-      ["XL", "96–101 cm (38–40\")", "76–81 cm (30–32\")", "101–106 cm (40–41.5\")", "B–C"],
-      ["XXL", "101–106 cm (40–41.5\")", "81–86 cm (32–34\")", "106–111 cm (41.5–43.5\")", "B–D"],
-      ["3XL", "106–111 cm (41.5–43.5\")", "86–91 cm (34–36\")", "111–116 cm (43.5–45.5\")", "D–E"],
     ],
     fitNote: "Size up for more coverage. Measurements are in centimetres.; cup column printed on the supplier chart. (Chart supplied separately by store owner, 2026-07-29 — not yet tagged in the Shopify gallery.). Size ranges refer to body measurements in centimetres.",
   },
@@ -663,8 +647,6 @@ export const PRODUCT_SIZE_CHARTS = {
       ["M", "U.S. 6 / Europe 40", "Australia 10", "88–92 cm (34.5–36\")", "76 cm (30\")", "74–78 cm (29–30.5\")", "82–98 cm (32.5–38.5\")"],
       ["L", "U.S. 8 / Europe 42", "Australia 12", "92–96 cm (36–38\")", "80 cm (31.5\")", "78–82 cm (30.5–32.5\")", "86–102 cm (34–40\")"],
       ["XL", "U.S. 10 / Europe 44", "Australia 14", "96–100 cm (38–39.5\")", "84 cm (33\")", "82–86 cm (32.5–34\")", "90–106 cm (35.5–41.5\")"],
-      ["2XL", "U.S. 12 / Europe 46", "Australia 16", "100–104 cm (39.5–41\")", "88 cm (34.5\")", "86–90 cm (34–35.5\")", "94–110 cm (37–43.5\")"],
-      ["3XL", "U.S. 14 / Europe 48", "Australia 18", "104–108 cm (41–42.5\")", "92 cm (36\")", "90–94 cm (35.5–37\")", "98–114 cm (38.5–45\")"],
     ],
     fitNote: "Size up for more coverage. Measurements are in centimetres.; US/Europe/Australia size columns printed on the chart. Same supplier chart as womens-swimwear-1. (Chart supplied separately by store owner, 2026-07-29 — not yet tagged in the Shopify gallery.). Size ranges refer to body measurements in centimetres.",
   },
