@@ -220,7 +220,7 @@ export function CartDrawer() {
   const handleCheckout = async () => {
     if (isCheckingOut) return;
     setIsCheckingOut(true);
-    // v214: Meta's InitiateCheckout, before checkout opens.
+    // v214: Meta's checkout event (v220: CheckoutTap), before checkout opens.
     trackCheckoutTap();
     // v218: phones and the in-app browsers stay in this tab (lib/checkoutTab).
     const sameTab = checkoutInSameTab();
