@@ -32,8 +32,9 @@ export const UK_SIZE_LABELS: Record<string, Record<string, string>> = {
   "high-waisted-silicone-shapewear-pants": { "XS-S": "6–8", "M-L": "10–20", "XL-2XL": "22–28", "3XL": "30", "4XL": "32" },
   // chart's bra fits
   "jelly-cup-multi-way-strapless-bra": { "XS": "30A–C", "S": "32A–C", "M": "34B–C", "L": "36B–C", "XL": "38A–B" },
-  // chart's bra fits
-  "seamless-wireless-full-cup-bra": { "S": "34B–D", "M": "36B–D", "L": "38B–D", "XL": "40B–D", "2XL": "42B–D", "3XL": "44B–DD" },
+  // (seamless-wireless-full-cup-bra: none since v221 - its corrected chart
+  // spans two bands per size, e.g. S = 32B–D and 34B, which a button can't
+  // carry; the size guide lists them.)
   // chart's EU (DE) column (−26)
   "womens-two-piece-swimsuit": { "S": "6–8", "M": "8–10", "L": "10–12" },
   // chart's UK / AUS Size column
@@ -45,7 +46,7 @@ export const UK_SIZE_LABELS: Record<string, Record<string, string>> = {
 const norm = (s: string) =>
   s.toUpperCase().replace(/\s+/g, "").replace(/^XXXL$/, "3XL").replace(/^XXL$/, "2XL");
 
-const BAND_EU: Record<number, number> = { 28: 60, 30: 65, 32: 70, 34: 75, 36: 80, 38: 85, 40: 90, 42: 95, 44: 100 };
+const BAND_EU: Record<number, number> = { 28: 60, 30: 65, 32: 70, 34: 75, 36: 80, 38: 85, 40: 90, 42: 95, 44: 100, 46: 105, 48: 110 };
 
 /** Joshua's default UK chart for a letter size, translated to the region.
     Handles combined sizes ("XS/S" → 6–10, "M-L" → 12–18). Null if any part

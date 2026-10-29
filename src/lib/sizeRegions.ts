@@ -68,7 +68,7 @@ function convertCup(cup: string, region: SizeRegion): string {
     Leaves measurements untouched — the pattern requires an UPPERCASE cup
     letter directly after the two-digit band, so "34 cm" never matches. */
 export function convertBraTokens(text: string, region: SizeRegion): string {
-  return text.replace(/\b(2[68]|3[02468]|4[024])(A|B|C|D|DD)\b/g, (_, band, cup) => {
+  return text.replace(/\b(2[68]|3[02468]|4[02468])(A|B|C|D|DD)\b/g, (_, band, cup) => {
     return `${convertBand(parseInt(band, 10), region)}${convertCup(cup, region)}`;
   });
 }
@@ -88,7 +88,7 @@ export function detectRegionSupport(
     if (l && !letters.includes(l)) letters.push(l);
   }
   letters.sort((a, b) => LETTER_ORDER.indexOf(a) - LETTER_ORDER.indexOf(b));
-  const braPattern = /\b(2[68]|3[02468]|4[024])(A|B|C|D|DD)\b/;
+  const braPattern = /\b(2[68]|3[02468]|4[02468])(A|B|C|D|DD)\b/;
   const hasBraTokens =
     rows.some((r) => r.some((c) => braPattern.test(c))) ||
     columns.some((c) => braPattern.test(c));

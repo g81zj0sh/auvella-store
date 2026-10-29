@@ -553,18 +553,23 @@ export const PRODUCT_SIZE_CHARTS = {
     ],
     fitNote: "Find your usual bra size in the right-hand column. Cup size is your overbust minus your underbust: 3–4\" is A, 4–5\" is B, 5–6\" is C. D cups: the chart points to a 'Plus' version we don't carry, so in the letter size you'll get coverage and a light hold rather than lift — for a big event an underwired strapless is the honest choice. The chart's own advice: if you're between sizes with a larger bust, size up.",
   },
+  /* SUWOCIB00460: TeemDrop's corrected chart (29 Oct 2026) - band x cup grid
+     read off by size. It replaces the 24 Sept chart that printed 34DD under
+     both M and L and measured up to E. 42DD/44C/44D map to a 4XL we don't
+     stock; 44DD and 46C-DD have no size. */
   "seamless-wireless-full-cup-bra": {
     guideType: "bra",
     columns: ["Size", "Fits Bra Sizes"],
     rows: [
-      ["S", "32DD, 32E, 34B, 34C, 34D"],
-      ["M", "34DD, 34E, 36B, 36C, 36D"],
-      ["L", "36DD, 36E, 38B, 38C, 38D"],
-      ["XL", "38DD, 38E, 40B, 40C, 40D"],
-      ["2XL", "40DD, 40E, 42B, 42C, 42D"],
-      ["3XL", "42DD, 42E, 44B, 44C, 44D, 44DD"],
+      ["S", "32B, 32C, 32D, 34B"],
+      ["M", "32DD, 34C, 34D, 36B"],
+      ["L", "34DD, 36C, 36D, 38B"],
+      ["XL", "36DD, 38C, 38D, 40B"],
+      ["2XL", "38DD, 40C, 40D, 42B"],
+      ["3XL", "40DD, 42C, 42D, 44B, 46B"],
     ],
-    fitNote: "Find your usual UK bra size in the right-hand column. Not sure of it? Measure snugly under your bust for the band: 69–74 cm (27–29\") is a 32, 74–79 cm (29–31\") a 34, 79–84 cm (31–33\") a 36, 84–89 cm (33–35\") a 38, 89–94 cm (35–37\") a 40, 94–99 cm (37–39\") a 42, 99–104 cm (39–41\") a 44. Then take your fullest bust measurement minus that underbust for the cup: 4.5–5.5\" is B, 5.5–6.5\" C, 6.5–7.5\" D, 7.5–8.5\" DD, 8.5–9.5\" E. The supplier's chart uses US cup letters: its DD(E) is a UK DD and its DDD(F) a UK E. If you have a larger bust, the supplier recommends going one size up. The straps are fixed, so size for the band.",
+    fitNote:
+      "Find your usual bra size in the right-hand column. Not sure of it? Measure snugly under your bust for the band: 69–74 cm (27–29\") is a 32, 74–79 cm (29–31\") a 34, 79–84 cm (31–33\") a 36, 84–89 cm (33–35\") a 38, 89–94 cm (35–37\") a 40, 94–99 cm (37–39\") a 42, 99–104 cm (39–41\") a 44, 104–109 cm (41–43\") a 46. Then take your fullest bust measurement minus that underbust for the cup: 11.5–14 cm (4.5–5.5\") is B, 14–16.5 cm (5.5–6.5\") C, 16.5–19 cm (6.5–7.5\") D, 19–21.5 cm (7.5–8.5\") DD. The chart puts 42DD, 44C and 44D in a 4XL, which we don't stock in this style. If you have a larger bust, the chart recommends going one size up. The straps are fixed, so size for the band.",
   },
   "women-waist-training-compression-garment": {
     guideType: "shapewear",
@@ -662,5 +667,57 @@ export const PRODUCT_SIZE_CHARTS = {
       ["3XL", "U.S. 14 / Europe 48", "Australia 18", "104–108 cm (41–42.5\")", "92 cm (36\")", "90–94 cm (35.5–37\")", "98–114 cm (38.5–45\")"],
     ],
     fitNote: "Size up for more coverage. Measurements are in centimetres.; US/Europe/Australia size columns printed on the chart. Same supplier chart as womens-swimwear-1. (Chart supplied separately by store owner, 2026-07-29 — not yet tagged in the Shopify gallery.). Size ranges refer to body measurements in centimetres.",
+  },
+  /* SUWOCIP00283: TeemDrop's updated product page (29 Oct 2026). Waist and hip
+     print as "26*2cm" - the flat width, doubled. Weights from the page's Sizes
+     line, which is cut off after "7XL (115-12"; the chart stops at 8XL though
+     the store sells 9XL. */
+  "womens-menstrual-period-panties": {
+    guideType: "underwear",
+    columns: ["Size", "Recommended Weight", "Flat Lay Waist Measurement", "Flat Lay Hip Measurement", "Crotch Depth"],
+    rows: [
+      ["M", "37.5–47.5 kg", "26 × 2 = 52 cm (20.5\")", "30 × 2 = 60 cm (23.5\")", "21 cm (8.5\")"],
+      ["L", "47.5–55 kg", "28 × 2 = 56 cm (22\")", "32 × 2 = 64 cm (25\")", "23 cm (9\")"],
+      ["XL", "55–65 kg", "30 × 2 = 60 cm (23.5\")", "34 × 2 = 68 cm (27\")", "25 cm (10\")"],
+      ["2XL", "65–75 kg", "32 × 2 = 64 cm (25\")", "36 × 2 = 72 cm (28.5\")", "27 cm (10.5\")"],
+      ["3XL", "75–85 kg", "34 × 2 = 68 cm (27\")", "38 × 2 = 76 cm (30\")", "29 cm (11.5\")"],
+      ["4XL", "85–95 kg", "36 × 2 = 72 cm (28.5\")", "40 × 2 = 80 cm (31.5\")", "31 cm (12\")"],
+      ["5XL", "95–105 kg", "38 × 2 = 76 cm (30\")", "42 × 2 = 84 cm (33\")", "33 cm (13\")"],
+      ["6XL", "105–115 kg", "40 × 2 = 80 cm (31.5\")", "44 × 2 = 88 cm (34.5\")", "35 cm (14\")"],
+      ["7XL", "115–? kg [CHECK: upper limit cut off in the screenshot of the supplier page ('7XL (115-12…') — confirm]", "42 × 2 = 84 cm (33\")", "46 × 2 = 92 cm (36\")", "37 cm (14.5\")"],
+      ["8XL", "[CHECK: 8XL weight not visible in the screenshot of the supplier page — confirm]", "44 × 2 = 88 cm (34.5\")", "48 × 2 = 96 cm (38\")", "39 cm (15.5\")"],
+      ["9XL", "[CHECK: 9XL is sold but missing from the supplier's updated chart (it stops at 8XL) — confirm 9XL is still made, and its measurements]", "[CHECK: no 9XL on the supplier's chart]", "[CHECK: no 9XL on the supplier's chart]", "[CHECK: no 9XL on the supplier's chart]"],
+    ],
+    fitNote:
+      "Choose your size by weight — that's how these are sized. Waist and hip are measured across the briefs laid flat and unstretched, then doubled, so they're naturally smaller than your own waist and hip. Weights are in kilograms; all measurements shown are garment measurements in centimetres.",
+  },
+  /* SUBAEBS00079: supplier chart (item G069), garment measurements in cm. */
+  "thick-rib-knit-lounge-set": {
+    guideType: "lounge",
+    columns: ["Size", "Bust", "Clothing Length", "Sleeve Length", "Shoulder Width", "Hip Circumference", "Waist Circumference", "Pants Length", "Weight (g)"],
+    rows: [
+      ["S", "92 cm (36\")", "55 cm (21.5\")", "51 cm (20\")", "39 cm (15.5\")", "102 cm (40\")", "64 cm (25\")", "101 cm (40\")", "385 g"],
+      ["M", "96 cm (38\")", "56 cm (22\")", "52 cm (20.5\")", "40 cm (15.5\")", "106 cm (41.5\")", "68 cm (27\")", "102 cm (40\")", "400 g"],
+      ["L", "102 cm (40\")", "57 cm (22.5\")", "53 cm (21\")", "41 cm (16\")", "112 cm (44\")", "72 cm (28.5\")", "103 cm (40.5\")", "425 g"],
+      ["XL", "108 cm (42.5\")", "58 cm (23\")", "54 cm (21.5\")", "42 cm (16.5\")", "118 cm (46.5\")", "76 cm (30\")", "104 cm (41\")", "460 g"],
+    ],
+    fitNote:
+      "Relaxed and true to size — if you're between sizes, take the larger one for a slouchier fit. Measured flat by hand, so allow 1–3 cm either way. 95% polyester, 5% elastane. All measurements shown are garment measurements in centimetres. Measure a garment that fits you well, or your body over light clothing, for the most accurate comparison.",
+  },
+  /* SUWOCIB00459: the supplier's bra-size table (EU "international" 70A =
+     UK/US 32A, as printed side by side; the region toggle shows the EU form).
+     It prints no M-3XL mapping, so it can't yet say which size to order -
+     the product stays in draft until TeemDrop supplies one. */
+  "seamless-support-bra-with-tummy-control": {
+    guideType: "bra",
+    columns: ["Underbust", "A Cup (about 10 cm / 4\")", "B Cup (about 12.5 cm / 5\")", "C Cup (about 15 cm / 6\")", "D Cup (about 17.5 cm / 7\")"],
+    rows: [
+      ["68–72 cm (27–28.5\")", "32A", "32B", "32C", "32D"],
+      ["73–77 cm (28.5–30.5\")", "34A", "34B", "34C", "34D"],
+      ["78–82 cm (30.5–32.5\")", "36A", "36B", "36C", "36D"],
+      ["83–87 cm (32.5–34.5\")", "38A", "38B", "38C", "38D"],
+    ],
+    fitNote:
+      "This table finds your bra size: measure snugly under your bust and find your row, then take your fullest bust measurement minus that underbust and read across to the cup. It covers 32A to 38D. We're confirming which of M to 3XL each bra size takes, so until that's on this page, contact us and we'll help you choose.",
   },
 };

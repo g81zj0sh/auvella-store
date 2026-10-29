@@ -130,7 +130,9 @@ export function SizeGuide({
         );
       }
     }
-    const isConvertible = isSizeCol || /bra/i.test(guide.columns[colIdx] ?? "");
+    /* v221: "… Cup" columns too - a band x cup table (the tummy-control bra's)
+       holds a bra size in every cell. */
+    const isConvertible = isSizeCol || /bra|cup/i.test(guide.columns[colIdx] ?? "");
     return support.hasBraTokens && isConvertible
       ? convertBraTokens(txt, region)
       : txt;
