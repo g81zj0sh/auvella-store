@@ -1,5 +1,6 @@
 import { isHiddenProduct, withoutHidden } from "@/lib/perks";
 import { GALLERY_VIDEO_HANDLES } from "@/lib/galleryVideo";
+import { readConsent } from "@/lib/consent";
 import { toast } from "sonner";
 
 export const SHOPIFY_API_VERSION = "2025-07";
@@ -116,20 +117,54 @@ export function storefrontCountry(): string {
   }
 }
 
-function withMarketContext(query: string): string {
+function withMarketContext(query: string, extra = ""): string {
   const country = storefrontCountry();
   // Named query with optional variables: `query Name($a: T) {` -> add the directive.
-  return query.replace(/^(\s*query\s+\w+(?:\s*\([^)]*\))?)(\s*\{)/, `$1 @inContext(country: ${country})$2`);
+  return query.replace(/^(\s*query\s+\w+(?:\s*\([^)]*\))?)(\s*\{)/, `$1 @inContext(country: ${country}${extra})$2`);
 }
 
-export async function storefrontApiRequest(query: string, variables: any = {}) {
+/*
+ * v220: the cookie choice, for the checkout link (Storefront API
+ * visitorConsent). Shopify writes it into the cart's checkoutUrl (_cs) and
+ * checkout applies it - even over a choice it kept from an earlier visit in
+ * its own cookies on www, which lib/shopifyConsent's cookie can't change.
+ * Accept is marketing only, what the banner asks about; Decline is all three
+ * false; no answer yet adds nothing. The site asks for API 2025-07, which
+ * Shopify now answers as 2026-01 (X-Shopify-API-Version), where
+ * visitorConsent exists.
+ */
+function visitorConsentContext(): string {
+  const choice = readConsent();
+  if (!choice) return "";
+  return `, visitorConsent: {marketing: ${choice === "accepted"}, analytics: false, preferences: false}`;
+}
+
+/** v220: a checkout link without the choice it carried (_cs), for keeping. */
+export function withoutVisitorConsent(checkoutUrl: string): string {
+  try {
+    const url = new URL(checkoutUrl);
+    url.searchParams.delete("_cs");
+    return url.toString();
+  } catch {
+    return checkoutUrl;
+  }
+}
+
+export async function storefrontApiRequest(
+  query: string,
+  variables: any = {},
+  options: { visitorConsent?: boolean } = {},
+) {
   const response = await fetch(SHOPIFY_STOREFRONT_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Shopify-Storefront-Access-Token": SHOPIFY_STOREFRONT_TOKEN,
     },
-    body: JSON.stringify({ query: withMarketContext(query), variables }),
+    body: JSON.stringify({
+      query: withMarketContext(query, options.visitorConsent ? visitorConsentContext() : ""),
+      variables,
+    }),
   });
 
   if (response.status === 402) {
