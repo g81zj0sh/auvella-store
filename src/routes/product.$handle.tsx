@@ -85,6 +85,16 @@ import {
 } from "@/lib/shipping";
 import { canonicalColour } from "@/lib/colourAliases";
 
+/*
+ * v223: lines from a product's current Meta ad, just above its Add to bag
+ * button, so the page picks up where the ad left off. The only place the
+ * words live. Seasonal - the Long Sleeve's Christmas 2026 ad: delete the
+ * entry once it's over.
+ */
+const AD_LINES = new Map<string, readonly string[]>([
+  ["seamless-shaping-long-sleeve-bodysuit", ["Christmas do, sorted.", "It's a bodysuit: no hem to untuck."]],
+]);
+
 export const Route = createFileRoute("/product/$handle")({
   component: ProductPage,
   /* ?colour=Mint opens the page on that colour: a tile showing a colour
@@ -1821,6 +1831,18 @@ function ProductPage() {
                 cur={(n) => display(n, bag.baseCurrency)}
               />
             </div>
+
+            {/* v223: this product's ad lines (AD_LINES), quiet, right above
+                the button so a phone shows them together. */}
+            {AD_LINES.has(node.handle) && (
+              <div className="mt-4 space-y-0.5 text-[12px] leading-relaxed text-[#555555]">
+                {AD_LINES.get(node.handle)?.map((line, i) => (
+                  <p key={line} className={i === 0 ? "font-medium text-[#0a0a0a]" : undefined}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
 
             {/* Add to bag / Select a size - the boldest thing on the page:
                 full-width, solid --cta fill. Grey while a mixed bundle still
