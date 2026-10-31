@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ShippingPopup } from "@/components/site/ShippingPopup";
-import { freeShippingThresholdFmt, useShippingCountry, transitLabel } from "@/lib/shipping";
+import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
+import { deliveryTimeLine, inFreeDeliveryCountry } from "@/lib/freeDelivery";
 import { usePreferences } from "@/lib/preferences";
 import { EditorialImage } from "@/components/site/EditorialImage";
 import { editorialSrc } from "@/lib/editorialImages";
@@ -585,11 +586,13 @@ function MarqueeStrip() {
   const marqueeRef = useMarqueeInView();
   // Country-aware: threshold and delivery window come from the same shared
   // state as the announcement bar and shipping popup.
+  // v224: free delivery on 2+ items where it applies, one delivery time.
   const { country } = useShippingCountry();
   const displayCurrency = usePreferences((s) => s.currency);
-  const text = `FREE SHIPPING ON ORDERS OVER ${freeShippingThresholdFmt(
-    displayCurrency,
-  )} · ${transitLabel(country).toUpperCase()} BUSINESS DAY SHIPPING · 30-DAY RETURNS · NEW DROPS WEEKLY · AUVELLA · `;
+  const free = inFreeDeliveryCountry(country.code)
+    ? "FREE DELIVERY ON 2+ ITEMS (EXCL. UNDERWEAR)"
+    : `FREE SHIPPING ON ORDERS OVER ${freeShippingThresholdFmt(displayCurrency)}`;
+  const text = `${free} · ${deliveryTimeLine(country).toUpperCase()} · 30-DAY RETURNS · NEW DROPS WEEKLY · AUVELLA · `;
   const loop = Array(4).fill(text);
   return (
     <section className="mt-3 overflow-hidden bg-[#0a0a0a] md:mt-4">

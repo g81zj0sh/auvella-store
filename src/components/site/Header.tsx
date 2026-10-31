@@ -6,7 +6,8 @@ import { useState, useEffect } from "react";
 import { CartDrawer } from "@/components/site/CartDrawer";
 import { isLoggedIn } from "@/lib/customerAuth";
 import { FavouritesButton } from "@/components/site/FavouritesButton";
-import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES, transitLabel } from "@/lib/shipping";
+import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES } from "@/lib/shipping";
+import { deliveryTimeLine, inFreeDeliveryCountry } from "@/lib/freeDelivery";
 import { SearchDrawer } from "@/components/site/SearchDrawer";
 import auvellaWordmarkImg from "@/assets/auvella-wordmark.png";
 import { editorialSrc, editorialSrcSet } from "@/lib/editorialImages";
@@ -438,10 +439,11 @@ function AnnouncementBar() {
   const displayCurrency = usePreferences((s) => s.currency);
   // No duties line (v186): nothing in Shopify includes or collects duties or
   // taxes, so "Duties And Taxes Are Included" wasn't true. Owner: remove it.
-  const messages = [
-    `${transitLabel(country)} Business Day Shipping`,
-    `Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`,
-  ];
+  // v224: free delivery on 2+ items where it applies (lib/freeDelivery), and
+  // one delivery time, order to door, in working days.
+  const messages = inFreeDeliveryCountry(country.code)
+    ? ["Free delivery on 2+ items (excl. underwear)", deliveryTimeLine(country)]
+    : [deliveryTimeLine(country), `Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`];
   const [idx, setIdx] = useState(0);
   const [shown, setShown] = useState(true);
 
@@ -459,7 +461,7 @@ function AnnouncementBar() {
   return (
     <div className="flex h-8 items-center justify-center border-b border-[#EBEBEB] bg-white px-4">
       <p
-        className={`text-center text-[10px] uppercase tracking-[0.16em] text-[#0a0a0a] transition-opacity duration-500 ease-out ${
+        className={`whitespace-nowrap text-center text-[10px] uppercase tracking-[0.16em] text-[#0a0a0a] transition-opacity duration-500 ease-out ${
           shown ? "opacity-100" : "opacity-0"
         }`}
       >

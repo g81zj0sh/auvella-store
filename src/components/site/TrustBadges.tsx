@@ -8,11 +8,9 @@ import { isFinalSale } from "@/lib/returnsPolicy";
  *
  * - Try-On Guarantee = the 30-day returns/exchanges (unworn, tags on); final-
  *   sale items (underwear, eye mask) show their final-sale line instead.
- * - "5–12 Day Direct Shipping", except where the shopper's own delivery
- *   window (dispatch + courier, the figure the bag and shipping popup quote)
- *   runs past 12 days: those countries see their real range (10 Oct 2026:
- *   7–13 for CA, AU, IE, IT, DK and ES; 6–13 for NZ), so the badge never
- *   promises less than the bag.
+ * - "4–9 Day Delivery" (v224, owner's brief: one delivery time everywhere):
+ *   the shopper's own window, order to door in working days - the figure the
+ *   top bar, the line under the price and the bag's estimate use.
  * - No-Roll Waistband Promise on items with a waistband (see hasWaistband),
  *   backed by the supplier's (Teemdrop) testing and customer base, per the
  *   owner, 10 Oct 2026. Everything else keeps Tracked delivery in that slot.
@@ -47,8 +45,7 @@ export function TrustBadges({
   productType?: string;
 }) {
   const { country } = useShippingCountry();
-  const [, max] = country.days.split(/\s*–\s*/).map(Number);
-  const days = max > 12 ? country.days.replace(/\s*–\s*/, "–") : "5–12";
+  const days = country.days.replace(/\s*–\s*/, "–");
   const badges: Badge[] = [
     isFinalSale(handle)
       ? {
@@ -65,8 +62,8 @@ export function TrustBadges({
         },
     {
       icon: PackageCheck,
-      title: `${days} Day Direct Shipping`,
-      detail: `Order to delivery, in business days, to ${country.name}`,
+      title: `${days} Day Delivery`,
+      detail: `Order to delivery, in working days, to ${country.name}`,
       slug: "shipping",
     },
     hasWaistband(title, productType)

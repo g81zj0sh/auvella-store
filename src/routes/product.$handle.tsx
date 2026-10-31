@@ -20,9 +20,7 @@ import {
   type BundleMode,
 } from "@/components/site/BundleBuilder";
 import { bundleVariant, type BundlePick } from "@/lib/bundlePicks";
-import { FreeShippingProgress } from "@/components/site/FreeShippingProgress";
 import { colourSwatchStyle } from "@/lib/swatch";
-import { bagTotals } from "@/lib/bagTotals";
 import { TrustBadges } from "@/components/site/TrustBadges";
 import { RatingBadge } from "@/components/site/RatingBadge";
 import { isFinalSale } from "@/lib/returnsPolicy";
@@ -76,13 +74,13 @@ import {
   inBundleDeal,
 } from "@/lib/bundleDeal";
 import {
-  bagFreeShipping,
   freeShippingThreshold,
   freeShippingThresholdFmt,
   useShippingCountry,
   PROCESSING_LABEL,
   transitLabel,
 } from "@/lib/shipping";
+import { addedToBagText, deliveryTimeLine, inFreeDeliveryCountry, isUnderwear } from "@/lib/freeDelivery";
 import { canonicalColour } from "@/lib/colourAliases";
 
 /*
@@ -344,8 +342,6 @@ function ProductPage() {
   const getCheckoutUrl = useCartStore((s) => s.getCheckoutUrl);
   const [buyingNow, setBuyingNow] = useState(false);
   const bagItems = useCartStore((s) => s.items);
-  const cartTotals = useCartStore((s) => s.totals);
-  const cartCodes = useCartStore((s) => s.discountCodes);
   /* What the main button last put in the bag (tier + variants), so the sticky
      bar can go straight to checkout instead of adding the same items again. */
   const [addedKey, setAddedKey] = useState<string | null>(null);
@@ -945,14 +941,10 @@ function ProductPage() {
       : !mixing && variant && !variant.availableForSale
         ? "Sold Out — Choose Another Size"
         : null;
-  /* Free-shipping progress: exactly the bag's standing - its value after
-     discounts (bagTotals) under the drawer's own rule (bagFreeShipping) - so
-     the box and the bag always show the same figure. This selection is NOT
-     added on top: once it is in the bag it counted twice (v158 said
-     "unlocked" while the bag said £27.01 to go). An empty bag quotes in the
-     shopper's currency, as the drawer and header do. */
-  const bag = bagTotals(bagItems, cartTotals, activeCurrency, cartCodes);
-  const bagShipping = bagFreeShipping(bag.payable, bag.baseCurrency);
+  /* v224 (lib/freeDelivery): pages that say "Free delivery on 2+ items" -
+     everything but underwear, in the free-delivery countries. Underwear keeps
+     the £60 line. */
+  const freeFromTwo = inFreeDeliveryCountry(shipCountry.code) && !isUnderwear(node?.productType);
 
   /* This exact selection (tier + variants) is what the main button last added
      and it is still in the bag: the sticky bar then just goes to checkout. */
@@ -1121,7 +1113,7 @@ function ProductPage() {
     setAddedKey(unitsKey);
     toast.success(
       count === 1
-        ? "Added to bag"
+        ? addedToBagText(useCartStore.getState()) // v224: with the offer while it's on
         : bundle
           ? `${count} pairs added — the bundle price shows in your bag`
           : tier.percent
@@ -1438,7 +1430,10 @@ function ProductPage() {
 
         {/* ============ INFO — disciplined hierarchy ============ */}
         <section className="px-5 pb-14 pt-4 lg:px-14 lg:pb-20 lg:pt-12 xl:px-20">
-          <div className="mx-auto w-full max-w-[480px] lg:mx-0">
+          {/* v224: on phones a column whose order puts the button group (ad
+              lines, Add to bag, promises) straight under the size picker and
+              Multi-buy below it, so Add to bag is a scroll from landing. */}
+          <div className="mx-auto flex w-full max-w-[480px] flex-col lg:mx-0 lg:block">
             <div className="hidden lg:block">
             {/* Breadcrumb and rating on one fixed-height line directly above
                 the title (no jump when the reviews load). */}
@@ -1477,12 +1472,12 @@ function ProductPage() {
             )}
             </div>
 
-            {/* Reassurance */}
+            {/* Reassurance (v224: free delivery on 2+, one delivery time) */}
             <div className="mt-0 space-y-1 text-[12px] leading-relaxed text-[#555555] lg:mt-6">
               <p className="font-medium text-[#0a0a0a]">
-                Free shipping on orders {shipThreshold}+
+                {freeFromTwo ? "Free delivery on 2+ items (excludes underwear)" : `Free shipping on orders ${shipThreshold}+`}
               </p>
-              <p>{transitLabel(shipCountry)} business day shipping (after dispatch)</p>
+              <p>{deliveryTimeLine(shipCountry)}</p>
               <p>
                 {isFinalSale(node.handle)
                   ? "Final sale for hygiene — faulty or wrong items replaced or refunded"
@@ -1708,7 +1703,7 @@ function ProductPage() {
               data.
             */}
             {multiBuy && (
-              <div>
+              <div className="max-lg:order-2">
                 <MultiBuySelector
                   name={`multibuy-${node.handle}`}
                   tiers={MULTI_BUY_TIERS}
@@ -1727,6 +1722,7 @@ function ProductPage() {
                   freeShipping={(t) =>
                     tierTotal(tierUnitPrices(t), t.percent) >= freeShippingThreshold(currency)
                   }
+                  freeDeliveryFromTwo={freeFromTwo}
                 />
                 {tier.quantity > 1 && (
                   <div className="mt-3 space-y-2 rounded-card border border-[#e6e4e0] bg-[#faf9f7] p-3">
@@ -1821,21 +1817,11 @@ function ProductPage() {
               </div>
             )}
 
-            {/* Friendly free-shipping progress right above the button (v158; the
-                bag's own figure since v159). */}
-            <div className="mt-7">
-              <FreeShippingProgress
-                value={bag.payable}
-                pending={bag.pending}
-                threshold={bagShipping.threshold}
-                cur={(n) => display(n, bag.baseCurrency)}
-              />
-            </div>
-
             {/* v223: this product's ad lines (AD_LINES), quiet, right above
-                the button so a phone shows them together. */}
+                the button so a phone shows them together. (v224: the £60
+                progress box that sat above them is gone.) */}
             {AD_LINES.has(node.handle) && (
-              <div className="mt-4 space-y-0.5 text-[12px] leading-relaxed text-[#555555]">
+              <div className="mt-7 space-y-0.5 text-[12px] leading-relaxed text-[#555555] max-lg:order-1">
                 {AD_LINES.get(node.handle)?.map((line, i) => (
                   <p key={line} className={i === 0 ? "font-medium text-[#0a0a0a]" : undefined}>
                     {line}
@@ -1848,7 +1834,7 @@ function ProductPage() {
                 full-width, solid --cta fill. Grey while a mixed bundle still
                 has pairs to pick (Step One does the same); a tap scrolls to
                 the builder. */}
-            <div className="mt-4">
+            <div className={`${AD_LINES.has(node.handle) ? "mt-4" : "mt-7"} max-lg:order-1`}>
             <button
               ref={atcRef}
               onClick={handleAdd}
@@ -1879,10 +1865,12 @@ function ProductPage() {
             </button>
             </div>
 
-            <TrustBadges handle={node.handle} title={node.title} productType={node.productType ?? ""} />
+            <div className="max-lg:order-1">
+              <TrustBadges handle={node.handle} title={node.title} productType={node.productType ?? ""} />
+            </div>
 
             {/* Tabs */}
-            <div className="mt-10">
+            <div className="mt-10 max-lg:order-3">
               <div className="flex gap-8 border-b border-[#EBEBEB] md:gap-10">
                 {(
                   [
@@ -1988,9 +1976,11 @@ function ProductPage() {
                 {tab === "shipping" && (
                   <div className="space-y-3">
                     <p>
-                      Free shipping to {shipDest} on orders over {shipThreshold}. Orders are
-                      dispatched within {PROCESSING_LABEL} business days, then shipping takes{" "}
-                      {transitLabel(shipCountry)} business days, tracked.
+                      {freeFromTwo
+                        ? `Free delivery to ${shipDest} on 2+ items (excludes underwear), or on orders over ${shipThreshold}.`
+                        : `Free shipping to ${shipDest} on orders over ${shipThreshold}.`}{" "}
+                      Orders are dispatched within {PROCESSING_LABEL} business days, then
+                      shipping takes {transitLabel(shipCountry)} business days, tracked.
                     </p>
                     <p>
                       {isFinalSale(node.handle)

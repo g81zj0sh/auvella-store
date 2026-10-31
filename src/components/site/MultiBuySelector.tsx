@@ -31,6 +31,10 @@ import { usePerkValues } from "@/lib/usePerkValues";
  * total - after its multi-buy saving, the figure Shopify checks - reaches the
  * free-shipping threshold in the shopper's currency. A card that doesn't get
  * there on its own says nothing, so the line is always true.
+ *
+ * v224 (owner's brief): where 2+ items ship free (lib/freeDelivery) the legend
+ * says "Buy 2 or more: free delivery" and every card from Buy 2 heads its band
+ * "Free delivery"; elsewhere the v210 figure still decides.
  */
 
 const PERKS: Record<
@@ -56,6 +60,8 @@ interface Props {
   name: string;
   /** True when this tier alone, after its saving, ships free (v210). */
   freeShipping?: (tier: MultiBuyTier) => boolean;
+  /** v224: delivery is free on 2+ items here, so Buy 2 and up ship free. */
+  freeDeliveryFromTwo?: boolean;
 }
 
 const NAMES: Record<MultiBuyTier["quantity"], { title: string; sub?: string }> = {
@@ -69,13 +75,24 @@ function badgeFor(t: MultiBuyTier): string | null {
   return t.quantity >= 3 ? `🔥 Best value · Save ${t.percent}%` : `Save ${t.percent}%`;
 }
 
-export function MultiBuySelector({ tiers, value, onChange, price, name, freeShipping }: Props) {
+export function MultiBuySelector({
+  tiers,
+  value,
+  onChange,
+  price,
+  name,
+  freeShipping,
+  freeDeliveryFromTwo,
+}: Props) {
   const worth = usePerkValues();
   return (
     <fieldset className="mt-7">
       <legend className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
         Multi-buy
       </legend>
+      {freeDeliveryFromTwo && (
+        <p className="mt-1 text-[12px] text-[#555555]">Buy 2 or more: free delivery</p>
+      )}
       {/* gap-4 leaves room for the badges, which sit across each card's top
           edge, so they never touch the card above. */}
       <div className="mt-5 grid grid-cols-1 gap-4">
@@ -86,7 +103,7 @@ export function MultiBuySelector({ tiers, value, onChange, price, name, freeShip
           const label = NAMES[t.quantity];
           const badge = badgeFor(t);
           const bold = t.quantity >= 3;
-          const shipsFree = !!freeShipping?.(t);
+          const shipsFree = freeDeliveryFromTwo ? t.quantity >= 2 : !!freeShipping?.(t);
           return (
             <label
               key={t.quantity}
@@ -177,7 +194,7 @@ export function MultiBuySelector({ tiers, value, onChange, price, name, freeShip
                         <Truck aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
                       </span>
                       <span className="min-w-0 flex-1 text-[12px] font-semibold uppercase leading-snug tracking-[0.04em]">
-                        You unlock free shipping
+                        Free delivery
                       </span>
                     </span>
                   )}

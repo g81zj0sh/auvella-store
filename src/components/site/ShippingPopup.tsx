@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { COUNTRIES, freeShippingThresholdFmt, inEea, useShippingCountry, transitLabel } from "@/lib/shipping";
+import { COUNTRIES, freeShippingThresholdFmt, inEea, useShippingCountry } from "@/lib/shipping";
+import { deliveryTimeLine, inFreeDeliveryCountry } from "@/lib/freeDelivery";
 import { usePreferences } from "@/lib/preferences";
 import { landedOnHome } from "@/lib/landing";
 
@@ -181,7 +182,10 @@ export function ShippingPopup() {
             <ul className="mt-3 space-y-0.5 md:mt-4 md:space-y-1">
               {[
                 <span key="ship" className="font-semibold">
-                  Free Shipping On Orders {thresholdFmt}+
+                  {/* v224: free delivery on 2+ items where it applies. */}
+                  {inFreeDeliveryCountry(country.code)
+                    ? "Free delivery on 2+ items (excludes underwear)"
+                    : `Free Shipping On Orders ${thresholdFmt}+`}
                 </span>,
                 <button
                   key="list"
@@ -191,10 +195,7 @@ export function ShippingPopup() {
                   Join the Auvella List for 10% off
                 </button>,
                 <span key="pay">Secure checkout with Apple&nbsp;Pay, Google&nbsp;Pay &amp; Shop&nbsp;Pay</span>,
-                <span key="days">
-                  Shipping Takes <span className="font-semibold">{transitLabel(country)}</span>{" "}
-                  Business Days
-                </span>,
+                <span key="days">{deliveryTimeLine(country)}</span>,
                 <span key="returns">Easy, tracked 30-day returns</span>,
               ].map((content, i) => (
                 <li
@@ -257,7 +258,7 @@ export function ShippingPopup() {
                       {c.the ? "the " : ""}
                       {c.name}
                     </span>
-                    <span className="text-[11px] text-[#888888]">{transitLabel(c)} days shipping</span>
+                    <span className="text-[11px] text-[#888888]">{c.days.replace(/\s*–\s*/, "–")} working days</span>
                   </button>
                 </li>
               ))}
