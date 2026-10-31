@@ -27,13 +27,15 @@ import { perkKindOf, type PerkKind } from "@/lib/perks";
 import { bagTotals } from "@/lib/bagTotals";
 import { freeShippingThreshold } from "@/lib/shipping";
 import {
-  OFFER_CODE,
+  FREE_DELIVERY_CODE,
   OFFER_ENDS,
+  OFFER_MINUTES,
   deliveryCount,
+  inFreeDeliveryCountry,
   offerEndsAt,
-  offerRunning,
-  wantedDeliveryCode,
+  wantedDelivery,
 } from "@/lib/freeDelivery";
+import { startDeliveryOffer } from "@/lib/deliveryOffer.functions";
 
 export interface CartItem {
   lineId: string | null;
@@ -91,9 +93,9 @@ interface CartStore {
    *  first add of an item that counts. Never reset, not even by emptying the
    *  bag, so the minutes never restart. */
   offerStartedAt: number | null;
-  /** v224: when checkout was opened while the offer was on. Its code then
-   *  stays on the cart, so that checkout stays free. Resets with the bag. */
-  offerCheckoutAt: number | null;
+  /** v226: the bag's own offer code (lib/deliveryOffer.functions), which
+   *  Shopify ends with the minutes. Kept, like offerStartedAt. */
+  offerCode: string | null;
   /** v224: the site's free-delivery code on the Shopify cart, and whether
    *  Shopify applies it - the bag only says "free" when it does. */
   deliveryCode: string | null;
@@ -108,6 +110,31 @@ let deliveryQueue: Promise<void> = Promise.resolve();
 /* The exact bag Shopify last refused the code for, so it isn't asked again
    until something changes. */
 let refusedKey: string | null = null;
+
+/* v226: the bag's own offer code, asked for once per offer (by its start
+   time, so a code always ends with the timer it was made for) - an add that
+   starts the offer asks alongside its own Shopify call. syncDeliveryCode
+   keeps it with the bag. A failed ask isn't repeated for a minute. */
+type OfferAsk = { startedAt: number; code: Promise<string | null> };
+let offerAsk: OfferAsk | null = null;
+let offerAskFailedAt = 0;
+function askOfferCode(startedAt: number): Promise<string | null> {
+  if (offerAsk?.startedAt === startedAt) return offerAsk.code;
+  const leftMs = Math.round(offerEndsAt(startedAt) - Date.now());
+  if (leftMs < 1000 || Date.now() - offerAskFailedAt < 60_000) return Promise.resolve(null);
+  const ask: OfferAsk = { startedAt, code: Promise.resolve(null) };
+  ask.code = startDeliveryOffer({ data: { leftMs: Math.min(leftMs, OFFER_MINUTES * 60_000) } })
+    .then((r) => r?.code ?? null, () => null)
+    .then((code) => {
+      if (!code) {
+        offerAskFailedAt = Date.now();
+        if (offerAsk === ask) offerAsk = null;
+      }
+      return code;
+    });
+  offerAsk = ask;
+  return ask.code;
+}
 
 /*
  * v225: one bag across tabs. Each tab keeps its own copy of the bag in memory
@@ -181,7 +208,7 @@ export const useCartStore = create<CartStore>()(
       perksDismissed: [],
       protectionOptIn: false,
       offerStartedAt: null,
-      offerCheckoutAt: null,
+      offerCode: null,
       deliveryCode: null,
       deliveryCodeApplies: false,
 
@@ -190,26 +217,41 @@ export const useCartStore = create<CartStore>()(
       syncDeliveryCode: () => {
         if (typeof window === "undefined") return Promise.resolve();
         const run = async () => {
-          const s = get();
+          let s = get();
           if (!s.cartId) {
             if (s.deliveryCode || s.deliveryCodeApplies) set({ deliveryCode: null, deliveryCodeApplies: false });
             return;
           }
-          const { payable, baseCurrency } = bagTotals(s.items, s.totals, "GBP", s.discountCodes);
           const country = storefrontCountry();
-          const want = wantedDeliveryCode({
-            items: s.items,
-            country,
-            payable,
-            threshold: freeShippingThreshold(baseCurrency),
-            startedAt: s.offerStartedAt,
-            checkoutAt: s.offerCheckoutAt,
-          });
+          const kindOf = (bag: CartStore) => {
+            const { payable, baseCurrency } = bagTotals(bag.items, bag.totals, "GBP", bag.discountCodes);
+            return wantedDelivery({
+              items: bag.items,
+              country,
+              payable,
+              threshold: freeShippingThreshold(baseCurrency),
+              startedAt: bag.offerStartedAt,
+            });
+          };
+          // v226: the offer's code is this bag's own (askOfferCode) - unless
+          // another tab already got one for it.
+          if (kindOf(s) === "offer" && !s.offerCode && s.offerStartedAt != null) {
+            const code = await askOfferCode(s.offerStartedAt);
+            s = get();
+            if (code && !s.offerCode) {
+              set({ offerCode: code });
+              s = get();
+            }
+          }
+          const cartId = s.cartId;
+          if (!cartId) return;
+          const kind = kindOf(s);
+          const want = kind === "2plus" ? FREE_DELIVERY_CODE : kind === "offer" ? s.offerCode : null;
           if (want === s.deliveryCode && (want === null || s.deliveryCodeApplies)) return;
-          const key = [s.cartId, want, cartLineKey(s.items), country, s.discountCodes.join(",")].join("|");
+          const key = [cartId, want, cartLineKey(s.items), country, s.discountCodes.join(",")].join("|");
           if (want && key === refusedKey) return;
           try {
-            const res = await setShopifyDiscountCodes(s.cartId, s.discountCodes, want ? [want] : []);
+            const res = await setShopifyDiscountCodes(cartId, s.discountCodes, want ? [want] : []);
             const applies = !!want && res.kept.some((k) => k.code.toUpperCase() === want && k.applicable);
             refusedKey = want && !applies ? key : null;
             const sameCodes = res.applied.join("|") === s.discountCodes.join("|");
@@ -247,7 +289,18 @@ export const useCartStore = create<CartStore>()(
       addItem: async (item, opts) => {
         // v225: the latest save (latestFirst) - a cart another tab made since
         // this one loaded is this tab's too, and so is the offer's start time.
-        const { items, cartId, clearCart } = get();
+        const { items, cartId, clearCart, offerStartedAt } = get();
+        // v226: an add that starts the offer starts it as it's tapped, and
+        // asks for the offer's code alongside its own Shopify call.
+        const offerStart = Date.now();
+        if (
+          offerStartedAt == null &&
+          offerStart < OFFER_ENDS &&
+          deliveryCount([item]).counted === 1 &&
+          inFreeDeliveryCountry(storefrontCountry())
+        ) {
+          void askOfferCode(offerStart);
+        }
         const existing = items.find((i) => i.variantId === item.variantId);
         set({ isLoading: true });
         // Only report AddToCart to Meta once Shopify has actually accepted the
@@ -335,8 +388,8 @@ export const useCartStore = create<CartStore>()(
           if (!opts?.quiet) announceBagAdd(item.product.node.handle);
           // v224: the offer's minutes start with the bag's first item that
           // counts (lib/freeDelivery) - once, ever, for this bag.
-          if (get().offerStartedAt == null && Date.now() < OFFER_ENDS && deliveryCount([item]).counted > 0) {
-            set({ offerStartedAt: Date.now() });
+          if (get().offerStartedAt == null && offerStart < OFFER_ENDS && deliveryCount([item]).counted > 0) {
+            set({ offerStartedAt: offerStart });
           }
           // v224: the right free-delivery code on the cart before the caller
           // toasts. Buy now (quiet) doesn't wait here: checkout's link waits
@@ -474,7 +527,8 @@ export const useCartStore = create<CartStore>()(
         set({ discountCodes: res.applied, ...deliveryAfter(res, deliveryCode) });
       },
 
-      // v224: offerStartedAt stays - emptying the bag never restarts the offer.
+      // v224: offerStartedAt stays - emptying the bag never restarts the offer
+      // (v226: nor gets it a new code).
       clearCart: () =>
         set({
           items: [],
@@ -483,7 +537,6 @@ export const useCartStore = create<CartStore>()(
           discountCodes: [],
           perksDismissed: [],
           protectionOptIn: false,
-          offerCheckoutAt: null,
           deliveryCode: null,
           deliveryCodeApplies: false,
         }),
@@ -537,19 +590,10 @@ export const useCartStore = create<CartStore>()(
        */
       resolveCheckoutUrl: async () => {
         const { cartId, items, checkoutUrl } = get();
-        // v224: checkout opened while the offer is on - its code stays on the
-        // cart from now (lib/freeDelivery). The bag's code is put right (a
-        // Shopify call only if it changes) alongside the link's own call, so
-        // the tap waits no longer.
-        const tapAt = Date.now();
-        const noteOffer = () => {
-          const bag = get();
-          if (bag.deliveryCode === OFFER_CODE && bag.deliveryCodeApplies && offerRunning(bag.offerStartedAt, tapAt)) {
-            set({ offerCheckoutAt: tapAt });
-          }
-        };
-        noteOffer();
-        const delivery = get().syncDeliveryCode().then(noteOffer, () => {});
+        // v224: the bag's free-delivery code is put right (a Shopify call only
+        // if it changes) alongside the link's own call, so the tap waits no
+        // longer.
+        const delivery = get().syncDeliveryCode().catch(() => {});
 
         // v220: this tap's link carries the cookie choice (lib/shopify,
         // visitorConsent). The stored copy doesn't: it can outlive a change
@@ -598,7 +642,7 @@ export const useCartStore = create<CartStore>()(
         });
         // v224: a new cart has no codes - its free-delivery code first.
         await delivery;
-        await get().syncDeliveryCode().then(noteOffer, () => {});
+        await get().syncDeliveryCode().catch(() => {});
         // v220: the rebuilt cart's link with the choice too.
         return (await linkFor(rebuilt.cartId).catch(() => null)) ?? rebuilt.checkoutUrl;
       },
@@ -635,7 +679,7 @@ export const useCartStore = create<CartStore>()(
         perksDismissed: state.perksDismissed,
         protectionOptIn: state.protectionOptIn,
         offerStartedAt: state.offerStartedAt,
-        offerCheckoutAt: state.offerCheckoutAt,
+        offerCode: state.offerCode,
         deliveryCode: state.deliveryCode,
         deliveryCodeApplies: state.deliveryCodeApplies,
       }),
