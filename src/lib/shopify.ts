@@ -1,6 +1,7 @@
 import { isHiddenProduct, withoutHidden } from "@/lib/perks";
 import { GALLERY_VIDEO_HANDLES } from "@/lib/galleryVideo";
 import { readConsent } from "@/lib/consent";
+import { SITE_DELIVERY_CODES } from "@/lib/freeDelivery";
 import { toast } from "sonner";
 
 export const SHOPIFY_API_VERSION = "2025-07";
@@ -364,7 +365,8 @@ export const CART_QUERY = `query cart($id: ID!) { cart(id: $id) { id totalQuanti
 
 /*
  * Shopify's own arithmetic for the bag: market prices per line, every
- * automatic or code discount it will apply, and the total it will charge.
+ * automatic or code discount it will apply, and the total it will charge
+ * for the goods (delivery is priced at checkout only).
  * The drawer shows these instead of mirroring the rules by hand, so the bag
  * and checkout agree to the penny in every market.
  */
@@ -402,6 +404,7 @@ const CART_TOTALS_QUERY = `
       cost { totalAmount { amount currencyCode } }
       discountCodes { code applicable }
       discountAllocations {
+        targetType
         discountedAmount { amount }
         ... on CartAutomaticDiscountAllocation { title }
         ... on CartCodeDiscountAllocation { code }
@@ -409,8 +412,10 @@ const CART_TOTALS_QUERY = `
       lines(first: 100) {
         edges { node {
           quantity
+          cost { totalAmount { amount } }
           merchandise { ... on ProductVariant { id price { amount currencyCode } compareAtPrice { amount currencyCode } } }
           discountAllocations {
+            targetType
             discountedAmount { amount }
             ... on CartAutomaticDiscountAllocation { title }
             ... on CartCodeDiscountAllocation { code }
@@ -425,12 +430,20 @@ export async function fetchCartTotals(cartId: string): Promise<CartTotals | null
   const data = await storefrontApiRequest(CART_TOTALS_QUERY, { id: cartId });
   const cart = data?.data?.cart;
   if (!cart?.cost?.totalAmount) return null;
+  /* v224: the goods only. A cart that has been to checkout carries the
+     delivery picked there - in cost.totalAmount, and as a shipping allocation
+     of a free-delivery code - so the total is the lines after their discounts,
+     less the cart-wide discounts on goods (an order code shows only there). */
+  const onGoods = (a: any) => a.targetType !== "SHIPPING_LINE";
+  const amount = (a: any) => parseFloat(a.discountedAmount?.amount ?? "0");
   const byLabel = new Map<string, number>();
   const add = (a: any) => {
     const label = a.title ?? a.code ?? "Discount";
-    byLabel.set(label, (byLabel.get(label) ?? 0) + parseFloat(a.discountedAmount?.amount ?? "0"));
+    byLabel.set(label, (byLabel.get(label) ?? 0) + amount(a));
   };
-  for (const a of cart.discountAllocations ?? []) add(a);
+  const cartOff = (cart.discountAllocations ?? []).filter(onGoods);
+  cartOff.forEach(add);
+  let goods = -cartOff.reduce((s: number, a: any) => s + amount(a), 0);
   const linePrices: CartTotals["linePrices"] = {};
   const lineCompareAt: NonNullable<CartTotals["lineCompareAt"]> = {};
   const lineUnits: Array<{ variantId: string; quantity: number }> = [];
@@ -439,11 +452,12 @@ export async function fetchCartTotals(cartId: string): Promise<CartTotals | null
     if (n.merchandise?.id && n.merchandise.price) linePrices[n.merchandise.id] = n.merchandise.price;
     if (n.merchandise?.id) lineCompareAt[n.merchandise.id] = n.merchandise.compareAtPrice ?? null;
     if (n.merchandise?.id) lineUnits.push({ variantId: n.merchandise.id, quantity: n.quantity ?? 0 });
-    for (const a of n.discountAllocations ?? []) add(a);
+    goods += parseFloat(n.cost?.totalAmount?.amount ?? "0");
+    (n.discountAllocations ?? []).filter(onGoods).forEach(add);
   }
   return {
     currency: cart.cost.totalAmount.currencyCode,
-    total: parseFloat(cart.cost.totalAmount.amount),
+    total: Math.round(goods * 100) / 100,
     discounts: [...byLabel.entries()].filter(([, v]) => v > 0).map(([label, amount]) => ({ label, amount: Math.round(amount * 100) / 100 })),
     linePrices,
     lineCompareAt,
@@ -451,7 +465,12 @@ export async function fetchCartTotals(cartId: string): Promise<CartTotals | null
     lineKey: cartLineKey(lineUnits),
     // Every code on the cart, applicable or not: the total already reflects
     // which ones apply, so totals stay usable for a code that stopped applying.
-    codes: (cart.discountCodes ?? []).map((c: { code: string }) => c.code.toUpperCase()).sort(),
+    // v224: but not the site's free-delivery codes - delivery isn't in a
+    // cart's total, and they aren't the shopper's codes the bag compares with.
+    codes: (cart.discountCodes ?? [])
+      .map((c: { code: string }) => c.code.toUpperCase())
+      .filter((c: string) => !SITE_DELIVERY_CODES.includes(c))
+      .sort(),
   };
 }
 
@@ -862,6 +881,8 @@ const CART_DISCOUNT_CODES_MUTATION = `
 
 export type DiscountResult = {
   applied: string[];
+  /** v224: the site's own codes (`keep`) and whether Shopify applies them. */
+  kept: Array<{ code: string; applicable: boolean }>;
   subtotal?: { amount: string; currencyCode: string };
   total?: { amount: string; currencyCode: string };
 };
@@ -873,8 +894,16 @@ export type DiscountResult = {
  * would otherwise sit there silently. If the code comes back applicable:false
  * we strip it straight back off and report failure, leaving only codes that
  * actually do something.
+ *
+ * v224: `keep` is the site's own free-delivery code (lib/freeDelivery), sent
+ * along so a shopper's code never knocks it off - and never blamed for a
+ * shopper's bad code. When the two can't combine, the shopper's code wins.
  */
-export async function setShopifyDiscountCodes(cartId: string, codes: string[]): Promise<DiscountResult> {
+export async function setShopifyDiscountCodes(
+  cartId: string,
+  codes: string[],
+  keep: string[] = [],
+): Promise<DiscountResult> {
   const run = async (list: string[]) => {
     let data;
     try {
@@ -892,14 +921,35 @@ export async function setShopifyDiscountCodes(cartId: string, codes: string[]): 
     }
     return data?.data?.cartDiscountCodesUpdate?.cart;
   };
-  const cart = await run(codes);
-  const rows: Array<{ code: string; applicable: boolean }> = cart?.discountCodes ?? [];
-  const good = rows.filter((r) => r.applicable).map((r) => r.code);
-  const bad = rows.filter((r) => !r.applicable).map((r) => r.code);
-  if (bad.length) {
-    const cleaned = await run(good);
-    if (bad.length && codes.length) throw new Error("That code isn't valid for this bag.");
-    return { applied: good, subtotal: cleaned?.cost?.subtotalAmount, total: cleaned?.cost?.totalAmount };
+  const isKept = (code: string) => keep.some((k) => k.toUpperCase() === code.toUpperCase());
+  const split = (c: any) => {
+    const rows: Array<{ code: string; applicable: boolean }> = c?.discountCodes ?? [];
+    const own = rows.filter((r) => !isKept(r.code));
+    return {
+      good: own.filter((r) => r.applicable).map((r) => r.code),
+      bad: own.filter((r) => !r.applicable).map((r) => r.code),
+      kept: rows.filter((r) => isKept(r.code)).map((r) => ({ code: r.code, applicable: r.applicable })),
+    };
+  };
+  const result = (c: any, applied: string[], kept: DiscountResult["kept"]): DiscountResult => ({
+    applied,
+    kept,
+    subtotal: c?.cost?.subtotalAmount,
+    total: c?.cost?.totalAmount,
+  });
+  const cart = await run([...codes, ...keep]);
+  const { good, bad, kept } = split(cart);
+  if (bad.length && keep.length) {
+    // Maybe it's only our code it can't sit with: try the shopper's codes alone.
+    const alone = await run(codes);
+    const retry = split(alone);
+    if (!retry.bad.length) return result(alone, retry.good, keep.map((code) => ({ code, applicable: false })));
   }
-  return { applied: good, subtotal: cart?.cost?.subtotalAmount, total: cart?.cost?.totalAmount };
+  const keptGood = kept.filter((k) => k.applicable).map((k) => k.code);
+  if (bad.length || keptGood.length < kept.length) {
+    const cleaned = await run([...good, ...keptGood]);
+    if (bad.length && codes.length) throw new Error("That code isn't valid for this bag.");
+    return result(cleaned, good, kept);
+  }
+  return result(cart, good, kept);
 }
