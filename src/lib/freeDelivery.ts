@@ -126,11 +126,15 @@ export function wantedDeliveryCode(bag: {
   return null;
 }
 
-/** The bag's offer line. */
-export function offerLine(minutes: number): string {
-  return minutes <= 1
-    ? "Free delivery if you check out in the next minute"
-    : `Free delivery if you check out in the next ${minutes} min`;
+/** v225 (owner, 31 Oct 2026: a timer like the old "reserved" one): the bag's
+ *  countdown. True as it stands - Shopify holds the free delivery on this bag
+ *  until the time runs out. */
+export const OFFER_TIMER_LABEL = "Free delivery reserved for";
+
+/** The countdown's time left: "09:42", ... "00:01", then "00:00" at the end. */
+export function offerClock(startedAt: number | null, now = Date.now()): string {
+  const s = Math.max(0, Math.ceil((offerEndsAt(startedAt) - now) / 1000));
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
 /* The offer's end in UK time, spelt out from fixed names so the server and
