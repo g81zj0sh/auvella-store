@@ -105,8 +105,11 @@ interface CartStore {
   syncDeliveryCode: () => Promise<void>;
 }
 
-/* v224: free-delivery code syncs run one at a time, in order. */
+/* v224: free-delivery code syncs run one at a time, in order. v227: one that
+   fails (Shopify busy, say) is tried again a few times, so the bag's code
+   isn't left stale until the next change. */
 let deliveryQueue: Promise<void> = Promise.resolve();
+let deliveryRetries = 0;
 /* The exact bag Shopify last refused the code for, so it isn't asked again
    until something changes. */
 let refusedKey: string | null = null;
@@ -255,6 +258,7 @@ export const useCartStore = create<CartStore>()(
             const applies = !!want && res.kept.some((k) => k.code.toUpperCase() === want && k.applicable);
             refusedKey = want && !applies ? key : null;
             const sameCodes = res.applied.join("|") === s.discountCodes.join("|");
+            deliveryRetries = 0;
             set({
               deliveryCode: applies ? want : null,
               deliveryCodeApplies: applies,
@@ -262,6 +266,7 @@ export const useCartStore = create<CartStore>()(
             });
           } catch (e) {
             console.warn("Free delivery code not updated:", e);
+            if (deliveryRetries++ < 3) setTimeout(() => void get().syncDeliveryCode(), 3000);
           }
         };
         deliveryQueue = deliveryQueue.then(run, run);
