@@ -85,6 +85,12 @@ export async function getAdminToken(
   return cachedToken.value;
 }
 
+/** Forget the cached token, so the next call mints one with the app's current
+ *  scopes (v226: one minted before a scope was granted lacks it). */
+export function dropAdminToken() {
+  cachedToken = null;
+}
+
 export type TrackingStage = 1 | 2 | 3 | 4 | 5;
 
 export type TrackedOrder = {

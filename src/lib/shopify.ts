@@ -1,7 +1,7 @@
 import { isHiddenProduct, withoutHidden } from "@/lib/perks";
 import { GALLERY_VIDEO_HANDLES } from "@/lib/galleryVideo";
 import { readConsent } from "@/lib/consent";
-import { SITE_DELIVERY_CODES } from "@/lib/freeDelivery";
+import { isSiteDeliveryCode } from "@/lib/freeDelivery";
 import { toast } from "sonner";
 
 export const SHOPIFY_API_VERSION = "2025-07";
@@ -469,7 +469,7 @@ export async function fetchCartTotals(cartId: string): Promise<CartTotals | null
     // cart's total, and they aren't the shopper's codes the bag compares with.
     codes: (cart.discountCodes ?? [])
       .map((c: { code: string }) => c.code.toUpperCase())
-      .filter((c: string) => !SITE_DELIVERY_CODES.includes(c))
+      .filter((c: string) => !isSiteDeliveryCode(c))
       .sort(),
   };
 }

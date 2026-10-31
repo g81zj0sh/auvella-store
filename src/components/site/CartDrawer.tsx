@@ -36,11 +36,11 @@ import { CartEditSheet } from "@/components/site/CartEditSheet";
 import { ensurePerks } from "@/components/site/PerkSync";
 import {
   FREE_DELIVERY_CODE,
-  OFFER_CODE,
   OFFER_TERMS,
   OFFER_TIMER_LABEL,
   deliveryCount,
   inFreeDeliveryCountry,
+  isOfferCode,
   offerClock,
   offerEndsAt,
   offerRunning,
@@ -67,7 +67,8 @@ import {
  * point, this brand's whole position is that it doesn't overstate.
  *
  *   Delivery line       — v224 (lib/freeDelivery): the real 10-minute offer
- *                         (v225: counting down, OfferTimer) while Shopify
+ *                         (v225: counting down, OfferTimer; v226: the bag's
+ *                         own code, which Shopify ends at 00:00) while Shopify
  *                         has its code on the bag, "free" only
  *                         when Shopify applies it, else the 2+ nudge; the £60
  *                         bar (bagFreeShipping) for underwear-only bags,
@@ -99,7 +100,7 @@ export function CartDrawer() {
     items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, resolveCheckoutUrl, syncCart,
     discountCodes, applyDiscountCode, removeDiscountCode,
     perksDismissed, protectionOptIn, setPerkPrefs,
-    offerStartedAt, offerCheckoutAt, deliveryCode, deliveryCodeApplies,
+    offerStartedAt, deliveryCode, deliveryCodeApplies,
   } = useCartStore();
   const favourites = useFavorites();
   const recentHandles = useRecentlyViewed((s) => s.handles);
@@ -195,22 +196,16 @@ export function CartDrawer() {
   const { counted } = deliveryCount(items);
   const inFreeDelivery = inFreeDeliveryCountry(country?.code);
   const [, setEndTick] = useState(0);
-  const offerLive = deliveryCode === OFFER_CODE && deliveryCodeApplies && offerRunning(offerStartedAt);
+  const offerLive = isOfferCode(deliveryCode) && deliveryCodeApplies && offerRunning(offerStartedAt);
   useEffect(() => {
     if (!open || !offerLive) return;
     // Re-render as the minutes end, so the countdown goes on time.
     const id = setTimeout(() => setEndTick((n) => n + 1), offerEndsAt(offerStartedAt) - Date.now() + 50);
     return () => clearTimeout(id);
   });
-  // The offer's code past its minutes is "free" only for a checkout opened in
-  // time - not in the moment before the bag takes it off.
-  const offerKept =
-    deliveryCode === OFFER_CODE &&
-    offerCheckoutAt != null &&
-    offerCheckoutAt < offerEndsAt(offerStartedAt);
-  const deliveryFree =
-    (deliveryCodeApplies && (deliveryCode === FREE_DELIVERY_CODE || (offerKept && !offerLive))) ||
-    (!pending && qualified);
+  // v226: the offer's code is never "free" past its minutes - Shopify ends it
+  // then, even in a checkout opened in time.
+  const deliveryFree = (deliveryCodeApplies && deliveryCode === FREE_DELIVERY_CODE) || (!pending && qualified);
   // A shopper's code that won't combine with free delivery (WELCOME10 and
   // AUVELLA10 combine with nothing): no "add 1 more" promise, and the £60
   // line once Shopify has refused the free-delivery code.

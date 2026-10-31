@@ -228,7 +228,8 @@ export const PAGES: Record<string, { title: string; description: string; body: R
           </LI>
         </ul>
         {/* v224 (owner's brief): free delivery on 2+ items and the 10-minute
-            offer (lib/freeDelivery). */}
+            offer (lib/freeDelivery). v226 (owner): the order has to be placed
+            within the minutes. */}
         <P>
           Free delivery on 2 or more items (or orders of £{FREE_SHIPPING_GBP}+). Underwear doesn't
           count towards the 2; an order of underwear only ships free from 5 pairs. Free delivery
@@ -236,11 +237,10 @@ export const PAGES: Record<string, { title: string; description: string; body: R
         </P>
         <P>
           Free delivery offer: until {OFFER_END_TEXT}, an order that would otherwise pay for
-          delivery ships free if you start checkout within {OFFER_MINUTES} minutes of first
-          adding an item other than underwear to your bag. The {OFFER_MINUTES} minutes start at
-          that first add and don't restart. Once you've started checkout within them, delivery
-          stays free on that checkout. Not for underwear-only orders, and not available for
-          delivery to Australia.
+          delivery ships free if you check out within {OFFER_MINUTES} minutes of first adding an
+          item other than underwear to your bag. The {OFFER_MINUTES} minutes start at that first
+          add and don't restart; an order placed after them pays for delivery as usual. Not for
+          underwear-only orders, and not available for delivery to Australia.
         </P>
         <H2>Delivery times</H2>
         <P>
