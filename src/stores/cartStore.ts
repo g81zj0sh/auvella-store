@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { create, type StateCreator, type StoreMutatorIdentifier } from "zustand";
+import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
 import {
   CART_QUERY,
   ShopifyProduct,
@@ -109,9 +109,68 @@ let deliveryQueue: Promise<void> = Promise.resolve();
    until something changes. */
 let refusedKey: string | null = null;
 
+/*
+ * v225: one bag across tabs. Each tab keeps its own copy of the bag in memory
+ * and saves the whole of it (auvella-cart) on every change, so a tab working
+ * from an old copy - opened before another tab's first add, or in the
+ * background while another tab changed the bag - started a second Shopify
+ * cart or put back lines that had gone, and its save replaced the bag. Now
+ * every read and save the bag's actions make starts from the latest save
+ * (latestFirst), and a tab on screen takes another tab's save at once.
+ */
+const BAG_KEY = "auvella-cart";
+/** The save this tab last wrote or read. */
+let seenBag: string | null = null;
+
+/** localStorage, noting what this tab saved or loaded. */
+function trackSaves(ls: Storage): StateStorage {
+  return {
+    getItem: (name) => (seenBag = ls.getItem(name)),
+    setItem: (name, value) => {
+      ls.setItem(name, value);
+      seenBag = value;
+    },
+    removeItem: (name) => {
+      ls.removeItem(name);
+      seenBag = null;
+    },
+  };
+}
+
+/** Take another tab's save, if there has been one since this tab's last. */
+function catchUp() {
+  try {
+    if (localStorage.getItem(BAG_KEY) === seenBag) return;
+  } catch {
+    return; // storage blocked: this tab's bag is the only one
+  }
+  void useCartStore.persist?.rehydrate();
+}
+
+type LatestFirst = <
+  T,
+  Mps extends [StoreMutatorIdentifier, unknown][] = [],
+  Mcs extends [StoreMutatorIdentifier, unknown][] = [],
+>(
+  f: StateCreator<T, Mps, Mcs>,
+) => StateCreator<T, Mps, Mcs>;
+/** The store's own get and set, each after catchUp. */
+const latestFirst = ((f: StateCreator<unknown, [], []>): StateCreator<unknown, [], []> =>
+  (set, get, api) => {
+    const freshSet = ((...a: Parameters<typeof set>) => {
+      catchUp();
+      set(...a);
+    }) as typeof set;
+    const freshGet: typeof get = () => {
+      catchUp();
+      return get();
+    };
+    return f(freshSet, freshGet, api);
+  }) as unknown as LatestFirst;
+
 export const useCartStore = create<CartStore>()(
   persist(
-    (set, get) => ({
+    latestFirst((set, get) => ({
       items: [],
       cartId: null,
       checkoutUrl: null,
@@ -186,12 +245,8 @@ export const useCartStore = create<CartStore>()(
       },
 
       addItem: async (item, opts) => {
-        // v224: a tab opened before another tab's first add still has no
-        // start time - take that tab's, so the minutes don't restart here.
-        if (get().offerStartedAt == null) {
-          const stored = storedOfferStart();
-          if (stored != null) set({ offerStartedAt: stored });
-        }
+        // v225: the latest save (latestFirst) - a cart another tab made since
+        // this one loaded is this tab's too, and so is the offer's start time.
         const { items, cartId, clearCart } = get();
         const existing = items.find((i) => i.variantId === item.variantId);
         set({ isLoading: true });
@@ -556,17 +611,19 @@ export const useCartStore = create<CartStore>()(
           const data = await storefrontApiRequest(CART_QUERY, { id: cartId });
           if (!data) return;
           const cart = data?.data?.cart;
-          if (!cart || cart.totalQuantity === 0) clearCart();
+          // v225: only while it is still the bag's cart - another tab may
+          // have moved the bag to a new one meanwhile.
+          if ((!cart || cart.totalQuantity === 0) && get().cartId === cartId) clearCart();
         } catch (e) {
           console.error("Sync failed:", e);
         } finally {
           set({ isSyncing: false });
         }
       },
-    }),
+    })),
     {
-      name: "auvella-cart",
-      storage: createJSONStorage(() => localStorage),
+      name: BAG_KEY,
+      storage: createJSONStorage(() => trackSaves(localStorage)),
       // Keep SSR and the first client render identical; persisted cart contents
       // are restored manually after mount from the root component.
       skipHydration: true,
@@ -585,16 +642,6 @@ export const useCartStore = create<CartStore>()(
     },
   ),
 );
-
-/** v224: the offer's start time as this browser last saved it (any tab). */
-function storedOfferStart(): number | null {
-  try {
-    const v = JSON.parse(localStorage.getItem("auvella-cart") ?? "null")?.state?.offerStartedAt;
-    return typeof v === "number" ? v : null;
-  } catch {
-    return null;
-  }
-}
 
 /** v224: the delivery-code state after a shopper's code change (lib/shopify). */
 function deliveryAfter(res: { kept: Array<{ code: string; applicable: boolean }> }, code: string | null) {
@@ -639,8 +686,20 @@ useCartStore.subscribe((state, prev) => {
   clearTimeout(deliveryTimer);
   deliveryTimer = setTimeout(() => void useCartStore.getState().syncDeliveryCode(), 400);
 });
+/* v225: a tab on screen takes another tab's save at once, one in the
+   background when it is shown again (its own reads and saves catch up
+   anyway). Not before the root component's first restore, so the first render
+   still matches the server's. */
+const catchUpOnScreen = () => {
+  if (document.visibilityState === "visible" && useCartStore.persist?.hasHydrated()) catchUp();
+};
 if (typeof document !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === BAG_KEY || e.key === null) catchUpOnScreen();
+  });
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") void useCartStore.getState().syncDeliveryCode();
+    if (document.visibilityState !== "visible") return;
+    catchUpOnScreen();
+    void useCartStore.getState().syncDeliveryCode();
   });
 }
