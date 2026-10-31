@@ -38,11 +38,11 @@ import {
   FREE_DELIVERY_CODE,
   OFFER_CODE,
   OFFER_TERMS,
+  OFFER_TIMER_LABEL,
   deliveryCount,
   inFreeDeliveryCountry,
+  offerClock,
   offerEndsAt,
-  offerLine,
-  offerMinutesLeft,
   offerRunning,
 } from "@/lib/freeDelivery";
 import { ProtectionIcon } from "@/components/site/ProtectionIcon";
@@ -60,13 +60,15 @@ import {
  * Bag drawer.
  *
  * Every persuasive line in here is derived from live data and renders nothing
- * when the data is missing. There is no timer, no invented stock figure, and
- * no "X people are looking at this". Under the UK DMCC Act fake scarcity is
- * a direct-fine offence; more to the point, this brand's whole position is
- * that it doesn't overstate.
+ * when the data is missing. The one timer is the free-delivery offer's own
+ * countdown, which runs to the moment its code comes off and never restarts;
+ * there is no invented stock figure, and no "X people are looking at this".
+ * Under the UK DMCC Act fake scarcity is a direct-fine offence; more to the
+ * point, this brand's whole position is that it doesn't overstate.
  *
  *   Delivery line       — v224 (lib/freeDelivery): the real 10-minute offer
- *                         while Shopify has its code on the bag, "free" only
+ *                         (v225: counting down, OfferTimer) while Shopify
+ *                         has its code on the bag, "free" only
  *                         when Shopify applies it, else the 2+ nudge; the £60
  *                         bar (bagFreeShipping) for underwear-only bags,
  *                         countries outside the free-delivery list and bags
@@ -192,13 +194,12 @@ export function CartDrawer() {
      Shopify applies it (the site's code, or the free rate from £60). */
   const { counted } = deliveryCount(items);
   const inFreeDelivery = inFreeDeliveryCountry(country?.code);
-  const [, setMinuteTick] = useState(0);
+  const [, setEndTick] = useState(0);
   const offerLive = deliveryCode === OFFER_CODE && deliveryCodeApplies && offerRunning(offerStartedAt);
   useEffect(() => {
     if (!open || !offerLive) return;
-    // Re-render as each minute ticks over (and at the end) - quietly, once a minute.
-    const left = offerEndsAt(offerStartedAt) - Date.now();
-    const id = setTimeout(() => setMinuteTick((n) => n + 1), (left % 60_000 || 60_000) + 50);
+    // Re-render as the minutes end, so the countdown goes on time.
+    const id = setTimeout(() => setEndTick((n) => n + 1), offerEndsAt(offerStartedAt) - Date.now() + 50);
     return () => clearTimeout(id);
   });
   // The offer's code past its minutes is "free" only for a checkout opened in
@@ -360,14 +361,11 @@ export function CartDrawer() {
           ) : (
             <>
               {/* ── Delivery — top of the drawer (v224, lib/freeDelivery) ──
-                  The offer in the bag's own text style: no box, no colour,
-                  no icon, and no live announcements - it changes once a
-                  minute and simply goes when the minutes end. */}
+                  v225 (owner): the offer counts down to the second in the
+                  old bag timer's green box, never announced, and goes when
+                  the minutes end. */}
               {offerLive && counted >= 1 ? (
-                <div className="px-6 pt-3 pb-3.5 border-b border-border">
-                  <p className="text-[13px] leading-snug text-ink">{offerLine(offerMinutesLeft(offerStartedAt))}</p>
-                  <p className="mt-1 text-[11px] leading-snug text-cocoa">{OFFER_TERMS}</p>
-                </div>
+                <OfferTimer startedAt={offerStartedAt} />
               ) : deliveryFree ? (
                 <div className="px-6 pt-3 pb-3.5 border-b border-border">
                   <p className="text-[13px] leading-snug font-semibold text-ink">Delivery is free on this order</p>
@@ -650,6 +648,31 @@ export function CartDrawer() {
 
       <CartEditSheet item={editing} open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }} />
     </>
+  );
+}
+
+/* ── Free-delivery countdown (v225) ────────────────────────────────────── */
+
+/** The offer's time left, to the second, in the old bag timer's green box -
+ *  but counting to the real end of the offer, never looping or restarting.
+ *  role="timer" is never announced. */
+function OfferTimer({ startedAt }: { startedAt: number | null }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="px-6 pt-3 pb-3.5 border-b border-border">
+      <p
+        role="timer"
+        className="rounded-control border border-[#94E374] bg-[#DCFFD3] px-4 py-[9px] text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-[#166534]"
+      >
+        {OFFER_TIMER_LABEL}{" "}
+        <span className="inline-block w-[5ch] text-left tabular-nums">{offerClock(startedAt, now)}</span>
+      </p>
+      <p className="mt-2 text-center text-[11px] leading-snug text-cocoa">{OFFER_TERMS}</p>
+    </div>
   );
 }
 
