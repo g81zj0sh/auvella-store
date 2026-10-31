@@ -193,7 +193,7 @@ export function CartDrawer() {
   /* v224 (lib/freeDelivery): the delivery line. The offer shows only while
      Shopify has its code on the bag and the minutes run; "free" only when
      Shopify applies it (the site's code, or the free rate from £60). */
-  const { counted } = deliveryCount(items);
+  const { counted, freeByRule } = deliveryCount(items);
   const inFreeDelivery = inFreeDeliveryCountry(country?.code);
   const [, setEndTick] = useState(0);
   const offerLive = isOfferCode(deliveryCode) && deliveryCodeApplies && offerRunning(offerStartedAt);
@@ -204,8 +204,10 @@ export function CartDrawer() {
     return () => clearTimeout(id);
   });
   // v226: the offer's code is never "free" past its minutes - Shopify ends it
-  // then, even in a checkout opened in time.
-  const deliveryFree = (deliveryCodeApplies && deliveryCode === FREE_DELIVERY_CODE) || (!pending && qualified);
+  // then, even in a checkout opened in time. v227: nor the 2+ code once the
+  // bag no longer earns it - not even while Shopify's answer is on its way.
+  const deliveryFree =
+    (deliveryCodeApplies && deliveryCode === FREE_DELIVERY_CODE && freeByRule) || (!pending && qualified);
   // A shopper's code that won't combine with free delivery (WELCOME10 and
   // AUVELLA10 combine with nothing): no "add 1 more" promise, and the £60
   // line once Shopify has refused the free-delivery code.
