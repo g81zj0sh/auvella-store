@@ -5,6 +5,7 @@ import { Loader2, Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cartStore";
+import { addedToBagText } from "@/lib/freeDelivery";
 import { useDisplayPrice, usePreferences } from "@/lib/preferences";
 import { sizeLabel } from "@/lib/sizeLabels";
 import { fetchProductByHandle, shopifyImg, type ShopifyProduct } from "@/lib/shopify";
@@ -222,7 +223,8 @@ function QuickAddBody({
         quantity: qty,
         selectedOptions: priceVariant.selectedOptions || [],
       });
-      toast.success("Added to bag", { position: "top-center" });
+      // v224: with the free-delivery offer once Shopify has it on the bag.
+      toast.success(addedToBagText(useCartStore.getState()), { position: "top-center" });
       onClose();
     } finally {
       setAdding(false);

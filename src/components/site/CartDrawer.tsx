@@ -33,8 +33,18 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { CartEditSheet } from "@/components/site/CartEditSheet";
-import { BagTimer } from "@/components/site/BagTimer";
 import { ensurePerks } from "@/components/site/PerkSync";
+import {
+  FREE_DELIVERY_CODE,
+  OFFER_CODE,
+  OFFER_TERMS,
+  deliveryCount,
+  inFreeDeliveryCountry,
+  offerEndsAt,
+  offerLine,
+  offerMinutesLeft,
+  offerRunning,
+} from "@/lib/freeDelivery";
 import { ProtectionIcon } from "@/components/site/ProtectionIcon";
 import { usePerkValues } from "@/lib/usePerkValues";
 import {
@@ -55,7 +65,12 @@ import {
  * a direct-fine offence; more to the point, this brand's whole position is
  * that it doesn't overstate.
  *
- *   Free-shipping bar   — bagFreeShipping(), same rule as the product page
+ *   Delivery line       — v224 (lib/freeDelivery): the real 10-minute offer
+ *                         while Shopify has its code on the bag, "free" only
+ *                         when Shopify applies it, else the 2+ nudge; the £60
+ *                         bar (bagFreeShipping) for underwear-only bags,
+ *                         countries outside the free-delivery list and bags
+ *                         with a shopper's code that won't combine with it
  *   "Only N left"       — Storefront quantityAvailable, < 40 only; the query
  *                         is rejected outright until the inventory scope is
  *                         enabled on the headless app, in which case nothing
@@ -82,6 +97,7 @@ export function CartDrawer() {
     items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, resolveCheckoutUrl, syncCart,
     discountCodes, applyDiscountCode, removeDiscountCode,
     perksDismissed, protectionOptIn, setPerkPrefs,
+    offerStartedAt, offerCheckoutAt, deliveryCode, deliveryCodeApplies,
   } = useCartStore();
   const favourites = useFavorites();
   const recentHandles = useRecentlyViewed((s) => s.handles);
@@ -170,6 +186,34 @@ export function CartDrawer() {
      the product page's progress box (lib/shipping.ts). While a code is still
      being priced (pending) the bar is left out rather than guess. */
   const { threshold, remaining, qualified, progress } = bagFreeShipping(payable, baseCurrency);
+
+  /* v224 (lib/freeDelivery): the delivery line. The offer shows only while
+     Shopify has its code on the bag and the minutes run; "free" only when
+     Shopify applies it (the site's code, or the free rate from £60). */
+  const { counted } = deliveryCount(items);
+  const inFreeDelivery = inFreeDeliveryCountry(country?.code);
+  const [, setMinuteTick] = useState(0);
+  const offerLive = deliveryCode === OFFER_CODE && deliveryCodeApplies && offerRunning(offerStartedAt);
+  useEffect(() => {
+    if (!open || !offerLive) return;
+    // Re-render as each minute ticks over (and at the end) - quietly, once a minute.
+    const left = offerEndsAt(offerStartedAt) - Date.now();
+    const id = setTimeout(() => setMinuteTick((n) => n + 1), (left % 60_000 || 60_000) + 50);
+    return () => clearTimeout(id);
+  });
+  // The offer's code past its minutes is "free" only for a checkout opened in
+  // time - not in the moment before the bag takes it off.
+  const offerKept =
+    deliveryCode === OFFER_CODE &&
+    offerCheckoutAt != null &&
+    offerCheckoutAt < offerEndsAt(offerStartedAt);
+  const deliveryFree =
+    (deliveryCodeApplies && (deliveryCode === FREE_DELIVERY_CODE || (offerKept && !offerLive))) ||
+    (!pending && qualified);
+  // A shopper's code that won't combine with free delivery (WELCOME10 and
+  // AUVELLA10 combine with nothing): no "add 1 more" promise, and the £60
+  // line once Shopify has refused the free-delivery code.
+  const codeBlocksDelivery = discountCodes.length > 0 && !deliveryCodeApplies;
 
   useEffect(() => {
     if (open) syncCart();
@@ -273,7 +317,6 @@ export function CartDrawer() {
             </SheetTitle>
             <SheetDescription className="sr-only">Items in your bag</SheetDescription>
           </SheetHeader>
-          {totalItems > 0 && <BagTimer />}
           {totalItems === 0 ? (
             /*
              * Empty bag. An empty drawer is still a shopper who opened the bag,
@@ -286,8 +329,14 @@ export function CartDrawer() {
               <div className="px-6 pt-10 pb-8 text-center">
                 <p className="font-serif text-[22px] font-light leading-tight text-ink">Nothing in here yet.</p>
                 <p className="mx-auto mt-3 max-w-[280px] text-[13px] leading-relaxed text-cocoa">
-                  Free delivery from {display(threshold, baseCurrency)}
-                  {country?.name ? ` to ${country.the ? "the " : ""}${country.name}` : ""}, and easy 30-day returns either way.
+                  {inFreeDelivery ? (
+                    <>Free delivery on 2+ items (excludes underwear), and easy 30-day returns either way.</>
+                  ) : (
+                    <>
+                      Free delivery from {display(threshold, baseCurrency)}
+                      {country?.name ? ` to ${country.the ? "the " : ""}${country.name}` : ""}, and easy 30-day returns either way.
+                    </>
+                  )}
                 </p>
                 <div className="mx-auto mt-6 flex max-w-[300px] flex-col gap-2">
                   <Button asChild className="h-11 w-full rounded-control bg-ink text-[11px] font-medium uppercase tracking-[0.18em] text-white hover:bg-ink/85">
@@ -310,12 +359,32 @@ export function CartDrawer() {
             </div>
           ) : (
             <>
-              {/* ── Free shipping — top of the drawer ─────────────────────
-                  v157: a 6px rounded bar with a 🚚 badge riding at the
-                  progress point. Once free shipping is unlocked the badge
-                  sits at the end and takes the timer's light green. The bar
-                  is inset by half the badge so the badge never clips. */}
-              {!pending && (
+              {/* ── Delivery — top of the drawer (v224, lib/freeDelivery) ──
+                  The offer in the bag's own text style: no box, no colour,
+                  no icon, and no live announcements - it changes once a
+                  minute and simply goes when the minutes end. */}
+              {offerLive && counted >= 1 ? (
+                <div className="px-6 pt-3 pb-3.5 border-b border-border">
+                  <p className="text-[13px] leading-snug text-ink">{offerLine(offerMinutesLeft(offerStartedAt))}</p>
+                  <p className="mt-1 text-[11px] leading-snug text-cocoa">{OFFER_TERMS}</p>
+                </div>
+              ) : deliveryFree ? (
+                <div className="px-6 pt-3 pb-3.5 border-b border-border">
+                  <p className="text-[13px] leading-snug font-semibold text-ink">Delivery is free on this order</p>
+                </div>
+              ) : inFreeDelivery && counted === 1 && !discountCodes.length ? (
+                <div className="px-6 pt-3 pb-3.5 border-b border-border">
+                  <p className="text-[13px] leading-snug text-cocoa">
+                    Add 1 more item and delivery is free (underwear doesn't count)
+                  </p>
+                </div>
+              ) : inFreeDelivery && counted >= 2 && !codeBlocksDelivery ? null : (
+              /* The £60 bar, for underwear-only bags and countries outside
+                 the free-delivery list. v157: a 6px rounded bar with a 🚚
+                 badge riding at the progress point. Once free shipping is
+                 unlocked the badge sits at the end and takes a light green.
+                 The bar is inset by half the badge so the badge never clips. */
+              !pending && (
               <div className="px-6 pt-3 pb-3.5 border-b border-border">
                 <p className="text-[13px] leading-snug text-cocoa">
                   {qualified ? (
@@ -355,6 +424,7 @@ export function CartDrawer() {
                   </span>
                 </div>
               </div>
+              )
               )}
 
               <div className="flex-1 overflow-y-auto min-h-0">
