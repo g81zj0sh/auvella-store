@@ -14,8 +14,8 @@ import { FREE_DELIVERY_COUNTRIES, OFFER_CODE_PREFIX, OFFER_ENDS, OFFER_MINUTES }
  * when the shopper's timer does (31 Oct 2026), so the bag asks here for a
  * code of its own: a Shopify free-shipping code for one order, in the
  * free-delivery countries, that Shopify itself ends with the bag's timer
- * (GRACE_MS after it; the bag takes it off at 00:00 itself). Strict, by the
- * owner's choice: a checkout opened in time but paid after loses it too.
+ * (the bag takes it off at 00:00 too). Strict, by the owner's choice: a
+ * checkout opened in time but paid after loses it too.
  *
  * Requires the `write_discounts` scope on the Dev Dashboard app version.
  *
@@ -28,8 +28,6 @@ import { FREE_DELIVERY_COUNTRIES, OFFER_CODE_PREFIX, OFFER_ENDS, OFFER_MINUTES }
    2025-07, which Shopify no longer serves as such). */
 const API_VERSION = "2026-10";
 const OFFER_MS = OFFER_MINUTES * 60_000;
-/** How long Shopify keeps a code past the bag's 00:00 - the time requests take. */
-const GRACE_MS = 30_000;
 /** No 0/O or 1/I; 32 characters, so a random byte maps onto them evenly. */
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -56,10 +54,12 @@ const ukTime = (ms: number) =>
 export const startDeliveryOffer = createServerFn({ method: "POST" })
   // The time the bag's timer has left, by the shopper's clock - so Shopify's
   // end (by Shopify's clock) lands on the bag's 00:00 whatever theirs says.
+  // No margin (v227): the request's own travel time already puts it a moment
+  // after 00:00, and v226's 30 s let a typed code work for those 30 s.
   .inputValidator(z.object({ leftMs: z.number().int().min(1000).max(OFFER_MS) }))
   .handler(async ({ data }): Promise<{ code: string } | null> => {
     const now = Date.now();
-    const endsAt = Math.min(now + data.leftMs + GRACE_MS, OFFER_ENDS);
+    const endsAt = Math.min(now + data.leftMs, OFFER_ENDS);
     if (endsAt <= now) return null;
     const code =
       OFFER_CODE_PREFIX + Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => ALPHABET[b % 32]).join("");
