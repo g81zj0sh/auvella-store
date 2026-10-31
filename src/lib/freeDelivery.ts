@@ -10,25 +10,37 @@ import type { Country } from "@/lib/shipping";
  * - 2 or more items that count, or 5+ pairs of underwear: free, always
  *   (FREE_DELIVERY_CODE).
  * - Until OFFER_ENDS, a bag that would otherwise pay gets free delivery if
- *   checkout is started within OFFER_MINUTES of its first add of an item that
- *   counts (OFFER_CODE). The minutes start once per bag and never restart.
+ *   it checks out within OFFER_MINUTES of its first add of an item that
+ *   counts. The minutes start once per bag and never restart.
  *
  * Both are Shopify free-shipping discount codes that the bag puts on the
  * Shopify cart itself (cartStore.syncDeliveryCode) - the shopper never types
- * them. Shopify holds the countries, the offer's end date and, for the 2+
- * code, a 2-item minimum; the counting below is the site's. Known gap (owner
- * accepted, 31 Oct 2026): the codes show at checkout, so one typed by hand
- * isn't checked against these rules.
+ * them. Shopify holds the countries, the end times and, for the 2+ code, a
+ * 2-item minimum; the counting below is the site's. Known gap (owner accepted,
+ * 31 Oct 2026): the 2+ code shows at checkout, so it can be typed by hand.
+ *
+ * v226 (owner, 31 Oct 2026): the offer's code is the bag's own
+ * (lib/deliveryOffer.functions), one order only, and Shopify ends it with the
+ * bag's timer - so once the minutes are up it works nowhere, typed or not,
+ * even in a checkout opened in time (the owner's choice: check out in time).
  */
 
 /** Shopify: "Free delivery on 2+ items (put on the bag by the site)". */
 export const FREE_DELIVERY_CODE = "FREE-DELIVERY-2PLUS";
-/** Shopify: "Free delivery 10-minute offer, until 10 Nov 23:59 UK ...". */
-export const OFFER_CODE = "FREE-DELIVERY-OFFER-K7Q4";
-export const SITE_DELIVERY_CODES = [FREE_DELIVERY_CODE, OFFER_CODE];
+/** v226: every bag's own offer code starts with this. */
+export const OFFER_CODE_PREFIX = "FREE-DELIVERY-OFFER-";
 
-/** The offer's last moment: Tue 10 Nov 2026, 23:59 UK time (GMT then). The
- *  Shopify code ends at the same moment. */
+export function isOfferCode(code: string | null | undefined): boolean {
+  return !!code && code.toUpperCase().startsWith(OFFER_CODE_PREFIX);
+}
+
+/** The site's own free-delivery codes, which aren't the shopper's. */
+export function isSiteDeliveryCode(code: string | null | undefined): boolean {
+  return !!code && (code.toUpperCase() === FREE_DELIVERY_CODE || isOfferCode(code));
+}
+
+/** The offer's last moment: Tue 10 Nov 2026, 23:59 UK time (GMT then). No
+ *  bag's code outlasts it. */
 export const OFFER_ENDS = Date.parse("2026-11-10T23:59:59Z");
 /** How long the offer runs from a bag's first add of an item that counts. */
 export const OFFER_MINUTES = 10;
@@ -101,34 +113,29 @@ export function offerMinutesLeft(startedAt: number | null, now = Date.now()): nu
 }
 
 /**
- * The free-delivery code this bag should carry, if any. `payable` and
- * `threshold` are the bag's total after discounts and the free-rate figure,
- * in the bag's currency: from £60 the rate is free anyway, no offer needed.
+ * Which free delivery this bag should carry, if any: the 2+ code, or the
+ * offer (v226: the bag's own code, cartStore). `payable` and `threshold` are
+ * the bag's total after discounts and the free-rate figure, in the bag's
+ * currency: from £60 the rate is free anyway, no offer needed.
  */
-export function wantedDeliveryCode(bag: {
+export function wantedDelivery(bag: {
   items: Line[];
   country: string | null | undefined;
   payable: number;
   threshold: number;
   startedAt: number | null;
-  checkoutAt: number | null;
   now?: number;
-}): string | null {
-  const now = bag.now ?? Date.now();
+}): "2plus" | "offer" | null {
   if (!inFreeDeliveryCountry(bag.country)) return null;
   const { counted, freeByRule } = deliveryCount(bag.items);
-  if (freeByRule) return FREE_DELIVERY_CODE;
+  if (freeByRule) return "2plus";
   if (counted < 1 || bag.payable >= bag.threshold) return null;
-  if (offerRunning(bag.startedAt, now)) return OFFER_CODE;
-  // Checkout was opened inside the minutes: the code stays on, so that
-  // checkout stays free however long they take to pay.
-  if (bag.checkoutAt != null && bag.checkoutAt < offerEndsAt(bag.startedAt) && now < OFFER_ENDS) return OFFER_CODE;
-  return null;
+  return offerRunning(bag.startedAt, bag.now) ? "offer" : null;
 }
 
 /** v225 (owner, 31 Oct 2026: a timer like the old "reserved" one): the bag's
  *  countdown. True as it stands - Shopify holds the free delivery on this bag
- *  until the time runs out. */
+ *  until the time runs out (v226: and ends it then). */
 export const OFFER_TIMER_LABEL = "Free delivery reserved for";
 
 /** The countdown's time left: "09:42", ... "00:01", then "00:00" at the end. */
@@ -150,7 +157,7 @@ const END_MONTH = MONTHS[Number(END.month) - 1];
 /** "23:59 UK time on Tuesday 10 November 2026" (the shipping policy). */
 export const OFFER_END_TEXT = `${END.hour}:${END.minute} UK time on ${DAYS[END.weekday]} ${Number(END.day)} ${END_MONTH} ${END.year}`;
 
-export const OFFER_TERMS = `Start checkout within ${OFFER_MINUTES} min of your first add to bag. Until ${Number(END.day)} ${END_MONTH.slice(0, 3)}. Not for underwear-only orders.`;
+export const OFFER_TERMS = `Check out within ${OFFER_MINUTES} min of your first add to bag. Until ${Number(END.day)} ${END_MONTH.slice(0, 3)}. Not for underwear-only orders.`;
 
 /** The "added to bag" toast: with the offer while Shopify has it on the bag. */
 export function addedToBagText(bag: {
@@ -158,7 +165,7 @@ export function addedToBagText(bag: {
   deliveryCodeApplies: boolean;
   offerStartedAt: number | null;
 }): string {
-  if (bag.deliveryCode !== OFFER_CODE || !bag.deliveryCodeApplies || !offerRunning(bag.offerStartedAt)) {
+  if (!isOfferCode(bag.deliveryCode) || !bag.deliveryCodeApplies || !offerRunning(bag.offerStartedAt)) {
     return "Added to bag";
   }
   const m = offerMinutesLeft(bag.offerStartedAt);
