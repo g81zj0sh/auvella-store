@@ -17,6 +17,12 @@ import { mediaUrl } from "@/lib/videoRange";
 /* Videos load from /media/ so they're answered in byte ranges (v198). */
 import heroVideoAssetImg from "@/assets/media/hero.mp4";
 const heroVideoAsset = { url: mediaUrl(heroVideoAssetImg) };
+/* v228 (owner): the second hero clip, a 16:9 cut and a 4:5 phone cut. */
+import heroStaircaseVideoImg from "@/assets/media/hero-staircase.mp4";
+import heroStaircaseMobileVideoImg from "@/assets/media/hero-staircase-mobile.mp4";
+const heroStaircaseVideo = { url: mediaUrl(heroStaircaseVideoImg), mobileUrl: mediaUrl(heroStaircaseMobileVideoImg) };
+/** How long one hero clip takes to fade into the next. */
+const HERO_FADE_MS = 800;
 import heroPosterAssetImg from "@/assets/media/hero-poster.jpg";
 const heroPosterAsset = { url: heroPosterAssetImg };
 import madeForBodyVideoImg from "@/assets/media/made-for-your-body.mp4";
@@ -309,21 +315,90 @@ function Index() {
   const [introGone, setIntroGone] = useState(true);
   const [minIntroDone, setMinIntroDone] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  /* v228: the second hero clip, and whichever clip is showing. */
+  const video2Ref = useRef<HTMLVideoElement>(null);
+  const showingRef = useRef<HTMLVideoElement | null>(null);
+  const [showSecond, setShowSecond] = useState(false);
 
   // Pause the hero video once it leaves the viewport — it otherwise keeps
-  // decoding frames for the entire scroll.
+  // decoding frames for the entire scroll. (v228: the clip that's showing.)
   useEffect(() => {
     const v = videoRef.current;
     if (!v || typeof IntersectionObserver === "undefined") return;
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) v.play().catch(() => {});
-        else v.pause();
+        const showing = showingRef.current ?? v;
+        if (entry.isIntersecting) showing.play().catch(() => {});
+        else showing.pause();
       },
       { threshold: 0.05 },
     );
     obs.observe(v);
     return () => obs.disconnect();
+  }, []);
+
+  /* v228 (owner): two clips take turns - the bedroom film, the staircase
+     walk, then the bedroom again - each fading into the next over its last
+     HERO_FADE_MS, so the loop never stops on a frame. The staircase clip is
+     the phone cut below 768px, like the collection banners, and only loads
+     once the first clip is playing, so it never holds up the opening frame.
+     If it isn't ready in time, the first clip just plays again. */
+  useEffect(() => {
+    const a = videoRef.current;
+    const b = video2Ref.current;
+    if (!a || !b) return;
+    showingRef.current = a;
+    let fading = false;
+    let fadeTimer: number | undefined;
+
+    const loadSecond = () => {
+      if (b.getAttribute("src")) return;
+      b.src = window.matchMedia("(min-width: 768px)").matches ? heroStaircaseVideo.url : heroStaircaseVideo.mobileUrl;
+      b.load();
+    };
+    const crossFade = () => {
+      const from = showingRef.current === b ? b : a;
+      const to = from === a ? b : a;
+      if (to.readyState < 3) return false;
+      fading = true;
+      from.loop = false; // ends on its last frame instead of jumping back to the first
+      to.loop = true; // keeps going if the next turn can't happen
+      to.currentTime = 0;
+      to.play().catch(() => {});
+      showingRef.current = to;
+      setShowSecond(to === b);
+      fadeTimer = window.setTimeout(() => {
+        from.pause();
+        from.currentTime = 0;
+        fading = false;
+      }, HERO_FADE_MS);
+      return true;
+    };
+    const onTime = (e: Event) => {
+      const v = e.currentTarget as HTMLVideoElement;
+      if (fading || v !== showingRef.current || !v.duration) return;
+      if (v.duration - v.currentTime <= HERO_FADE_MS / 1000) crossFade();
+    };
+    const onEnded = (e: Event) => {
+      const v = e.currentTarget as HTMLVideoElement;
+      if (v !== showingRef.current || crossFade()) return;
+      v.currentTime = 0;
+      v.play().catch(() => {});
+    };
+
+    for (const v of [a, b]) {
+      v.addEventListener("timeupdate", onTime);
+      v.addEventListener("ended", onEnded);
+    }
+    a.addEventListener("playing", loadSecond);
+    return () => {
+      window.clearTimeout(fadeTimer);
+      for (const v of [a, b]) {
+        v.removeEventListener("timeupdate", onTime);
+        v.removeEventListener("ended", onEnded);
+      }
+      a.removeEventListener("playing", loadSecond);
+    };
   }, []);
 
   useEffect(() => {
@@ -338,6 +413,9 @@ function Index() {
     };
 
     const tryPlay = () => {
+      // v228: not while the staircase clip has the turn (rewinding this one
+      // for its next turn fires canplay again).
+      if (showingRef.current && showingRef.current !== v) return;
       try {
         const p = v.play();
         if (p && typeof p.catch === "function") {
@@ -449,6 +527,17 @@ function Index() {
             playsInline
             preload="auto"
             className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* v228: the staircase clip, over the first and faded in on its
+              turn. No src until the first clip plays (see above). */}
+          <video
+            ref={video2Ref}
+            muted
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            style={{ transitionDuration: `${HERO_FADE_MS}ms` }}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity ease-in-out ${showSecond ? "opacity-100" : "opacity-0"}`}
           />
           {autoplayBlocked && (
             <img
