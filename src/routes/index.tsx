@@ -5,6 +5,7 @@ import { Footer } from "@/components/site/Footer";
 import { ShippingPopup } from "@/components/site/ShippingPopup";
 import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
 import { deliveryTimeLine, inFreeDeliveryCountry } from "@/lib/freeDelivery";
+import { DUO_DEAL } from "@/lib/duoDeal";
 import { usePreferences } from "@/lib/preferences";
 import { EditorialImage } from "@/components/site/EditorialImage";
 import { editorialSrc } from "@/lib/editorialImages";
@@ -21,8 +22,33 @@ const heroVideoAsset = { url: mediaUrl(heroVideoAssetImg) };
 import heroStaircaseVideoImg from "@/assets/media/hero-staircase.mp4";
 import heroStaircaseMobileVideoImg from "@/assets/media/hero-staircase-mobile.mp4";
 const heroStaircaseVideo = { url: mediaUrl(heroStaircaseVideoImg), mobileUrl: mediaUrl(heroStaircaseMobileVideoImg) };
-/** How long one hero clip takes to fade into the next. */
-const HERO_FADE_MS = 800;
+/** How long the next hero turn takes to slide in (v229, owner: a slide, not
+    v228's fade). The outgoing one slides out to the left meanwhile. */
+const HERO_SLIDE_MS = 900;
+/* v229 (owner): a still between the two clips - the Long Sleeve worn in Black
+   with the Bright Red on a hanger, for the multi-buy. A 16:9 cut and a 9:16
+   phone cut, each at two widths. */
+import heroStillImg from "@/assets/home/hero-rotation-desktop-1600.webp";
+import heroStillLargeImg from "@/assets/home/hero-rotation-desktop-2560.webp";
+import heroStillPhoneImg from "@/assets/home/hero-rotation-phone-960.webp";
+import heroStillPhoneLargeImg from "@/assets/home/hero-rotation-phone-1440.webp";
+/** How long the still stays up (its slide in included) before the next clip. */
+const HERO_STILL_MS = 6000;
+/** How far the still drifts in over its turn; none with reduced motion. */
+const HERO_STILL_ZOOM = 1.06;
+/** The product the still shows. */
+const HERO_STILL_HANDLE = "seamless-shaping-long-sleeve-bodysuit";
+/** The hero's turns: the bedroom film, the still, the staircase walk. */
+type HeroTurn = 0 | 1 | 2;
+/** Where a turn's layer is: showing, slid out to the left, or waiting on the right. */
+type HeroSpot = "in" | "left" | "right";
+/* Sliding in or out takes HERO_SLIDE_MS (set inline); going back to wait on
+   the right is instant, out of sight. With reduced motion the turns just cut. */
+const HERO_SPOT_CLASS: Record<HeroSpot, string> = {
+  in: "translate-x-0 transition-transform motion-reduce:transition-none",
+  left: "-translate-x-full transition-transform motion-reduce:transition-none",
+  right: "translate-x-full transition-none",
+};
 import heroPosterAssetImg from "@/assets/media/hero-poster.jpg";
 const heroPosterAsset = { url: heroPosterAssetImg };
 import madeForBodyVideoImg from "@/assets/media/made-for-your-body.mp4";
@@ -315,91 +341,199 @@ function Index() {
   const [introGone, setIntroGone] = useState(true);
   const [minIntroDone, setMinIntroDone] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
-  /* v228: the second hero clip, and whichever clip is showing. */
+  /* v228: the second hero clip. v229: the still between the clips, whose
+     turn it is, where each turn's layer is, the bars and the pause button. */
   const video2Ref = useRef<HTMLVideoElement>(null);
-  const showingRef = useRef<HTMLVideoElement | null>(null);
-  const [showSecond, setShowSecond] = useState(false);
+  const stillRef = useRef<HTMLImageElement>(null);
+  const stillBoxRef = useRef<HTMLDivElement>(null);
+  const barRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const turnRef = useRef<HeroTurn>(0);
+  const [turn, setTurn] = useState<HeroTurn>(0);
+  const [spots, setSpots] = useState<HeroSpot[]>(["in", "right", "right"]);
+  const [loadStill, setLoadStill] = useState(false);
+  const pausedRef = useRef(false);
+  const [paused, setPaused] = useState(false);
+  const pauseHeroRef = useRef<(paused: boolean) => void>(() => {});
+  const { country } = useShippingCountry();
+  const freeFromTwo = inFreeDeliveryCountry(country.code);
 
-  // Pause the hero video once it leaves the viewport — it otherwise keeps
-  // decoding frames for the entire scroll. (v228: the clip that's showing.)
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v || typeof IntersectionObserver === "undefined") return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        const showing = showingRef.current ?? v;
-        if (entry.isIntersecting) showing.play().catch(() => {});
-        else showing.pause();
-      },
-      { threshold: 0.05 },
-    );
-    obs.observe(v);
-    return () => obs.disconnect();
-  }, []);
-
-  /* v228 (owner): two clips take turns - the bedroom film, the staircase
-     walk, then the bedroom again - each fading into the next over its last
-     HERO_FADE_MS, so the loop never stops on a frame. The staircase clip is
-     the phone cut below 768px, like the collection banners, and only loads
-     once the first clip is playing, so it never holds up the opening frame.
-     If it isn't ready in time, the first clip just plays again. */
+  /* v228/v229 (owner): the hero takes three turns - the bedroom film, the
+     Daily Rotation still, then the staircase walk - like a slideshow: the
+     next turn slides in from the right over HERO_SLIDE_MS as the last one
+     slides out to the left, so the loop never stops on a frame. A film's turn
+     ends HERO_SLIDE_MS before its clip does (it plays out as it leaves); the
+     still's lasts HERO_STILL_MS. The still and the staircase clip (phone cuts
+     below 768px) only load once the first clip is playing, so they never hold
+     up the opening frame; one that isn't ready in time is skipped. One bar
+     per turn fills as it plays. Off screen, in a hidden tab or paused,
+     nothing moves on (the hero video used to decode frames for the entire
+     scroll). */
   useEffect(() => {
     const a = videoRef.current;
     const b = video2Ref.current;
     if (!a || !b) return;
-    showingRef.current = a;
-    let fading = false;
-    let fadeTimer: number | undefined;
+    const slideS = HERO_SLIDE_MS / 1000;
+    const drift = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const clip = (t: HeroTurn) => (t === 0 ? a : t === 2 ? b : null);
+    const stillReady = () => {
+      const img = stillRef.current;
+      return !!img && img.complete && img.naturalWidth > 0;
+    };
+    let inView = true;
+    let sliding = false;
+    let slideTimer: number | undefined;
+    let raf = 0;
+    let last = 0;
+    /** How long the still has been up this turn, its slide in included. */
+    let stillMs = 0;
+    let stillUp = false;
+    let restAsked = false;
 
-    const loadSecond = () => {
+    /* On the first clip's first timeupdate, not its "playing" event: the clip
+       usually starts before this effect is listening, and the rest then only
+       loaded once it had looped (v228 played it twice before the staircase). */
+    const loadRest = () => {
+      restAsked = true;
+      setLoadStill(true);
       if (b.getAttribute("src")) return;
       b.src = window.matchMedia("(min-width: 768px)").matches ? heroStaircaseVideo.url : heroStaircaseVideo.mobileUrl;
       b.load();
     };
-    const crossFade = () => {
-      const from = showingRef.current === b ? b : a;
-      const to = from === a ? b : a;
-      if (to.readyState < 3) return false;
-      fading = true;
-      from.loop = false; // ends on its last frame instead of jumping back to the first
-      to.loop = true; // keeps going if the next turn can't happen
-      to.currentTime = 0;
-      to.play().catch(() => {});
-      showingRef.current = to;
-      setShowSecond(to === b);
-      fadeTimer = window.setTimeout(() => {
-        from.pause();
-        from.currentTime = 0;
-        fading = false;
-      }, HERO_FADE_MS);
+
+    const handTo = (next: HeroTurn) => {
+      const from = turnRef.current;
+      const out = clip(from);
+      const into = clip(next);
+      sliding = true;
+      if (out) out.loop = false; // ends on its last frame instead of jumping back to the first
+      if (into) {
+        into.loop = true; // keeps going if the next turn can't happen
+        into.currentTime = 0;
+        if (inView && !pausedRef.current) into.play().catch(() => {});
+      }
+      if (next === 1) {
+        stillMs = 0;
+        stillUp = true;
+        if (stillBoxRef.current) stillBoxRef.current.style.transform = "";
+      }
+      turnRef.current = next;
+      setTurn(next);
+      setSpots((s) => s.map((spot, i) => (i === next ? "in" : i === from ? "left" : spot)));
+      slideTimer = window.setTimeout(() => {
+        if (out) {
+          out.pause();
+          out.currentTime = 0;
+        }
+        if (from === 1) stillUp = false;
+        // Out of sight, back round to the right for its next turn.
+        setSpots((s) => s.map((spot, i) => (i === from && spot === "left" ? "right" : spot)));
+        sliding = false;
+      }, HERO_SLIDE_MS);
       return true;
+    };
+    /** After the first clip the still, else the staircase, else nothing (the
+        clip loops); after the still the staircase, else the first clip. */
+    const advance = () => {
+      const t = turnRef.current;
+      if (t === 0) {
+        if (stillReady()) return handTo(1);
+        if (b.readyState >= 3) return handTo(2);
+        return false;
+      }
+      return handTo(t === 1 && b.readyState >= 3 ? 2 : 0);
     };
     const onTime = (e: Event) => {
       const v = e.currentTarget as HTMLVideoElement;
-      if (fading || v !== showingRef.current || !v.duration) return;
-      if (v.duration - v.currentTime <= HERO_FADE_MS / 1000) crossFade();
+      if (!restAsked && v === a && v.currentTime > 0) loadRest();
+      if (sliding || v !== clip(turnRef.current) || !v.duration) return;
+      if (v.duration - v.currentTime <= slideS) advance();
     };
     const onEnded = (e: Event) => {
       const v = e.currentTarget as HTMLVideoElement;
-      if (v !== showingRef.current || crossFade()) return;
+      if (v !== clip(turnRef.current) || advance()) return;
       v.currentTime = 0;
       v.play().catch(() => {});
     };
+
+    // Once a frame while running: the still's clock and drift, and the bars.
+    const filled = (v: HTMLVideoElement) => (v.duration > slideS ? Math.min(1, v.currentTime / (v.duration - slideS)) : 0);
+    const tick = (now: number) => {
+      raf = 0;
+      const dt = last ? Math.min(now - last, 100) : 0;
+      last = now;
+      const t = turnRef.current;
+      if (stillUp) {
+        stillMs += dt;
+        const box = stillBoxRef.current;
+        if (box && drift) box.style.transform = `scale(${1 + (HERO_STILL_ZOOM - 1) * Math.min(1, stillMs / (HERO_STILL_MS + HERO_SLIDE_MS))})`;
+      }
+      if (t === 1 && !sliding && stillMs >= HERO_STILL_MS) advance();
+      const fill = t === 0 ? [filled(a), 0, 0] : t === 1 ? [1, Math.min(1, stillMs / HERO_STILL_MS), 0] : [1, 1, filled(b)];
+      barRefs.current.forEach((el, i) => {
+        if (el) el.style.transform = `scaleX(${fill[i]})`;
+      });
+      run();
+    };
+    const run = () => {
+      if (!raf && inView && !pausedRef.current && !document.hidden) raf = requestAnimationFrame(tick);
+    };
+    const halt = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      last = 0;
+    };
+    /** Play or stop what's showing and the clock together. */
+    const sync = () => {
+      const v = clip(turnRef.current);
+      if (inView && !pausedRef.current) {
+        v?.play().catch(() => {});
+        run();
+      } else {
+        v?.pause();
+        halt();
+      }
+    };
+    pauseHeroRef.current = (p) => {
+      pausedRef.current = p;
+      sync();
+    };
+    const obs =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(
+            ([entry]) => {
+              inView = entry.isIntersecting;
+              sync();
+            },
+            { threshold: 0.05 },
+          );
+    // The hero box, not a turn's layer: those slide out of sight in turn.
+    obs?.observe(a.parentElement ?? a);
+    const onVisibility = () => (document.hidden ? halt() : run());
 
     for (const v of [a, b]) {
       v.addEventListener("timeupdate", onTime);
       v.addEventListener("ended", onEnded);
     }
-    a.addEventListener("playing", loadSecond);
+    document.addEventListener("visibilitychange", onVisibility);
+    run();
     return () => {
-      window.clearTimeout(fadeTimer);
+      window.clearTimeout(slideTimer);
+      halt();
+      obs?.disconnect();
       for (const v of [a, b]) {
         v.removeEventListener("timeupdate", onTime);
         v.removeEventListener("ended", onEnded);
       }
-      a.removeEventListener("playing", loadSecond);
+      document.removeEventListener("visibilitychange", onVisibility);
+      pauseHeroRef.current = () => {};
     };
   }, []);
+
+  const togglePaused = () => {
+    setPaused(!pausedRef.current);
+    pauseHeroRef.current(!pausedRef.current);
+  };
 
   useEffect(() => {
     const v = videoRef.current;
@@ -413,9 +547,9 @@ function Index() {
     };
 
     const tryPlay = () => {
-      // v228: not while the staircase clip has the turn (rewinding this one
-      // for its next turn fires canplay again).
-      if (showingRef.current && showingRef.current !== v) return;
+      // v228: not while another turn is on (rewinding this one for its next
+      // turn fires canplay again). v229: nor once the hero is paused.
+      if (turnRef.current !== 0 || pausedRef.current) return;
       try {
         const p = v.play();
         if (p && typeof p.catch === "function") {
@@ -516,8 +650,10 @@ function Index() {
         {/* v203 (owner): straight into the video - no still poster first. Until
             the first frame arrives the box is the video's own opening colour
             (average of frame 0); the still shows only if the browser refuses
-            to autoplay (iPhone Low Power Mode, data saver). */}
-        <div className="relative w-full h-screen bg-[#7c6952] md:aspect-[21/9] md:h-auto lg:aspect-auto lg:h-screen">
+            to autoplay (iPhone Low Power Mode, data saver). v229: 4:3 on
+            tablets, not 21:9 - the words ran up into the header there. */}
+        <div className="relative w-full h-screen overflow-hidden bg-[#7c6952] md:aspect-[4/3] md:h-auto md:max-h-screen lg:aspect-auto lg:h-screen">
+          {/* v229: each turn's layer slides in and out (HERO_SPOT_CLASS). */}
           <video
             ref={videoRef}
             src={heroVideo}
@@ -526,18 +662,50 @@ function Index() {
             loop
             playsInline
             preload="auto"
-            className="absolute inset-0 h-full w-full object-cover"
+            style={{ transitionDuration: `${HERO_SLIDE_MS}ms` }}
+            className={`absolute inset-0 h-full w-full object-cover will-change-transform ease-[cubic-bezier(0.77,0,0.175,1)] ${HERO_SPOT_CLASS[spots[0]]}`}
           />
-          {/* v228: the staircase clip, over the first and faded in on its
-              turn. No src until the first clip plays (see above). */}
+          {/* v229: the still, waiting on the right until its turn. Not loaded
+              until the first clip plays (see above). Wide screens keep her
+              left of the words. */}
+          <div
+            aria-hidden="true"
+            style={{ transitionDuration: `${HERO_SLIDE_MS}ms` }}
+            className={`absolute inset-0 overflow-hidden will-change-transform ease-[cubic-bezier(0.77,0,0.175,1)] ${HERO_SPOT_CLASS[spots[1]]}`}
+          >
+            {loadStill && (
+              <div ref={stillBoxRef} className="absolute inset-0 will-change-transform">
+                <picture>
+                  <source
+                    media="(min-width: 768px)"
+                    srcSet={`${heroStillImg} 1600w, ${heroStillLargeImg} 2560w`}
+                    sizes="100vw"
+                  />
+                  <img
+                    ref={stillRef}
+                    src={heroStillPhoneImg}
+                    srcSet={`${heroStillPhoneImg} 960w, ${heroStillPhoneLargeImg} 1440w`}
+                    sizes="125vw"
+                    alt=""
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-cover md:object-[80%_50%]"
+                  />
+                </picture>
+              </div>
+            )}
+            {/* Phones: the words sit over her cream trousers, so a deeper shade there. */}
+            <div className="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-ink/85 via-ink/55 via-45% to-transparent md:hidden" />
+          </div>
+          {/* v228: the staircase clip, waiting on the right until its turn. No
+              src until the first clip plays (see above). */}
           <video
             ref={video2Ref}
             muted
             playsInline
             preload="auto"
             aria-hidden="true"
-            style={{ transitionDuration: `${HERO_FADE_MS}ms` }}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity ease-in-out ${showSecond ? "opacity-100" : "opacity-0"}`}
+            style={{ transitionDuration: `${HERO_SLIDE_MS}ms` }}
+            className={`absolute inset-0 h-full w-full object-cover will-change-transform ease-[cubic-bezier(0.77,0,0.175,1)] ${HERO_SPOT_CLASS[spots[2]]}`}
           />
           {autoplayBlocked && (
             <img
@@ -552,41 +720,117 @@ function Index() {
           <div className="absolute inset-0 bg-gradient-to-l from-ink/70 via-ink/30 to-transparent" />
         </div>
 
-        {/* Bottom-right text overlay */}
-        <div className="absolute bottom-0 right-0 p-6 md:p-12 lg:p-16 max-w-xl text-right">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-cream/80 mb-4">The Auvella Edit</p>
-          <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-cream leading-[1.05]">
-            Built for the day, not the photo.
-          </h1>
-          <p className="mt-4 text-sm md:text-base text-cream/80 leading-relaxed max-w-md ml-auto">
-            Shapewear, bras and lounge built to hold where it helps and stay put all day.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-end gap-3">
-            {/* Straight into the collection, same as the bag/favourites/account
-                buttons — not a scroll down to the tile that links there. */}
-            <Link
-              to="/collections/$handle"
-              params={{ handle: "everyday-support-edit" }}
-              className="inline-flex items-center justify-center rounded-control bg-cream text-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-white transition-colors"
-            >
-              Shop Best Sellers
-            </Link>
-            <a
-              href="#sleep"
-              onClick={(e) => {
-                // Glide down to the four tiles instead of the instant anchor jump.
-                if (smoothScrollToId("sleep")) e.preventDefault();
-              }}
-              className="inline-flex items-center justify-center rounded-control bg-transparent text-cream border border-cream/40 px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-cream/10 transition-colors"
-            >
-              Explore Sleep &amp; Lounge
-            </a>
+        {/* Bottom-right text overlay. v229: the films' words and the still's
+            share the spot and swap with the turn (the hidden set is inert);
+            the bottom padding leaves room for the bars. */}
+        <div className="absolute bottom-0 right-0 grid max-w-xl px-6 pt-6 pb-14 text-right md:p-12 md:pb-16 lg:p-16 lg:pb-20">
+          <div
+            inert={turn === 1}
+            className={`col-start-1 row-start-1 self-end transition-opacity duration-500 ${turn === 1 ? "opacity-0" : "opacity-100 delay-300"}`}
+          >
+            <p className="text-[11px] uppercase tracking-[0.28em] text-cream/80 mb-4">The Auvella Edit</p>
+            <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-cream leading-[1.05]">
+              Built for the day, not the photo.
+            </h1>
+            <p className="mt-4 text-sm md:text-base text-cream/80 leading-relaxed max-w-md ml-auto">
+              Shapewear, bras and lounge built to hold where it helps and stay put all day.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              {/* Straight into the collection, same as the bag/favourites/account
+                  buttons — not a scroll down to the tile that links there. */}
+              <Link
+                to="/collections/$handle"
+                params={{ handle: "everyday-support-edit" }}
+                className="inline-flex items-center justify-center rounded-control bg-cream text-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-white transition-colors"
+              >
+                Shop Best Sellers
+              </Link>
+              <a
+                href="#sleep"
+                onClick={(e) => {
+                  // Glide down to the four tiles instead of the instant anchor jump.
+                  if (smoothScrollToId("sleep")) e.preventDefault();
+                }}
+                className="inline-flex items-center justify-center rounded-control bg-transparent text-cream border border-cream/40 px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-cream/10 transition-colors"
+              >
+                Explore Sleep &amp; Lounge
+              </a>
+            </div>
+            <p className="mt-4 text-xs text-cream/60 max-w-md ml-auto leading-relaxed">
+              Loved by women for everyday comfort, sculpting support and elevated softness.
+            </p>
           </div>
-          <p className="mt-4 text-xs text-cream/60 max-w-md ml-auto leading-relaxed">
-            Loved by women for everyday comfort, sculpting support and elevated softness.
-          </p>
+          {/* v229: the still's words - the multi-buy (lib/duoDeal, lib/perks:
+              the wash bag comes with 3+ of one style), no deadline. */}
+          <div
+            inert={turn !== 1}
+            className={`col-start-1 row-start-1 self-end transition-opacity duration-500 ${turn === 1 ? "opacity-100 delay-300" : "opacity-0"}`}
+          >
+            <p className="text-[11px] uppercase tracking-[0.28em] text-cream/80 mb-3">The Daily Rotation</p>
+            <p className="font-serif text-[44px] italic leading-[0.98] text-cream md:text-5xl xl:text-[52px] 2xl:text-[64px]">
+              One on.
+              <br />
+              One in the wash.
+            </p>
+            <p className="mt-4 text-[15px] leading-snug text-cream md:text-[17px]">
+              {DUO_DEAL.percent}% off two. {DUO_DEAL.stockUpPercent}% off three or more,
+              <br />
+              plus a free wash bag.
+            </p>
+            <div className="mt-6 flex justify-end">
+              <Link
+                to="/product/$handle"
+                params={{ handle: HERO_STILL_HANDLE }}
+                className="inline-flex items-center justify-center rounded-control bg-cream text-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.2em] hover:bg-white transition-colors"
+              >
+                Shop the Long Sleeve
+              </Link>
+            </div>
+            <p className="mt-4 text-xs text-cream/60 leading-relaxed">
+              Mix sizes and colours of one style. Selected styles.
+              {freeFromTwo && (
+                <>
+                  <br />
+                  Free delivery on 2+ items (excl. underwear).
+                </>
+              )}
+            </p>
+          </div>
         </div>
 
+        {/* v229 (owner): one bar per turn, filling as it plays, and a pause. */}
+        <div className="absolute left-6 right-6 bottom-5 flex items-center gap-3 md:left-auto md:right-12 md:bottom-7 md:w-72 lg:right-16 lg:bottom-9 lg:w-80">
+          <div className="flex flex-1 gap-1.5" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <span key={i} className="relative h-[2px] flex-1 overflow-hidden rounded-full bg-cream/30">
+                <span
+                  ref={(el) => {
+                    barRefs.current[i] = el;
+                  }}
+                  style={{ transform: "scaleX(0)" }}
+                  className="absolute inset-0 origin-left bg-cream"
+                />
+              </span>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={togglePaused}
+            aria-label={paused ? "Play slideshow" : "Pause slideshow"}
+            className="-m-2 flex h-8 w-8 items-center justify-center text-cream/80 transition-colors hover:text-cream"
+          >
+            {paused ? (
+              <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor" aria-hidden="true">
+                <path d="M0 0.8v10.4a.6.6 0 0 0 .9.5l8.6-5.2a.6.6 0 0 0 0-1L.9.3A.6.6 0 0 0 0 .8z" />
+              </svg>
+            ) : (
+              <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="0" width="3" height="12" rx="0.5" />
+                <rect x="7" y="0" width="3" height="12" rx="0.5" />
+              </svg>
+            )}
+          </button>
+        </div>
       </section>
 
       <EssentialsSection />
