@@ -34,8 +34,6 @@ import heroStillPhoneImg from "@/assets/home/hero-rotation-phone-960.webp";
 import heroStillPhoneLargeImg from "@/assets/home/hero-rotation-phone-1440.webp";
 /** How long the still stays up (its slide in included) before the next clip. */
 const HERO_STILL_MS = 6000;
-/** How far the still drifts in over its turn; none with reduced motion. */
-const HERO_STILL_ZOOM = 1.06;
 /** The product the still shows. */
 const HERO_STILL_HANDLE = "seamless-shaping-long-sleeve-bodysuit";
 /** The hero's turns: the bedroom film, the still, the staircase walk. */
@@ -345,7 +343,6 @@ function Index() {
      turn it is, where each turn's layer is, the bars and the pause button. */
   const video2Ref = useRef<HTMLVideoElement>(null);
   const stillRef = useRef<HTMLImageElement>(null);
-  const stillBoxRef = useRef<HTMLDivElement>(null);
   const barRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const turnRef = useRef<HeroTurn>(0);
   const [turn, setTurn] = useState<HeroTurn>(0);
@@ -373,7 +370,6 @@ function Index() {
     const b = video2Ref.current;
     if (!a || !b) return;
     const slideS = HERO_SLIDE_MS / 1000;
-    const drift = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const clip = (t: HeroTurn) => (t === 0 ? a : t === 2 ? b : null);
     const stillReady = () => {
       const img = stillRef.current;
@@ -386,7 +382,6 @@ function Index() {
     let last = 0;
     /** How long the still has been up this turn, its slide in included. */
     let stillMs = 0;
-    let stillUp = false;
     let restAsked = false;
 
     /* On the first clip's first timeupdate, not its "playing" event: the clip
@@ -411,11 +406,7 @@ function Index() {
         into.currentTime = 0;
         if (inView && !pausedRef.current) into.play().catch(() => {});
       }
-      if (next === 1) {
-        stillMs = 0;
-        stillUp = true;
-        if (stillBoxRef.current) stillBoxRef.current.style.transform = "";
-      }
+      if (next === 1) stillMs = 0;
       turnRef.current = next;
       setTurn(next);
       setSpots((s) => s.map((spot, i) => (i === next ? "in" : i === from ? "left" : spot)));
@@ -424,7 +415,6 @@ function Index() {
           out.pause();
           out.currentTime = 0;
         }
-        if (from === 1) stillUp = false;
         // Out of sight, back round to the right for its next turn.
         setSpots((s) => s.map((spot, i) => (i === from && spot === "left" ? "right" : spot)));
         sliding = false;
@@ -455,18 +445,14 @@ function Index() {
       v.play().catch(() => {});
     };
 
-    // Once a frame while running: the still's clock and drift, and the bars.
+    // Once a frame while running: the still's clock and the bars.
     const filled = (v: HTMLVideoElement) => (v.duration > slideS ? Math.min(1, v.currentTime / (v.duration - slideS)) : 0);
     const tick = (now: number) => {
       raf = 0;
       const dt = last ? Math.min(now - last, 100) : 0;
       last = now;
       const t = turnRef.current;
-      if (stillUp) {
-        stillMs += dt;
-        const box = stillBoxRef.current;
-        if (box && drift) box.style.transform = `scale(${1 + (HERO_STILL_ZOOM - 1) * Math.min(1, stillMs / (HERO_STILL_MS + HERO_SLIDE_MS))})`;
-      }
+      if (t === 1) stillMs += dt;
       if (t === 1 && !sliding && stillMs >= HERO_STILL_MS) advance();
       const fill = t === 0 ? [filled(a), 0, 0] : t === 1 ? [1, Math.min(1, stillMs / HERO_STILL_MS), 0] : [1, 1, filled(b)];
       barRefs.current.forEach((el, i) => {
@@ -667,31 +653,29 @@ function Index() {
           />
           {/* v229: the still, waiting on the right until its turn. Not loaded
               until the first clip plays (see above). Wide screens keep her
-              left of the words. */}
+              left of the words. v230 (owner): it holds still, no zoom. */}
           <div
             aria-hidden="true"
             style={{ transitionDuration: `${HERO_SLIDE_MS}ms` }}
             className={`absolute inset-0 overflow-hidden will-change-transform ease-[cubic-bezier(0.77,0,0.175,1)] ${HERO_SPOT_CLASS[spots[1]]}`}
           >
             {loadStill && (
-              <div ref={stillBoxRef} className="absolute inset-0 will-change-transform">
-                <picture>
-                  <source
-                    media="(min-width: 768px)"
-                    srcSet={`${heroStillImg} 1600w, ${heroStillLargeImg} 2560w`}
-                    sizes="100vw"
-                  />
-                  <img
-                    ref={stillRef}
-                    src={heroStillPhoneImg}
-                    srcSet={`${heroStillPhoneImg} 960w, ${heroStillPhoneLargeImg} 1440w`}
-                    sizes="125vw"
-                    alt=""
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover md:object-[80%_50%]"
-                  />
-                </picture>
-              </div>
+              <picture>
+                <source
+                  media="(min-width: 768px)"
+                  srcSet={`${heroStillImg} 1600w, ${heroStillLargeImg} 2560w`}
+                  sizes="100vw"
+                />
+                <img
+                  ref={stillRef}
+                  src={heroStillPhoneImg}
+                  srcSet={`${heroStillPhoneImg} 960w, ${heroStillPhoneLargeImg} 1440w`}
+                  sizes="125vw"
+                  alt=""
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover md:object-[80%_50%]"
+                />
+              </picture>
             )}
             {/* Phones: the words sit over her cream trousers, so a deeper shade there. */}
             <div className="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-ink/85 via-ink/55 via-45% to-transparent md:hidden" />
