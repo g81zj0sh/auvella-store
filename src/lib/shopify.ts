@@ -879,6 +879,10 @@ const CART_DISCOUNT_CODES_MUTATION = `
   }
 `;
 
+/** The bag's answer when Shopify won't apply a shopper's code. v231: while
+ *  Black Friday runs the bag shows its own note instead (lib/blackFriday). */
+export const CODE_NOT_VALID = "That code isn't valid for this bag.";
+
 export type DiscountResult = {
   applied: string[];
   /** v224: the site's own codes (`keep`) and whether Shopify applies them. */
@@ -948,7 +952,7 @@ export async function setShopifyDiscountCodes(
   const keptGood = kept.filter((k) => k.applicable).map((k) => k.code);
   if (bad.length || keptGood.length < kept.length) {
     const cleaned = await run([...good, ...keptGood]);
-    if (bad.length && codes.length) throw new Error("That code isn't valid for this bag.");
+    if (bad.length && codes.length) throw new Error(CODE_NOT_VALID);
     return result(cleaned, good, kept);
   }
   return result(cart, good, kept);
