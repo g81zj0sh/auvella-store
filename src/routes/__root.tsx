@@ -27,6 +27,7 @@ import { useCartSync } from "@/hooks/useCartSync";
 import { useDomTranslation } from "@/lib/preferences";
 import { useCartStore } from "@/stores/cartStore";
 import { installImageProtection } from "@/lib/imageProtection";
+import { SALE_PHASE_ATTRIBUTE, useSalePhase } from "@/lib/blackFriday";
 // Side-effect import: captures the session's entry path before any route renders.
 import "@/lib/landing";
 
@@ -152,8 +153,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  // v231: the Black Friday phase this page was rendered with (lib/blackFriday).
+  const salePhase = useSalePhase();
   return (
-    <html lang="en">
+    <html lang="en" {...{ [SALE_PHASE_ATTRIBUTE]: salePhase }}>
       <head>
         <HeadContent />
       </head>

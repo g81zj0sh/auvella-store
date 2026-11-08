@@ -6,6 +6,7 @@ import { ShippingPopup } from "@/components/site/ShippingPopup";
 import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
 import { deliveryTimeLine, inFreeDeliveryCountry } from "@/lib/freeDelivery";
 import { DUO_DEAL } from "@/lib/duoDeal";
+import { BF_ENDS, BF_TIERS, useBlackFriday } from "@/lib/blackFriday";
 import { usePreferences } from "@/lib/preferences";
 import { EditorialImage } from "@/components/site/EditorialImage";
 import { editorialSrc } from "@/lib/editorialImages";
@@ -353,6 +354,7 @@ function Index() {
   const pauseHeroRef = useRef<(paused: boolean) => void>(() => {});
   const { country } = useShippingCountry();
   const freeFromTwo = inFreeDeliveryCountry(country.code);
+  const blackFriday = useBlackFriday();
 
   /* v228/v229 (owner): the hero takes three turns - the bedroom film, the
      Daily Rotation still, then the staircase walk - like a slideshow: the
@@ -745,21 +747,36 @@ function Index() {
             </p>
           </div>
           {/* v229: the still's words - the multi-buy (lib/duoDeal, lib/perks:
-              the wash bag comes with 3+ of one style), no deadline. */}
+              the wash bag comes with 3+ of one style), no deadline.
+              v231: while Black Friday runs (lib/blackFriday, by the clock)
+              they carry its rates and its real end; the wash bag line goes,
+              as it needs 3+ of ONE style and Black Friday mixes any. */}
           <div
             inert={turn !== 1}
             className={`col-start-1 row-start-1 self-end transition-opacity duration-500 ${turn === 1 ? "opacity-100 delay-300" : "opacity-0"}`}
           >
-            <p className="text-[11px] uppercase tracking-[0.28em] text-cream/80 mb-3">The Daily Rotation</p>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-cream/80 mb-3">
+              {blackFriday ? "Black Friday" : "The Daily Rotation"}
+            </p>
             <p className="font-serif text-[44px] italic leading-[0.98] text-cream md:text-5xl xl:text-[52px] 2xl:text-[64px]">
               One on.
               <br />
               One in the wash.
             </p>
             <p className="mt-4 text-[15px] leading-snug text-cream md:text-[17px]">
-              {DUO_DEAL.percent}% off two. {DUO_DEAL.stockUpPercent}% off three or more,
-              <br />
-              plus a free wash bag.
+              {blackFriday ? (
+                <>
+                  {BF_TIERS[1].percent}% off two bodysuits.
+                  <br />
+                  {BF_TIERS[2].percent}% off three or more.
+                </>
+              ) : (
+                <>
+                  {DUO_DEAL.percent}% off two. {DUO_DEAL.stockUpPercent}% off three or more,
+                  <br />
+                  plus a free wash bag.
+                </>
+              )}
             </p>
             <div className="mt-6 flex justify-end">
               <Link
@@ -771,7 +788,9 @@ function Index() {
               </Link>
             </div>
             <p className="mt-4 text-xs text-cream/60 leading-relaxed">
-              Mix sizes and colours of one style. Selected styles.
+              {blackFriday
+                ? `${BF_TIERS[0].percent}% off one. Mix any bodysuits. Ends ${BF_ENDS}.`
+                : "Mix sizes and colours of one style. Selected styles."}
               {freeFromTwo && (
                 <>
                   <br />
@@ -909,7 +928,12 @@ function MarqueeStrip() {
   const free = inFreeDeliveryCountry(country.code)
     ? "FREE DELIVERY ON 2+ ITEMS (EXCL. UNDERWEAR)"
     : `FREE SHIPPING ON ORDERS OVER ${freeShippingThresholdFmt(displayCurrency)}`;
-  const text = `${free} · ${deliveryTimeLine(country).toUpperCase()} · 30-DAY RETURNS · NEW DROPS WEEKLY · AUVELLA · `;
+  // v231: Black Friday first while it runs (lib/blackFriday, by the clock).
+  const blackFriday = useBlackFriday();
+  const sale = blackFriday
+    ? `BLACK FRIDAY: ${BF_TIERS.map((t) => `${t.percent}% OFF ${t.quantity}${t.orMore ? "+" : ""}`).join(" · ")} BODYSUITS · ENDS ${BF_ENDS.toUpperCase()} · `
+    : "";
+  const text = `${sale}${free} · ${deliveryTimeLine(country).toUpperCase()} · 30-DAY RETURNS · NEW DROPS WEEKLY · AUVELLA · `;
   const loop = Array(4).fill(text);
   return (
     <section className="mt-3 overflow-hidden bg-[#0a0a0a] md:mt-4">
