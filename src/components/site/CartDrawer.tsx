@@ -30,8 +30,10 @@ import {
   fetchProductsByHandles,
   fetchVariantStock,
   shopifyImg,
+  CODE_NOT_VALID,
   type ShopifyProduct,
 } from "@/lib/shopify";
+import { BF_CODE_NOTE, bfBagLine, bfLabel, isBlackFridayTitle, useBlackFriday } from "@/lib/blackFriday";
 import { CartEditSheet } from "@/components/site/CartEditSheet";
 import { ensurePerks } from "@/components/site/PerkSync";
 import {
@@ -163,8 +165,12 @@ export function CartDrawer() {
      bag quotes in the shopper's currency, like the header. */
   const displayCurrency = usePreferences((s) => s.currency);
   const totals = useCartStore((s) => s.totals);
-  const { baseCurrency, duoSaving, duoOneShort, duoPercents, bundleSaving, shopifyTotals, payable, pending } =
-    bagTotals(items, totals, displayCurrency, discountCodes);
+  // v231: Black Friday on the bodysuits while it runs (lib/blackFriday).
+  const blackFriday = useBlackFriday();
+  const {
+    baseCurrency, duoSaving, duoOneShort, duoPercents, bundleSaving, bfUnits, bfPercent, bfSaving,
+    shopifyTotals, payable, pending,
+  } = bagTotals(items, totals, displayCurrency, discountCodes, blackFriday);
   /* Bundle: how many eligible underwear lines are in the bag. */
   const bundleQty = items.filter((i) => inBundleDeal(i.product.node.handle)).reduce((s, i) => s + i.quantity, 0);
   const savingLines: Array<{ label: string; amount: number }> = shopifyTotals
@@ -182,7 +188,14 @@ export function CartDrawer() {
     : [
         ...(bundleSaving > 0 ? [{ label: bundleLabel(baseCurrency, bundleQty), amount: bundleSaving }] : []),
         ...(duoSaving > 0 ? [{ label: duoLabel(duoPercents), amount: duoSaving }] : []),
+        ...(bfSaving > 0 ? [{ label: bfLabel(bfPercent), amount: bfSaving }] : []),
       ];
+  /* v231: Black Friday's tier progress (brief: "Add 1 more bodysuit for 30%
+     off both", ...), from the bodysuits in the bag. Quiet while a shopper's
+     code is on (Black Friday doesn't combine with codes) or once Shopify has
+     priced this exact bag without a Black Friday line. */
+  const bfConfirmed = !shopifyTotals || shopifyTotals.discounts.some((d) => isBlackFridayTitle(d.label));
+  const bfLine = blackFriday && discountCodes.length === 0 && bfConfirmed ? bfBagLine(bfUnits) : null;
 
   const { country } = useShippingCountry();
   /* Judged on what checkout charges (after discounts), with the same rule as
@@ -577,7 +590,12 @@ export function CartDrawer() {
                   />
                 )}
 
-                <PromoCode codes={discountCodes} onApply={applyDiscountCode} onRemove={removeDiscountCode} />
+                <PromoCode
+                  codes={discountCodes}
+                  onApply={applyDiscountCode}
+                  onRemove={removeDiscountCode}
+                  blackFridayNote={blackFriday && bfUnits > 0 && bfConfirmed}
+                />
 
                 {together.length > 0 && (
                   <ProductGrid title="Frequently bought together" products={together} onPick={openQuickAdd} display={display} />
@@ -614,11 +632,13 @@ export function CartDrawer() {
                   </p>
                 )}
                 {savingLines.map((l) => (
-                  <div key={l.label} className="mb-2 flex items-center justify-between text-[12px]">
+                  <div key={l.label} className="mb-2 flex items-center justify-between gap-3 text-[12px]">
                     <span className="text-cocoa">{l.label} — applied at checkout</span>
-                    <span className="text-ink">−{display(l.amount, baseCurrency)}</span>
+                    {/* v231: the amount stays in one piece beside a long label. */}
+                    <span className="shrink-0 whitespace-nowrap text-ink">−{display(l.amount, baseCurrency)}</span>
                   </div>
                 ))}
+                {bfLine && <p className="mb-2 text-[12px] font-medium text-ink">{bfLine}</p>}
                 {duoSaving === 0 && duoOneShort > 0 ? (
                   <p className="mb-2 text-[12px] text-cocoa">Add a second of the same product to save {DUO_DEAL.percent}% on both.</p>
                 ) : null}
@@ -827,8 +847,16 @@ function ShippingInsurance({
 /* ── Promo code accordion ──────────────────────────────────────────────── */
 
 function PromoCode({
-  codes, onApply, onRemove,
-}: { codes: string[]; onApply: (c: string) => Promise<void>; onRemove: (c: string) => Promise<void> }) {
+  codes, onApply, onRemove, blackFridayNote = false,
+}: {
+  codes: string[];
+  onApply: (c: string) => Promise<void>;
+  onRemove: (c: string) => Promise<void>;
+  /** v231: Black Friday runs and the bag holds bodysuits. A code Shopify won't
+      apply then gives less than the Black Friday price (a bigger one would
+      apply), so the bag says that rather than "isn't valid" (brief). */
+  blackFridayNote?: boolean;
+}) {
   const [openAcc, setOpenAcc] = useState(codes.length > 0);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -838,7 +866,10 @@ function PromoCode({
     if (!code.trim() || busy) return;
     setBusy(true); setError("");
     try { await onApply(code); setCode(""); }
-    catch (e) { setError(e instanceof Error ? e.message : "That code couldn't be applied."); }
+    catch (e) {
+      const message = e instanceof Error ? e.message : "That code couldn't be applied.";
+      setError(blackFridayNote && message === CODE_NOT_VALID ? BF_CODE_NOTE : message);
+    }
     finally { setBusy(false); }
   };
 

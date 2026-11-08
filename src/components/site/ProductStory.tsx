@@ -7,6 +7,7 @@ import { GALLERY_INDEX } from "@/lib/galleryIndex";
 import { STORY_IMAGES } from "@/lib/storyImages";
 import { COUNTRIES, PROCESSING_LABEL, transitLabel, type Country } from "@/lib/shipping";
 import { inDuoDeal, DUO_DEAL } from "@/lib/duoDeal";
+import { BF_ENDS, BF_TIERS, inBlackFriday, useBlackFriday } from "@/lib/blackFriday";
 import { inBundleDeal } from "@/lib/bundleDeal";
 import { isFinalSale } from "@/lib/returnsPolicy";
 import type { Review } from "@/components/site/Reviews";
@@ -85,6 +86,8 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
   const sizes = sizesLine(html);
   const fabricText = fabricLine(html);
   const finalSale = isFinalSale(handle);
+  // v231: the multi-buy answer follows Black Friday while it runs (lib/blackFriday).
+  const blackFriday = useBlackFriday() && inBlackFriday(handle);
   const rows = comparisonRows(html, title, { sized, finalSale });
   const transit = transitLabel(country);
   const featureA = [...points, ...whyPoints(html, title, { finalSale }).slice(points.length)]
@@ -145,7 +148,9 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
         ? "For hygiene reasons this is final sale — it can't be returned unless it's faulty or not what you ordered, in which case we'll replace or refund it at no cost to you."
         : "Yes — within 30 days of delivery. Email us to start a return. Return postage is paid by you unless the item is faulty.",
     },
-    ...(inDuoDeal(handle)
+    ...(blackFriday
+      ? [{ q: "Is there a multi-buy?", a: `Black Friday, until ${BF_ENDS}: ${BF_TIERS[0].percent}% off one bodysuit, ${BF_TIERS[1].percent}% off two and ${BF_TIERS[2].percent}% off three or more. Any bodysuits count together, in any sizes or colours. The saving is applied automatically in your bag.` }]
+      : inDuoDeal(handle)
       ? [{ q: "Is there a multi-buy?", a: `Buy two of this product and save ${DUO_DEAL.percent}%, or three or more and save ${DUO_DEAL.stockUpPercent}% — any sizes or colours. The saving is applied automatically in your bag.` }]
       : inBundleDeal(handle)
         ? [{ q: "Is there a multi-buy?", a: "It's part of our underwear 3-pack deal: add any three eligible pieces and the saving is applied automatically in your bag." }]

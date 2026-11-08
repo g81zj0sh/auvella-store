@@ -8,6 +8,7 @@ import { isLoggedIn } from "@/lib/customerAuth";
 import { FavouritesButton } from "@/components/site/FavouritesButton";
 import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES } from "@/lib/shipping";
 import { deliveryTimeLine, inFreeDeliveryCountry } from "@/lib/freeDelivery";
+import { BF_BAR_MESSAGES, useBlackFriday } from "@/lib/blackFriday";
 import { SearchDrawer } from "@/components/site/SearchDrawer";
 import auvellaWordmarkImg from "@/assets/auvella-wordmark.png";
 import { editorialSrc, editorialSrcSet } from "@/lib/editorialImages";
@@ -441,9 +442,14 @@ function AnnouncementBar() {
   // taxes, so "Duties And Taxes Are Included" wasn't true. Owner: remove it.
   // v224: free delivery on 2+ items where it applies (lib/freeDelivery), and
   // one delivery time, order to door, in working days.
-  const messages = inFreeDeliveryCountry(country.code)
-    ? ["Free delivery on 2+ items (excl. underwear)", deliveryTimeLine(country)]
-    : [deliveryTimeLine(country), `Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`];
+  // v231: Black Friday leads while it runs (lib/blackFriday), by the clock.
+  const blackFriday = useBlackFriday();
+  const messages = [
+    ...(blackFriday ? BF_BAR_MESSAGES : []),
+    ...(inFreeDeliveryCountry(country.code)
+      ? ["Free delivery on 2+ items (excl. underwear)", deliveryTimeLine(country)]
+      : [deliveryTimeLine(country), `Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`]),
+  ];
   const [idx, setIdx] = useState(0);
   const [shown, setShown] = useState(true);
 
@@ -465,7 +471,7 @@ function AnnouncementBar() {
           shown ? "opacity-100" : "opacity-0"
         }`}
       >
-        {messages[idx]}
+        {messages[idx % messages.length]}
       </p>
     </div>
   );

@@ -35,6 +35,11 @@ import { usePerkValues } from "@/lib/usePerkValues";
  * v224 (owner's brief): where 2+ items ship free (lib/freeDelivery) the legend
  * says "Buy 2 or more: free delivery" and every card from Buy 2 heads its band
  * "Free delivery"; elsewhere the v210 figure still decides.
+ *
+ * v231 (owner, 8 Nov 2026): while Black Friday runs (lib/blackFriday) a
+ * bodysuit's cards are its tiers - 20% for one, 30% for two, 40% for three or
+ * more - under the legend "Black Friday" and its real end. The gifts stay
+ * with the Buy 2 products (`perks`).
  */
 
 const PERKS: Record<
@@ -62,6 +67,12 @@ interface Props {
   freeShipping?: (tier: MultiBuyTier) => boolean;
   /** v224: delivery is free on 2+ items here, so Buy 2 and up ship free. */
   freeDeliveryFromTwo?: boolean;
+  /** v231: false where the free gifts don't apply (lib/perks: the Buy 2
+      products only) - two bodysuits get the Black Friday cards without them. */
+  perks?: boolean;
+  /** v231: while Black Friday runs, its real end (lib/blackFriday): the cards
+      are its tiers and say so. */
+  blackFridayEnds?: string;
 }
 
 const NAMES: Record<MultiBuyTier["quantity"], { title: string; sub?: string }> = {
@@ -83,13 +94,18 @@ export function MultiBuySelector({
   name,
   freeShipping,
   freeDeliveryFromTwo,
+  perks = true,
+  blackFridayEnds,
 }: Props) {
   const worth = usePerkValues();
   return (
     <fieldset className="mt-7">
       <legend className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a]">
-        Multi-buy
+        {blackFridayEnds ? "Black Friday" : "Multi-buy"}
       </legend>
+      {blackFridayEnds && (
+        <p className="mt-1 text-[12px] text-[#555555]">Ends {blackFridayEnds}</p>
+      )}
       {freeDeliveryFromTwo && (
         <p className="mt-1 text-[12px] text-[#555555]">Buy 2 or more: free delivery</p>
       )}
@@ -104,6 +120,10 @@ export function MultiBuySelector({
           const badge = badgeFor(t);
           const bold = t.quantity >= 3;
           const shipsFree = freeDeliveryFromTwo ? t.quantity >= 2 : !!freeShipping?.(t);
+          // v231: no gifts where they don't apply; the band then carries only
+          // the free delivery, if any.
+          const gifts = perks ? PERKS[t.quantity] : [];
+          const band = PERKS[t.quantity].length > 0 && (gifts.length > 0 || shipsFree);
           return (
             <label
               key={t.quantity}
@@ -176,7 +196,7 @@ export function MultiBuySelector({
                   )}
                 </span>
               </span>
-              {PERKS[t.quantity].length > 0 && (
+              {band && (
                 /* Gift band, full width across the card's foot (inner radius:
                    12px card minus its 2/3px border). */
                 <span
@@ -198,7 +218,7 @@ export function MultiBuySelector({
                       </span>
                     </span>
                   )}
-                  {PERKS[t.quantity].map((p) => (
+                  {gifts.map((p) => (
                     <span key={p.title} className="flex items-center gap-3 px-4 py-2.5">
                       {p.key === "protection" ? (
                         <ProtectionIcon size={28} className="rounded-[6px]" />
