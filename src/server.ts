@@ -11,12 +11,14 @@ import { primeReviews, productPageHandle, reviewsApi } from "./lib/reviewsServer
 import { workerBindings, workerWaitUntil } from "./lib/workerEnv";
 import { serveMedia } from "./lib/videoRange";
 import {
+  BUILD_ID,
   edgeCacheKey,
   forBrowser,
   forEdge,
   isCacheableRequest,
   isCacheableResponse,
 } from "./lib/edgeCache";
+import { salePhaseAt } from "./lib/blackFriday";
 
 // v205: every server render sees the full catalogue tables (lib/catalogTables).
 installCatalogTables(FULL_CATALOG_TABLES);
@@ -75,7 +77,8 @@ async function renderPage(request: Request, env: unknown, ctx: unknown, source: 
   // Worker over its resource limits (Cloudflare 1102) under load.
   const url = new URL(request.url);
   const cache = isCacheableRequest(request, url) ? edgeCache() : null;
-  const key = cache ? edgeCacheKey(url) : null;
+  // v231: one copy per Black Friday phase (lib/blackFriday).
+  const key = cache ? edgeCacheKey(url, BUILD_ID, salePhaseAt(Date.now())) : null;
   if (cache && key) {
     try {
       const hit = await cache.match(key);

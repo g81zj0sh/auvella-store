@@ -81,6 +81,7 @@ import {
   transitLabel,
 } from "@/lib/shipping";
 import { addedToBagText, deliveryTimeLine, inFreeDeliveryCountry, isUnderwear } from "@/lib/freeDelivery";
+import { BF_ENDS, BF_TIERS, bfTotal, inBlackFriday, useBlackFriday } from "@/lib/blackFriday";
 import { canonicalColour } from "@/lib/colourAliases";
 
 /*
@@ -337,6 +338,8 @@ function ProductPage() {
   const atcRef = useRef<HTMLButtonElement>(null);
   const sizesRef = useRef<HTMLDivElement>(null);
   const addItem = useCartStore((s) => s.addItem);
+  // v231: Black Friday on the bodysuits while it runs (lib/blackFriday).
+  const blackFridayLive = useBlackFriday();
   const adding = useCartStore((s) => s.isLoading);
   const resolveCheckoutUrl = useCartStore((s) => s.resolveCheckoutUrl);
   const getCheckoutUrl = useCartStore((s) => s.getCheckoutUrl);
@@ -871,10 +874,22 @@ function ProductPage() {
   };
 
   /* Multi-buy: which tier is chosen, and the units it puts in the bag (#1 is
-     the main selection, #2/#3 their own colour/size). */
-  const multiBuy = inDuoDeal(node.handle);
-  const tier =
-    MULTI_BUY_TIERS.find((t) => t.quantity === (multiBuy ? pack : 1)) ?? MULTI_BUY_TIERS[0];
+     the main selection, #2/#3 their own colour/size).
+     v231: while Black Friday runs, a bodysuit's cards are its three tiers
+     (20 / 30 / 40%, lib/blackFriday) - also on the two bodysuits outside the
+     Buy 2 deal. The free gifts stay with the Buy 2 products (lib/perks). */
+  const blackFriday = blackFridayLive && inBlackFriday(node.handle);
+  const duoPerks = inDuoDeal(node.handle);
+  const multiBuy = blackFriday || duoPerks;
+  const tiers = blackFriday ? BF_TIERS : MULTI_BUY_TIERS;
+  const tier = tiers.find((t) => t.quantity === (multiBuy ? pack : 1)) ?? tiers[0];
+  /** What checkout charges for these units at a tier's rate: Shopify's own
+      Black Friday maths (rounded per line) or the Buy 2 app's (per unit, down). */
+  const totalAt = (prices: number[], percent: number) =>
+    blackFriday ? bfTotal(prices, percent) : tierTotal(prices, percent);
+  /* v231: the Black Friday price for one, struck against today's price -
+     never the compare-at (CMA) - with its rate beside it. */
+  const bfOne = blackFriday ? bfTotal([unitPrice], BF_TIERS[0].percent) : null;
   /* Underwear bundle: 1, 3 or 5 pairs, all in this colour or mixed across
      the three styles (picks). Its £ amounts are UK prices, shown only when
      the shopper sees GBP, as bundleLabel does; elsewhere the tiles name the
@@ -923,7 +938,7 @@ function ProductPage() {
           units[i]?.v ? parseFloat(units[i].v.price.amount) : unitPrice,
         ),
       )
-    : tierTotal(tierUnitPrices(tier), tier.percent);
+    : totalAt(tierUnitPrices(tier), tier.percent);
   /* The price the buttons and sticky bars quote. A bundle outside GBP has
      none: its discount is Shopify's market figure, shown in the bag. */
   const payLabel: string | null =
@@ -1062,7 +1077,7 @@ function ProductPage() {
     // Underwear counts every pair in the bag, as PerkSync and the tiles do.
     const bagPairs = perkPlan(useCartStore.getState().items).bundlePairs;
     const unlock = (k: "protection" | "washbag") =>
-      multiBuy
+      duoPerks
         ? count >= PERK_UNLOCK[k].duo
         : bundle && count + bagPairs >= PERK_UNLOCK[k].bundle;
     if (unlock("protection")) {
@@ -1231,6 +1246,23 @@ function ProductPage() {
           <h1 className="mt-2 text-[18px] font-semibold uppercase leading-snug tracking-[0.06em] text-[#0a0a0a]">
             {node.title}
           </h1>
+          {bfOne !== null ? (
+            <>
+              <p className="mt-1.5 text-[22px] font-semibold leading-tight text-[#0a0a0a]">
+                <span className="sr-only">Black Friday price </span>
+                {cur(bfOne)}
+                <span className="ml-2 text-[14px] font-normal text-[#6b6b6b] line-through">
+                  <span className="sr-only">Today's price </span>
+                  {cur(unitPrice)}
+                </span>
+              </p>
+              <div className="mt-2.5">
+                <span className="inline-block rounded-pill bg-[#0a0a0a] px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.08em] text-white">
+                  Black Friday · {BF_TIERS[0].percent}% off
+                </span>
+              </div>
+            </>
+          ) : (
           <p className="mt-1.5 text-[22px] font-semibold leading-tight text-[#0a0a0a]">
             {onSale && compareAt && <span className="sr-only">Now </span>}
             {cur(unitPrice)}
@@ -1241,6 +1273,7 @@ function ProductPage() {
               </span>
             )}
           </p>
+          )}
           {bundleDeal && (
             <div className="mt-2.5">
               <span className="inline-block rounded-pill border border-[#0a0a0a] px-2.5 py-[3px] text-[11px] font-medium uppercase tracking-[0.08em] text-[#0a0a0a]">
@@ -1452,6 +1485,23 @@ function ProductPage() {
               {node.title}
             </h1>
 
+            {bfOne !== null ? (
+              <>
+                <p className="mt-2 text-[26px] font-semibold leading-tight text-[#0a0a0a]">
+                  <span className="sr-only">Black Friday price </span>
+                  {cur(bfOne)}
+                  <span className="ml-2.5 text-[15px] font-normal text-[#6b6b6b] line-through">
+                    <span className="sr-only">Today's price </span>
+                    {cur(unitPrice)}
+                  </span>
+                </p>
+                <div className="mt-3">
+                  <span className="inline-block rounded-pill bg-[#0a0a0a] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-white">
+                    Black Friday · {BF_TIERS[0].percent}% off
+                  </span>
+                </div>
+              </>
+            ) : (
             <p className="mt-2 text-[26px] font-semibold leading-tight text-[#0a0a0a]">
               {onSale && compareAt && <span className="sr-only">Now </span>}
               {cur(unitPrice)}
@@ -1462,6 +1512,7 @@ function ProductPage() {
                 </span>
               )}
             </p>
+            )}
 
             {bundleDeal && (
               <div className="mt-3">
@@ -1706,13 +1757,13 @@ function ProductPage() {
               <div className="max-lg:order-2">
                 <MultiBuySelector
                   name={`multibuy-${node.handle}`}
-                  tiers={MULTI_BUY_TIERS}
+                  tiers={tiers}
                   value={tier.quantity}
                   onChange={choosePack}
                   price={(t) => {
                     const prices = tierUnitPrices(t);
                     const full = prices.reduce((s, p) => s + p, 0);
-                    const total = tierTotal(prices, t.percent);
+                    const total = totalAt(prices, t.percent);
                     return {
                       total: cur(total),
                       full: t.percent ? cur(full) : null,
@@ -1720,9 +1771,11 @@ function ProductPage() {
                     };
                   }}
                   freeShipping={(t) =>
-                    tierTotal(tierUnitPrices(t), t.percent) >= freeShippingThreshold(currency)
+                    totalAt(tierUnitPrices(t), t.percent) >= freeShippingThreshold(currency)
                   }
                   freeDeliveryFromTwo={freeFromTwo}
+                  perks={duoPerks}
+                  blackFridayEnds={blackFriday ? BF_ENDS : undefined}
                 />
                 {tier.quantity > 1 && (
                   <div className="mt-3 space-y-2 rounded-card border border-[#e6e4e0] bg-[#faf9f7] p-3">
@@ -1811,8 +1864,9 @@ function ProductPage() {
                   </div>
                 )}
                 <p className="mt-2 text-[11px] text-[#666666]">
-                  Any sizes or colours of this product — the saving applies automatically at
-                  checkout.
+                  {blackFriday
+                    ? "Mix any bodysuits: 2 or more count together. The saving applies automatically at checkout."
+                    : "Any sizes or colours of this product — the saving applies automatically at checkout."}
                 </p>
               </div>
             )}
@@ -1860,7 +1914,7 @@ function ProductPage() {
                   </>
                 )
               ) : (
-                <>Add to Bag — {cur(unitPrice)}</>
+                <>Add to Bag — {blackFriday ? payLabel : cur(unitPrice)}</>
               )}
             </button>
             </div>

@@ -49,14 +49,17 @@ export function isCacheableRequest(request: Request, url: URL): boolean {
 }
 
 /** The cache key: same origin, a path no route uses, the build id, the page
- *  path and its non-tracking params in a fixed order. */
-export function edgeCacheKey(url: URL, buildId: string | null = BUILD_ID): string | null {
+ *  path and its non-tracking params in a fixed order. v231: `phase` (the
+ *  Black Friday switch, lib/blackFriday) keeps one copy per phase, so no page
+ *  rendered before a switch is served after it. */
+export function edgeCacheKey(url: URL, buildId: string | null = BUILD_ID, phase?: string): string | null {
   if (!buildId) return null;
   const params = [...url.searchParams]
     .filter(([name]) => !TRACKING_PARAM.test(name))
     .sort(([a, av], [b, bv]) => (a < b ? -1 : a > b ? 1 : av < bv ? -1 : av > bv ? 1 : 0));
   const query = new URLSearchParams(params).toString();
-  return `${url.origin}/__edge/${encodeURIComponent(buildId)}${url.pathname}${query ? `?${query}` : ""}`;
+  const segment = phase ? `/${encodeURIComponent(phase)}` : "";
+  return `${url.origin}/__edge/${encodeURIComponent(buildId)}${segment}${url.pathname}${query ? `?${query}` : ""}`;
 }
 
 /** Only complete, impersonal HTML pages are stored. */

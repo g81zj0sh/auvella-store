@@ -2,6 +2,7 @@ import type { CartItem } from "@/stores/cartStore";
 import { cartLineKey, type CartTotals } from "@/lib/shopify";
 import { BUNDLE_DEAL, bundleUnitOffGBP, inBundleDeal } from "@/lib/bundleDeal";
 import { DUO_DEAL, duoPercentFor, duoUnitOff, inDuoDeal } from "@/lib/duoDeal";
+import { bfPercentFor, inBlackFriday } from "@/lib/blackFriday";
 
 /*
  * The bag's arithmetic, shared by the bag drawer and the product page's
@@ -23,15 +24,31 @@ import { DUO_DEAL, duoPercentFor, duoUnitOff, inDuoDeal } from "@/lib/duoDeal";
  * `pending`: a discount code is applied but Shopify hasn't priced this exact
  * bag yet. The local mirrors can't model codes, so the free-shipping standing
  * is unknown until the totals arrive - callers show no claim meanwhile.
+ *
+ * v231 `blackFriday` (the bag drawer passes it while Black Friday runs,
+ * lib/blackFriday): the bodysuits take its rate - 20 / 30 / 40% by the number
+ * of bodysuits across the bag, Shopify's rounding per line - instead of the
+ * Buy 2 one, which it beats at every quantity.
  */
 export function bagTotals(
   items: CartItem[],
   totals: CartTotals | null,
   fallbackCurrency = "GBP",
   codes: string[] = [],
+  blackFriday = false,
 ) {
   const baseCurrency = items[0]?.price.currencyCode ?? fallbackCurrency;
   const totalPrice = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
+  const bfLines = blackFriday ? items.filter((i) => inBlackFriday(i.product.node.handle)) : [];
+  const bfUnits = bfLines.reduce((s, i) => s + i.quantity, 0);
+  const bfPercent = bfPercentFor(bfUnits);
+  const bfSaving =
+    Math.round(
+      bfLines.reduce((s, i) => {
+        const pennies = Math.round(parseFloat(i.price.amount) * 100) * i.quantity;
+        return s + Math.round((pennies * bfPercent) / 100);
+      }, 0),
+    ) / 100;
   /* "Buy 2, save 10% / Buy 3+, save 15%": mirrors the Simple Discounts
      quantity breaks so the bag shows the figure checkout will. Counted PER
      PRODUCT: units of one product across its sizes, not across the bag. */
@@ -42,7 +59,7 @@ export function bagTotals(
   const perProduct = new Map<string, number>();
   for (const i of items) {
     const h = i.product.node.handle;
-    if (!inDuoDeal(h)) continue;
+    if (!inDuoDeal(h) || (blackFriday && inBlackFriday(h))) continue;
     perProduct.set(h, (perProduct.get(h) ?? 0) + i.quantity);
   }
   let duoSaving = 0;
@@ -81,7 +98,7 @@ export function bagTotals(
     (totals.codes ?? []).join("|") === appliedCodes.join("|")
       ? totals
       : null;
-  const payable = shopifyTotals ? shopifyTotals.total : totalPrice - duoSaving - bundleSaving;
+  const payable = shopifyTotals ? shopifyTotals.total : totalPrice - duoSaving - bundleSaving - bfSaving;
   const pending = !shopifyTotals && items.length > 0 && appliedCodes.length > 0;
   return {
     baseCurrency,
@@ -91,6 +108,10 @@ export function bagTotals(
     /* Rate per qualifying product (10 or 15), for the bag's label. */
     duoPercents,
     bundleSaving,
+    /* v231: Black Friday - bodysuits in the bag, their rate, the saving. */
+    bfUnits,
+    bfPercent,
+    bfSaving,
     shopifyTotals,
     payable,
     pending,
