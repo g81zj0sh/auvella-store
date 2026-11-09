@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cartStore";
 import { addedToBagText } from "@/lib/freeDelivery";
+import { BF_TIERS, bfTotal, inBlackFriday, useBlackFriday } from "@/lib/blackFriday";
 import { useDisplayPrice, usePreferences } from "@/lib/preferences";
 import { sizeLabel } from "@/lib/sizeLabels";
 import { fetchProductByHandle, shopifyImg, type ShopifyProduct } from "@/lib/shopify";
@@ -86,6 +87,8 @@ function QuickAddBody({
   const addItem = useCartStore((s) => s.addItem);
   const isSyncing = useCartStore((s) => s.isSyncing);
   const displayPrice = useDisplayPrice();
+  // v233: a bodysuit's Black Friday price while it runs (lib/blackFriday).
+  const blackFriday = useBlackFriday() && inBlackFriday(node.handle);
 
   const allImages = useMemo(() => node.images.edges.map((e) => e.node), [node]);
   const [imgIdx, setImgIdx] = useState(0);
@@ -176,6 +179,12 @@ function QuickAddBody({
     parseFloat(priceVariant.compareAtPrice.amount) > parseFloat(priceVariant.price.amount)
       ? displayPrice(priceVariant.compareAtPrice.amount, priceVariant.compareAtPrice.currencyCode)
       : null;
+  /* v233: while Black Friday runs a bodysuit shows its price for one, struck
+     against today's price - never the compare-at - as on its product page. */
+  const bfPrice =
+    blackFriday && priceVariant
+      ? displayPrice(bfTotal([parseFloat(priceVariant.price.amount)], BF_TIERS[0].percent), priceVariant.price.currencyCode)
+      : null;
 
   const guide = resolveGuide(node.title);
   const productChart = chartForHandle(node.handle);
@@ -243,8 +252,24 @@ function QuickAddBody({
           )}
           <h2 className="mt-1 font-serif text-lg leading-snug text-[#0a0a0a]">{node.title}</h2>
           <p className="mt-1.5 text-[14px] text-[#0a0a0a]">
-            {compare && <span className="mr-2 text-[#999999] line-through">{compare}</span>}
-            {price}
+            {bfPrice ? (
+              <>
+                <span className="mr-2 text-[#999999] line-through">
+                  <span className="sr-only">Today's price </span>
+                  {price}
+                </span>
+                <span className="sr-only">Black Friday price </span>
+                {bfPrice}
+                <span className="ml-2 inline-block rounded-pill bg-[#0a0a0a] px-2 py-[2px] align-[1px] text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
+                  Black Friday · {BF_TIERS[0].percent}% off
+                </span>
+              </>
+            ) : (
+              <>
+                {compare && <span className="mr-2 text-[#999999] line-through">{compare}</span>}
+                {price}
+              </>
+            )}
           </p>
         </div>
         <button
@@ -442,7 +467,7 @@ function QuickAddBody({
           ) : !priceVariant?.availableForSale ? (
             "Sold out"
           ) : (
-            <>Add to Bag · {price}</>
+            <>Add to Bag · {bfPrice ?? price}</>
           )}
         </button>
         <Link
