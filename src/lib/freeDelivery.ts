@@ -39,9 +39,11 @@ export function isSiteDeliveryCode(code: string | null | undefined): boolean {
   return !!code && (code.toUpperCase() === FREE_DELIVERY_CODE || isOfferCode(code));
 }
 
-/** The offer's last moment: Tue 10 Nov 2026, 23:59 UK time (GMT then). No
- *  bag's code outlasts it. */
-export const OFFER_ENDS = Date.parse("2026-11-10T23:59:59Z");
+/** The offer's last moment. No bag's code outlasts it. v224: Tue 10 Nov 2026.
+ *  v232 (owner, 9 Nov 2026): kept on to the end of Black Friday, Mon 30 Nov
+ *  2026, 23:59 UK time (GMT then, so UTC) - extended once, before it ended,
+ *  with every mention following this line. It must not be extended again. */
+export const OFFER_ENDS = Date.parse("2026-11-30T23:59:59Z");
 /** How long the offer runs from a bag's first add of an item that counts. */
 export const OFFER_MINUTES = 10;
 
@@ -158,6 +160,12 @@ const END_MONTH = MONTHS[Number(END.month) - 1];
 export const OFFER_END_TEXT = `${END.hour}:${END.minute} UK time on ${DAYS[END.weekday]} ${Number(END.day)} ${END_MONTH} ${END.year}`;
 
 export const OFFER_TERMS = `Check out within ${OFFER_MINUTES} min of your first add to bag. Until ${Number(END.day)} ${END_MONTH.slice(0, 3)}. Not for underwear-only orders.`;
+
+/** v232 (owner): while Black Friday runs (lib/blackFriday) the offer is part
+ *  of it, and the bag's terms line says so. */
+export function offerTerms(blackFriday: boolean): string {
+  return blackFriday ? `Black Friday: ${OFFER_TERMS.charAt(0).toLowerCase()}${OFFER_TERMS.slice(1)}` : OFFER_TERMS;
+}
 
 /** The "added to bag" toast: with the offer while Shopify has it on the bag. */
 export function addedToBagText(bag: {
