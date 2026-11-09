@@ -13,6 +13,7 @@ import {
   type MultiBuyTier,
 } from "@/lib/duoDeal";
 import { MultiBuySelector } from "@/components/site/MultiBuySelector";
+import { BodysuitMixRow } from "@/components/site/BodysuitMixRow";
 import {
   BundleMixer,
   BundleModeToggle,
@@ -1922,6 +1923,14 @@ function ProductPage() {
             <div className="max-lg:order-1">
               <TrustBadges handle={node.handle} title={node.title} productType={node.productType ?? ""} />
             </div>
+
+            {/* v233 (owner): the other bodysuits, one tap each - under the
+                button on laptops, after the multi-buy cards on phones. */}
+            {inBlackFriday(node.handle) && (
+              <div className="max-lg:order-2">
+                <BodysuitMixRow handle={node.handle} blackFriday={blackFriday} freeFromTwo={freeFromTwo} />
+              </div>
+            )}
 
             {/* Tabs */}
             <div className="mt-10 max-lg:order-3">
