@@ -38,7 +38,7 @@ import { CartEditSheet } from "@/components/site/CartEditSheet";
 import { ensurePerks } from "@/components/site/PerkSync";
 import {
   FREE_DELIVERY_CODE,
-  OFFER_TERMS,
+  offerTerms,
   OFFER_TIMER_LABEL,
   deliveryCount,
   inFreeDeliveryCountry,
@@ -375,7 +375,7 @@ export function CartDrawer() {
                   old bag timer's green box, never announced, and goes when
                   the minutes end. */}
               {offerLive && counted >= 1 ? (
-                <OfferTimer startedAt={offerStartedAt} />
+                <OfferTimer startedAt={offerStartedAt} blackFriday={blackFriday} />
               ) : deliveryFree ? (
                 <div className="px-6 pt-3 pb-3.5 border-b border-border">
                   <p className="text-[13px] leading-snug font-semibold text-ink">Delivery is free on this order</p>
@@ -673,7 +673,7 @@ export function CartDrawer() {
 /** The offer's time left, to the second, in the old bag timer's green box -
  *  but counting to the real end of the offer, never looping or restarting.
  *  role="timer" is never announced. */
-function OfferTimer({ startedAt }: { startedAt: number | null }) {
+function OfferTimer({ startedAt, blackFriday = false }: { startedAt: number | null; blackFriday?: boolean }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -688,7 +688,8 @@ function OfferTimer({ startedAt }: { startedAt: number | null }) {
         {OFFER_TIMER_LABEL}{" "}
         <span className="inline-block w-[5ch] text-left tabular-nums">{offerClock(startedAt, now)}</span>
       </p>
-      <p className="mt-2 text-center text-[11px] leading-snug text-cocoa">{OFFER_TERMS}</p>
+      {/* v232: the offer runs to the end of Black Friday and is part of it then. */}
+      <p className="mt-2 text-center text-[11px] leading-snug text-cocoa">{offerTerms(blackFriday)}</p>
     </div>
   );
 }
