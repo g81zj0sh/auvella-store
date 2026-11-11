@@ -81,7 +81,7 @@ import {
   transitLabel,
 } from "@/lib/shipping";
 import { addedToBagText, deliveryTimeLine, inFreeDeliveryCountry, isUnderwear } from "@/lib/freeDelivery";
-import { BF_ENDS, BF_TIERS, bfTotal, inBlackFriday, useBlackFriday } from "@/lib/blackFriday";
+import { BF_ENDS, BF_HANDLES, BF_TIERS, bfTotal, inBlackFriday, useBlackFriday } from "@/lib/blackFriday";
 import { canonicalColour } from "@/lib/colourAliases";
 
 /*
@@ -2070,6 +2070,10 @@ function ProductPage() {
         queryKey={["rail-picks", handle]}
         queryFn={() => fetchProducts(30, "bra OR bodysuit OR short OR brief OR thong OR set OR dress OR swim OR bikini OR robe")}
         excludeHandle={handle}
+        /* v234 (owner, 11 Nov 2026): on a bodysuit's page the other bodysuits
+           come first - in Black Friday any two or more count together. */
+        lead={inBlackFriday(handle) ? BF_HANDLES : undefined}
+        blackFriday={blackFridayLive}
       />
 
       {/* ============ REVIEWS ============ */}
@@ -2244,13 +2248,19 @@ function ProductPage() {
 /* hairline-divided row of quiet product cards.                        */
 /* ------------------------------------------------------------------ */
 
-function RailCard({ p }: { p: ShopifyProduct }) {
+function RailCard({ p, blackFriday = false }: { p: ShopifyProduct; blackFriday?: boolean }) {
   const display = useDisplayPrice();
   const favHandles = useFavorites((s) => s.handles);
   const toggleFav = useFavorites((s) => s.toggle);
   const liked = favHandles.includes(p.node.handle);
   const img = p.node.images.edges[0]?.node;
   const price = p.node.priceRange.minVariantPrice;
+  /* v234: while Black Friday runs a bodysuit's card shows its price for one,
+     struck against today's price - never the compare-at - as on its page. */
+  const bfPrice =
+    blackFriday && inBlackFriday(p.node.handle)
+      ? display(bfTotal([parseFloat(price.amount)], BF_TIERS[0].percent), price.currencyCode)
+      : null;
   const label = inferCollection(p.node.title).label;
   /* Garment first, model on hover (Joshua, 29 Sept 2026). The gallery index
      knows which shots are garment ("g") and which are on-model ("m") per
@@ -2302,8 +2312,21 @@ function RailCard({ p }: { p: ShopifyProduct }) {
           <p className="mt-1 text-[12px] font-medium uppercase tracking-[0.06em] text-[#0a0a0a]">
             {p.node.title}
           </p>
-          <p className="mt-1 text-[11px] text-[#555555]">
-            {display(price.amount, price.currencyCode)}
+          {/* relative: keeps the screen-reader labels inside the scrolling
+              strip (unpositioned, they widen the whole phone page). */}
+          <p className="relative mt-1 text-[11px] text-[#555555]">
+            {bfPrice ? (
+              <>
+                <span className="sr-only">Black Friday price </span>
+                <span className="font-medium text-[#0a0a0a]">{bfPrice}</span>
+                <span className="ml-1.5 text-[#888888] line-through">
+                  <span className="sr-only">Today's price </span>
+                  {display(price.amount, price.currencyCode)}
+                </span>
+              </>
+            ) : (
+              display(price.amount, price.currencyCode)
+            )}
           </p>
         </Link>
         <button
@@ -2324,12 +2347,19 @@ function Rail({
   queryKey,
   queryFn,
   excludeHandle,
+  lead,
+  blackFriday = false,
 }: {
   title: string;
   products?: ShopifyProduct[];
   queryKey: unknown[];
   queryFn: () => Promise<ShopifyProduct[]>;
   excludeHandle?: string;
+  /** v234: these products first (Shopify's order where it recommends them,
+      then the rest), fetched if Shopify didn't recommend them. */
+  lead?: readonly string[];
+  /** v234: Black Friday runs now (lib/blackFriday): bodysuit cards show its price. */
+  blackFriday?: boolean;
 }) {
   const PER_PAGE = 6;
   // Always fetch the pool as well: it tops up Shopify's recommendations
@@ -2339,11 +2369,29 @@ function Rail({
     queryFn,
     staleTime: 5 * 60 * 1000,
   });
+  const leadHandles = (lead ?? []).filter((h) => h !== excludeHandle);
+  const { data: leadProducts = [], isPending: leadPending } = useQuery({
+    queryKey: ["rail-lead", leadHandles],
+    queryFn: () => fetchProductsByHandles(leadHandles),
+    enabled: leadHandles.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+  const leadKey = leadHandles.join(",");
   // v205: other products' cards read the full catalogue tables.
   const tablesReady = useCatalogTables();
   const items = useMemo(() => {
     if (!tablesReady) return [];
-    const src = [...(products ?? []), ...fetched];
+    // v234: wait for the lead products rather than reorder the strip later.
+    if (leadKey && leadPending) return [];
+    const leadSet = new Set(leadKey ? leadKey.split(",") : []);
+    const pool = [...(products ?? []), ...fetched];
+    const src = leadSet.size
+      ? [
+          ...pool.filter((p) => leadSet.has(p.node.handle)),
+          ...leadProducts,
+          ...pool.filter((p) => !leadSet.has(p.node.handle)),
+        ]
+      : pool;
     const seen = new Set<string>();
     const clothing = src.filter((p) => {
       if (p.node.handle === excludeHandle) return false;
@@ -2356,7 +2404,7 @@ function Rail({
     // Whole rows only: 6 or 12. Under six, show what there is.
     const whole = Math.min(12, Math.floor(clothing.length / PER_PAGE) * PER_PAGE);
     return whole > 0 ? clothing.slice(0, whole) : clothing;
-  }, [products, fetched, excludeHandle, tablesReady]);
+  }, [products, fetched, excludeHandle, tablesReady, leadKey, leadPending, leadProducts]);
 
   /* One continuous strip: swipe on mobile, trackpad-scroll on desktop, and
      the arrows scroll a full view at a time. The counter follows the
@@ -2476,7 +2524,7 @@ function Rail({
         className="flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-4 select-none [scrollbar-width:none] md:cursor-grab md:scroll-px-8 md:gap-4 md:px-8 [&::-webkit-scrollbar]:hidden"
       >
         {items.map((p) => (
-          <RailCard key={p.node.id} p={p} />
+          <RailCard key={p.node.id} p={p} blackFriday={blackFriday} />
         ))}
       </div>
     </section>
