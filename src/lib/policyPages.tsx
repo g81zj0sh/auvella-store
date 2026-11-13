@@ -255,6 +255,8 @@ export const PAGES: Record<string, { title: string; description: string; body: R
             </LI>
           ))}
         </ul>
+        {/* v235 (owner's brief): the dates themselves are on the product page and in the bag. */}
+        <P>You'll see your estimated delivery dates on the product page and in your bag.</P>
         <P>
           These are estimates, not guarantees. Carrier delays, customs inspections,
           weather and peak periods can extend them. If your parcel is running

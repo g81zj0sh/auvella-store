@@ -131,10 +131,18 @@ const ORDER: Record<SalePhase, number> = { before: 0, on: 1, after: 2 };
    the page is still open. It never moves back. */
 const ATTRIBUTE = "data-sale";
 
+/* v235: read once, before React touches the attribute - route chunks that
+   hydrate after the root has moved the phase on must still hydrate with the
+   phase the page was rendered with, or React rejects the server's text (#418). */
+let rendered: SalePhase | null = null;
+
 function renderedPhase(): SalePhase {
   if (typeof document === "undefined") return salePhaseAt(Date.now());
-  const v = document.documentElement.getAttribute(ATTRIBUTE);
-  return v === "before" || v === "on" || v === "after" ? v : salePhaseAt(Date.now());
+  if (rendered === null) {
+    const v = document.documentElement.getAttribute(ATTRIBUTE);
+    rendered = v === "before" || v === "on" || v === "after" ? v : salePhaseAt(Date.now());
+  }
+  return rendered;
 }
 
 let phase: SalePhase | null = null;
