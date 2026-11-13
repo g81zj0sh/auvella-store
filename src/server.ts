@@ -19,6 +19,7 @@ import {
   isCacheableResponse,
 } from "./lib/edgeCache";
 import { salePhaseAt } from "./lib/blackFriday";
+import { ukDayOf } from "./lib/ukDay";
 
 // v205: every server render sees the full catalogue tables (lib/catalogTables).
 installCatalogTables(FULL_CATALOG_TABLES);
@@ -77,8 +78,10 @@ async function renderPage(request: Request, env: unknown, ctx: unknown, source: 
   // Worker over its resource limits (Cloudflare 1102) under load.
   const url = new URL(request.url);
   const cache = isCacheableRequest(request, url) ? edgeCache() : null;
-  // v231: one copy per Black Friday phase (lib/blackFriday).
-  const key = cache ? edgeCacheKey(url, BUILD_ID, salePhaseAt(Date.now())) : null;
+  // v231: one copy per Black Friday phase (lib/blackFriday). v235: and per
+  // UK day, so no page shows yesterday's delivery dates (lib/ukDay).
+  const now = Date.now();
+  const key = cache ? edgeCacheKey(url, BUILD_ID, `${salePhaseAt(now)}~${ukDayOf(now)}`) : null;
   if (cache && key) {
     try {
       const hit = await cache.match(key);
