@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BadgeCheck, PackageCheck, ShieldCheck, Shirt, Truck, type LucideIcon } from "lucide-react";
-import { useShippingCountry } from "@/lib/shipping";
+import { BadgeCheck, ShieldCheck, Shirt, Truck, type LucideIcon } from "lucide-react";
 import { isFinalSale } from "@/lib/returnsPolicy";
 
 /*
@@ -8,9 +7,8 @@ import { isFinalSale } from "@/lib/returnsPolicy";
  *
  * - Try-On Guarantee = the 30-day returns/exchanges (unworn, tags on); final-
  *   sale items (underwear, eye mask) show their final-sale line instead.
- * - "Tracked UK delivery" (v235, owner's brief of 13 Nov 2026: was "4–9 Day
- *   Delivery"; the dates now sit under Add to Bag and in the bag). Elsewhere
- *   "Tracked delivery".
+ * - v235 (owner, 13 Nov 2026): the "4–9 Day Delivery" badge is gone - the
+ *   delivery dates sit under Add to Bag and in the bag - so the row has two.
  * - No-Roll Waistband Promise on items with a waistband (see hasWaistband),
  *   backed by the supplier's (Teemdrop) testing and customer base, per the
  *   owner, 10 Oct 2026. Everything else keeps Tracked delivery in that slot.
@@ -44,7 +42,6 @@ export function TrustBadges({
   title: string;
   productType?: string;
 }) {
-  const { country } = useShippingCountry();
   const badges: Badge[] = [
     isFinalSale(handle)
       ? {
@@ -59,12 +56,6 @@ export function TrustBadges({
           detail: "30 days to return or exchange, unworn with tags on",
           slug: "returns",
         },
-    {
-      icon: PackageCheck,
-      title: country.code === "GB" ? "Tracked UK delivery" : "Tracked delivery",
-      detail: `Order to delivery, in working days, to ${country.name}`,
-      slug: "shipping",
-    },
     hasWaistband(title, productType)
       ? {
           icon: BadgeCheck,
@@ -82,7 +73,7 @@ export function TrustBadges({
   return (
     <ul
       aria-label="Our promises"
-      className="mt-4 grid grid-cols-3 gap-3 border-y border-[#EBEBEB] py-4"
+      className="mt-4 grid grid-cols-2 gap-3 border-y border-[#EBEBEB] py-4"
     >
       {badges.map(({ icon: Icon, title, detail, slug }, i) => {
         const body = (
