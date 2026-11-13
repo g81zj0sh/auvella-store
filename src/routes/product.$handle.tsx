@@ -80,7 +80,9 @@ import {
   PROCESSING_LABEL,
   transitLabel,
 } from "@/lib/shipping";
-import { addedToBagText, deliveryTimeLine, inFreeDeliveryCountry, isUnderwear } from "@/lib/freeDelivery";
+import { addedToBagText, inFreeDeliveryCountry, isUnderwear } from "@/lib/freeDelivery";
+import { deliveryLines } from "@/lib/deliveryEstimate";
+import { useUkDay } from "@/lib/ukDay";
 import { BF_ENDS, BF_HANDLES, BF_TIERS, bfTotal, inBlackFriday, useBlackFriday } from "@/lib/blackFriday";
 import { canonicalColour } from "@/lib/colourAliases";
 
@@ -340,6 +342,8 @@ function ProductPage() {
   const addItem = useCartStore((s) => s.addItem);
   // v231: Black Friday on the bodysuits while it runs (lib/blackFriday).
   const blackFridayLive = useBlackFriday();
+  // v235: today's UK date, for the delivery dates under Add to Bag.
+  const ukDay = useUkDay();
   const adding = useCartStore((s) => s.isLoading);
   const resolveCheckoutUrl = useCartStore((s) => s.resolveCheckoutUrl);
   const getCheckoutUrl = useCartStore((s) => s.getCheckoutUrl);
@@ -960,6 +964,8 @@ function ProductPage() {
      everything but underwear, in the free-delivery countries. Underwear keeps
      the £60 line. */
   const freeFromTwo = inFreeDeliveryCountry(shipCountry.code) && !isUnderwear(node?.productType);
+  /* v235: the delivery dates under Add to Bag (lib/deliveryEstimate). */
+  const arrival = deliveryLines(shipCountry, ukDay);
 
   /* This exact selection (tier + variants) is what the main button last added
      and it is still in the bag: the sticky bar then just goes to checkout. */
@@ -1523,12 +1529,12 @@ function ProductPage() {
             )}
             </div>
 
-            {/* Reassurance (v224: free delivery on 2+, one delivery time) */}
+            {/* Reassurance (v224: free delivery on 2+). v235: no delivery time
+                here - the "arrives" dates sit under Add to Bag. */}
             <div className="mt-0 space-y-1 text-[12px] leading-relaxed text-[#555555] lg:mt-6">
               <p className="font-medium text-[#0a0a0a]">
                 {freeFromTwo ? "Free delivery on 2+ items (excludes underwear)" : `Free shipping on orders ${shipThreshold}+`}
               </p>
-              <p>{deliveryTimeLine(shipCountry)}</p>
               <p>
                 {isFinalSale(node.handle)
                   ? "Final sale for hygiene — faulty or wrong items replaced or refunded"
@@ -1917,6 +1923,14 @@ function ProductPage() {
                 <>Add to Bag — {blackFriday ? payLabel : cur(unitPrice)}</>
               )}
             </button>
+            {/* v235 (owner's brief): when it arrives, as dates - the same
+                line as the bag's (lib/deliveryEstimate), from today's UK date. */}
+            {arrival && (
+              <div className="mt-3 space-y-0.5 text-center text-[12px] leading-relaxed text-[#555555]">
+                <p>{arrival.arrives}</p>
+                {arrival.christmas && <p>{arrival.christmas}</p>}
+              </div>
+            )}
             </div>
 
             <div className="max-lg:order-1">
