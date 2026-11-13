@@ -2,9 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { ShippingPopup } from "@/components/site/ShippingPopup";
 import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
-import { deliveryTimeLine, inFreeDeliveryCountry } from "@/lib/freeDelivery";
+import { inFreeDeliveryCountry } from "@/lib/freeDelivery";
 import { DUO_DEAL } from "@/lib/duoDeal";
 import { BF_ENDS, BF_TIERS, useBlackFriday } from "@/lib/blackFriday";
 import { usePreferences } from "@/lib/preferences";
@@ -626,7 +625,8 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-white">
-      <ShippingPopup />
+      {/* v235 (owner, 13 Nov 2026): no first-visit shipping popup - the
+          delivery dates show under Add to Bag and in the bag. */}
 
 
       <Header transparent />
@@ -933,7 +933,9 @@ function MarqueeStrip() {
   const sale = blackFriday
     ? `BLACK FRIDAY: ${BF_TIERS.map((t) => `${t.percent}% OFF ${t.quantity}${t.orMore ? "+" : ""}`).join(" · ")} BODYSUITS · ENDS ${BF_ENDS.toUpperCase()} · `
     : "";
-  const text = `${sale}${free} · ${deliveryTimeLine(country).toUpperCase()} · 30-DAY RETURNS · NEW DROPS WEEKLY · AUVELLA · `;
+  // v235 (owner): "Tracked UK delivery" in place of the delivery time.
+  const tracked = country.code === "GB" ? "TRACKED UK DELIVERY" : "TRACKED DELIVERY";
+  const text = `${sale}${free} · ${tracked} · 30-DAY RETURNS · NEW DROPS WEEKLY · AUVELLA · `;
   const loop = Array(4).fill(text);
   return (
     <section className="mt-3 overflow-hidden bg-[#0a0a0a] md:mt-4">

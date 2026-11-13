@@ -7,7 +7,7 @@ import { CartDrawer } from "@/components/site/CartDrawer";
 import { isLoggedIn } from "@/lib/customerAuth";
 import { FavouritesButton } from "@/components/site/FavouritesButton";
 import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES } from "@/lib/shipping";
-import { deliveryTimeLine, inFreeDeliveryCountry } from "@/lib/freeDelivery";
+import { inFreeDeliveryCountry } from "@/lib/freeDelivery";
 import { BF_BAR_MESSAGES, useBlackFriday } from "@/lib/blackFriday";
 import { SearchDrawer } from "@/components/site/SearchDrawer";
 import auvellaWordmarkImg from "@/assets/auvella-wordmark.png";
@@ -440,20 +440,26 @@ function AnnouncementBar() {
   const displayCurrency = usePreferences((s) => s.currency);
   // No duties line (v186): nothing in Shopify includes or collects duties or
   // taxes, so "Duties And Taxes Are Included" wasn't true. Owner: remove it.
-  // v224: free delivery on 2+ items where it applies (lib/freeDelivery), and
-  // one delivery time, order to door, in working days.
+  // v224: free delivery on 2+ items where it applies (lib/freeDelivery).
+  // v235 (owner's brief, 13 Nov 2026): no delivery time up here - the
+  // "arrives" dates sit under Add to Bag and in the bag (lib/deliveryEstimate).
   // v231: Black Friday leads while it runs (lib/blackFriday), by the clock.
   const blackFriday = useBlackFriday();
   const messages = [
     ...(blackFriday ? BF_BAR_MESSAGES : []),
     ...(inFreeDeliveryCountry(country.code)
-      ? ["Free delivery on 2+ items (excl. underwear)", deliveryTimeLine(country)]
-      : [deliveryTimeLine(country), `Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`]),
+      ? ["Free delivery on 2+ items (excl. underwear)"]
+      : [`Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`]),
   ];
   const [idx, setIdx] = useState(0);
   const [shown, setShown] = useState(true);
 
   useEffect(() => {
+    // One message: it just stays (no fade out and back in every 5 s).
+    if (messages.length < 2) {
+      setShown(true);
+      return;
+    }
     const cycle = setInterval(() => {
       setShown(false); // fade out…
       setTimeout(() => {

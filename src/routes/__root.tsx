@@ -28,6 +28,7 @@ import { useDomTranslation } from "@/lib/preferences";
 import { useCartStore } from "@/stores/cartStore";
 import { installImageProtection } from "@/lib/imageProtection";
 import { SALE_PHASE_ATTRIBUTE, useSalePhase } from "@/lib/blackFriday";
+import { UK_DAY_ATTRIBUTE, useUkDay } from "@/lib/ukDay";
 // Side-effect import: captures the session's entry path before any route renders.
 import "@/lib/landing";
 
@@ -155,8 +156,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   // v231: the Black Friday phase this page was rendered with (lib/blackFriday).
   const salePhase = useSalePhase();
+  // v235: the UK date it was rendered on, for the delivery dates (lib/ukDay).
+  const ukDay = useUkDay();
   return (
-    <html lang="en" {...{ [SALE_PHASE_ATTRIBUTE]: salePhase }}>
+    <html lang="en" {...{ [SALE_PHASE_ATTRIBUTE]: salePhase, [UK_DAY_ATTRIBUTE]: ukDay }}>
       <head>
         <HeadContent />
       </head>

@@ -24,7 +24,8 @@ import { DUO_DEAL, DUO_SHOPIFY_TITLES, duoLabel } from "@/lib/duoDeal";
 import { bagTotals } from "@/lib/bagTotals";
 import { trackCheckoutTap } from "@/lib/metaCheckout";
 import { checkoutInSameTab, openCheckoutHere } from "@/lib/checkoutTab";
-import { estimateDelivery, DISPATCH_CUTOFF_LONDON } from "@/lib/deliveryEstimate";
+import { deliveryLines } from "@/lib/deliveryEstimate";
+import { useUkDay } from "@/lib/ukDay";
 import {
   fetchProductRecommendations,
   fetchProductsByHandles,
@@ -80,8 +81,10 @@ import {
  *                         is rejected outright until the inventory scope is
  *                         enabled on the headless app, in which case nothing
  *                         renders
- *   Delivery window     — processing + per-country transit in working days,
- *                         Europe/London; no countdown while no cutoff is
+ *   Delivery window     — v235: "Tracked UK delivery: arrives …", the same
+ *                         line as under Add to Bag (lib/deliveryEstimate:
+ *                         working days, England bank holidays skipped,
+ *                         Europe/London); no countdown while no cutoff is
  *                         confirmed (DISPATCH_CUTOFF_LONDON is null)
  *   Bundle nudge        — mirrors the live 3-for-£30 automatic discount
  *   Multi-buy perks     — the free shipping protection / wash bag lines and
@@ -230,16 +233,11 @@ export function CartDrawer() {
     if (open) syncCart();
   }, [open, syncCart]);
 
-  /* Delivery window, re-derived every 30s while open so a shopper who leaves
-     the drawer up over midnight (or a future cutoff) sees it move. */
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    if (!open) return;
-    const id = setInterval(() => setTick((n) => n + 1), 30_000);
-    return () => clearInterval(id);
-  }, [open]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const delivery = useMemo(() => estimateDelivery(country), [country, tick]);
+  /* Delivery window (v235: the same "arrives" line as under Add to Bag,
+     lib/deliveryEstimate). Today's UK date moves on at midnight by itself
+     (lib/ukDay), so a drawer left open over midnight moves with it. */
+  const ukDay = useUkDay();
+  const arrival = deliveryLines(country, ukDay);
 
   /* Live stock — resolves to {} (and shows nothing) until the scope exists. */
   const variantIds = items.map((i) => i.variantId);
@@ -621,15 +619,11 @@ export function CartDrawer() {
 
               {/* ── Sticky footer ───────────────────────────────────── */}
               <div className="flex-shrink-0 border-t border-border bg-cream px-6 pt-4 pb-5 space-y-3">
-                {delivery && (
-                  <p className="text-[12px] leading-relaxed text-cocoa">
-                    {DISPATCH_CUTOFF_LONDON && delivery.minutesToCutoff !== null ? (
-                      <>Order within <span className="text-ink">{Math.floor(delivery.minutesToCutoff / 60)}h {delivery.minutesToCutoff % 60}m</span> for delivery </>
-                    ) : (
-                      <>Estimated delivery </>
-                    )}
-                    <span className="text-ink">{delivery.label}</span> to {delivery.countryName}
-                  </p>
+                {arrival && (
+                  <div className="text-[12px] leading-relaxed text-cocoa">
+                    <p>{arrival.arrives}</p>
+                    {arrival.christmas && <p>{arrival.christmas}</p>}
+                  </div>
                 )}
                 {savingLines.map((l) => (
                   <div key={l.label} className="mb-2 flex items-center justify-between gap-3 text-[12px]">
