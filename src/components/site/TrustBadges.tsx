@@ -8,9 +8,9 @@ import { isFinalSale } from "@/lib/returnsPolicy";
  *
  * - Try-On Guarantee = the 30-day returns/exchanges (unworn, tags on); final-
  *   sale items (underwear, eye mask) show their final-sale line instead.
- * - "4–9 Day Delivery" (v224, owner's brief: one delivery time everywhere):
- *   the shopper's own window, order to door in working days - the figure the
- *   top bar, the line under the price and the bag's estimate use.
+ * - "Tracked UK delivery" (v235, owner's brief of 13 Nov 2026: was "4–9 Day
+ *   Delivery"; the dates now sit under Add to Bag and in the bag). Elsewhere
+ *   "Tracked delivery".
  * - No-Roll Waistband Promise on items with a waistband (see hasWaistband),
  *   backed by the supplier's (Teemdrop) testing and customer base, per the
  *   owner, 10 Oct 2026. Everything else keeps Tracked delivery in that slot.
@@ -45,7 +45,6 @@ export function TrustBadges({
   productType?: string;
 }) {
   const { country } = useShippingCountry();
-  const days = country.days.replace(/\s*–\s*/, "–");
   const badges: Badge[] = [
     isFinalSale(handle)
       ? {
@@ -62,7 +61,7 @@ export function TrustBadges({
         },
     {
       icon: PackageCheck,
-      title: `${days} Day Delivery`,
+      title: country.code === "GB" ? "Tracked UK delivery" : "Tracked delivery",
       detail: `Order to delivery, in working days, to ${country.name}`,
       slug: "shipping",
     },
@@ -85,7 +84,7 @@ export function TrustBadges({
       aria-label="Our promises"
       className="mt-4 grid grid-cols-3 gap-3 border-y border-[#EBEBEB] py-4"
     >
-      {badges.map(({ icon: Icon, title, detail, slug }) => {
+      {badges.map(({ icon: Icon, title, detail, slug }, i) => {
         const body = (
           <>
             <Icon aria-hidden="true" className="h-5 w-5 text-[#0a0a0a]" strokeWidth={1.5} />
@@ -100,7 +99,7 @@ export function TrustBadges({
           </>
         );
         return (
-          <li key={title}>
+          <li key={`${i}-${title}`}>
             {slug ? (
               <Link
                 to="/pages/$slug"

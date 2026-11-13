@@ -140,7 +140,8 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
     ...(fabricText ? [{ q: "What's it made of?", a: fabricText.charAt(0).toUpperCase() + fabricText.slice(1) + "." }] : []),
     ...(sizes ? [{ q: "What sizes does it come in?", a: sizes.replace(/\s*\(.*\)$/, "") + ". Tap Size Guide next to the sizes for measurements." }] : []),
     ...(sized ? [{ q: "How do I find my size?", a: "Tap Size Guide next to the sizes at the top of this page: each size is mapped to real measurements. If you're between two, the fit note says which way to go." }] : []),
-    { q: "How long does delivery take?", a: `Orders are dispatched within ${PROCESSING_LABEL} business days, then shipping to ${country.name} takes ${transit} business days, tracked.` },
+    // v235 (owner's brief): the rule stays in words; the dates are on the page and in the bag.
+    { q: "How long does delivery take?", a: `Orders are dispatched within ${PROCESSING_LABEL} business days, then shipping to ${country.name} takes ${transit} business days, tracked: ${country.days} working days from ordering. You'll see your estimated delivery dates on the product page and in your bag.` },
     { q: "Where do you ship to?", a: `We ship to ${COUNTRIES.length} countries, including the UK, the US, Canada, Australia and most of Europe. Choose yours with Ship to in the globe menu.` },
     {
       q: "Can I return it?",
