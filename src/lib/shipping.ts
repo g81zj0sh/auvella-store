@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import {
   convertPrice,
   usePreferences,
+  usePreferencesHydrated,
   type ShippingCountry,
 } from "@/lib/preferences";
 
@@ -179,24 +180,32 @@ export function countryFromCode(code?: string, fallbackName?: string): Country {
   };
 }
 
+/*
+ * v237: the country comes from our own Worker (GET /api/country, Cloudflare's
+ * geolocation - lib/countryApi), not ipapi.co: no third party sees the
+ * visitor's IP address and there's no daily cap. If it can't tell, the home
+ * market (the UK). The browser-language guess is gone: it gave a UK phone set
+ * to US English US prices. Anyone can change it under Ship to.
+ */
 export async function detectCountry(): Promise<Country> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 3500);
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 3500);
-    const res = await fetch("https://ipapi.co/json/", { signal: ctrl.signal });
-    clearTimeout(t);
+    const res = await fetch("/api/country", {
+      signal: ctrl.signal,
+      cache: "no-store",
+      headers: { accept: "application/json" },
+    });
     if (res.ok) {
-      const data = (await res.json()) as { country_code?: string; country_name?: string };
-      if (data.country_code) return countryFromCode(data.country_code, data.country_name);
+      const data = (await res.json()) as { country?: string | null };
+      if (typeof data.country === "string" && /^[A-Z]{2}$/.test(data.country)) {
+        return countryFromCode(data.country);
+      }
     }
   } catch {
     /* fall through */
-  }
-  try {
-    const region = new Intl.Locale(navigator.language).region;
-    if (region) return countryFromCode(region);
-  } catch {
-    /* fall through */
+  } finally {
+    clearTimeout(t);
   }
   return COUNTRIES[0];
 }
@@ -253,9 +262,16 @@ let detectPromise: Promise<Country> | null = null;
 export function useShippingCountry() {
   const country = usePreferences((s) => s.shippingCountry);
   const setShippingCountry = usePreferences((s) => s.setShippingCountry);
+  // v237: saved preferences load after mount (skipHydration), so wait for
+  // them - a returning shopper's country is already known and needn't be
+  // looked up again on every page.
+  const hydrated = usePreferencesHydrated();
 
   useEffect(() => {
-    if (country) return;
+    if (country || !hydrated) return;
+    // A part of the page that hydrates late still reads the server's (empty)
+    // value at first; the store itself already has the saved country.
+    if (usePreferences.getState().shippingCountry) return;
     if (!detectPromise) detectPromise = detectCountry();
     let cancelled = false;
     detectPromise.then((c) => {
@@ -267,7 +283,7 @@ export function useShippingCountry() {
     return () => {
       cancelled = true;
     };
-  }, [country, setShippingCountry]);
+  }, [country, hydrated, setShippingCountry]);
 
   // Resolve to the canonical entry: the persisted object may predate the
   // transit figures and still carry an old `days` total.
