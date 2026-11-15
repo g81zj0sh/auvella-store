@@ -141,8 +141,9 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
     ...(sizes ? [{ q: "What sizes does it come in?", a: sizes.replace(/\s*\(.*\)$/, "") + ". Tap Size Guide next to the sizes for measurements." }] : []),
     ...(sized ? [{ q: "How do I find my size?", a: "Tap Size Guide next to the sizes at the top of this page: each size is mapped to real measurements. If you're between two, the fit note says which way to go." }] : []),
     // v235 (owner's brief): the rule stays in words; the dates are on the page and in the bag.
-    { q: "How long does delivery take?", a: `Orders are dispatched within ${PROCESSING_LABEL} business days, then shipping to ${country.name} takes ${transit} business days, tracked: ${country.days} working days from ordering. You'll see your estimated delivery dates on the product page and in your bag.` },
-    { q: "Where do you ship to?", a: `We ship to ${COUNTRIES.length} countries, including the UK, the US, Canada, Australia and most of Europe. Choose yours with Ship to in the globe menu.` },
+    { q: "How long does delivery take?", a: `Orders are dispatched within ${PROCESSING_LABEL} business days, then shipping to ${country.the ? "the " : ""}${country.name} takes ${transit} business days, tracked: ${country.days} working days from ordering. You'll see your estimated delivery dates on the product page and in your bag.` },
+    // v236: Ship to is in the phone menu too (it was only behind the globe icon, laptops only).
+    { q: "Where do you ship to?", a: `We ship to ${COUNTRIES.length} countries, including the UK, the US, Canada, Australia and most of Europe. Choose yours with Ship to, in the menu or under the globe icon.` },
     {
       q: "Can I return it?",
       a: finalSale

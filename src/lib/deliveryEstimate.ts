@@ -144,8 +144,11 @@ export function estimateDelivery(
   now: Date | string = new Date(),
 ): DeliveryWindow | null {
   // Resolve by code: the persisted preference object may predate `transit`.
+  // No country yet means the home market. A country that isn't in COUNTRIES
+  // (we don't ship there) gets no dates at all - v236: it used to borrow the
+  // UK's and read "Tracked delivery to the United Kingdom: arrives …".
   const code = country?.code ?? "GB";
-  const c = COUNTRIES.find((x) => x.code === code) ?? COUNTRIES.find((x) => x.code === "GB");
+  const c = COUNTRIES.find((x) => x.code === code);
   if (!c?.transit) return null; // no supply-partner figure for this country — say nothing
 
   // The order is treated as placed today - on a weekend or bank holiday, the
@@ -201,4 +204,23 @@ export function deliveryLines(
         ? `Order by ${fmt(fromIso(CHRISTMAS_CUTOFF))} for delivery before Christmas`
         : null,
   };
+}
+
+/**
+ * v236: the same window for an order already placed (the tracking page),
+ * counted from the UK date it was placed (`placedAt`, ISO). `lastDay` is
+ * "Thu 26 Nov"; `late` once `today` (UK date) is past it. Null where the
+ * country has no figure.
+ */
+export function orderDelivery(
+  countryCode: string | null | undefined,
+  placedAt: string,
+  today: string,
+): { label: string; lastDay: string; late: boolean } | null {
+  const country = COUNTRIES.find((x) => x.code === (countryCode || "GB"));
+  const placed = new Date(placedAt);
+  if (!country || Number.isNaN(placed.getTime())) return null;
+  const w = estimateDelivery(country, iso(toUtcDay(londonToday(placed))));
+  if (!w) return null;
+  return { label: w.label, lastDay: fmt(w.to), late: today > iso(w.to) };
 }
