@@ -7,6 +7,7 @@ import { renderErrorPage } from "./lib/error-page";
 import { legacyRedirect } from "./lib/legacyRedirects";
 import { adLandingTarget, canSwapAddress, withAddressSwap } from "./lib/adLanding";
 import { productViews } from "./lib/productViewsApi";
+import { countryApi } from "./lib/countryApi";
 import { primeReviews, productPageHandle, reviewsApi } from "./lib/reviewsServer";
 import { workerBindings, workerWaitUntil } from "./lib/workerEnv";
 import { serveMedia } from "./lib/videoRange";
@@ -119,6 +120,10 @@ async function renderPage(request: Request, env: unknown, ctx: unknown, source: 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // v237: the visitor's country from Cloudflare (lib/countryApi), in
+      // place of the browser asking ipapi.co.
+      const country = countryApi(request, new URL(request.url));
+      if (country) return country;
       // v208: "people viewed this in the last 24 hours" counts (D1).
       const views = await productViews(request, new URL(request.url), env);
       if (views) return views;
