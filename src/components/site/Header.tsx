@@ -343,10 +343,29 @@ function SimplePanel({ item }: { item: NavItem }) {
 /* Globe — currency + language behind one icon                         */
 /* ------------------------------------------------------------------ */
 
+/** "GB" → 🇬🇧 (regional indicator letters). */
+function flagOf(code: string): string {
+  return /^[A-Z]{2}$/.test(code)
+    ? String.fromCodePoint(...[...code].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65))
+    : "";
+}
+
+/* A detected country we don't ship to isn't in COUNTRIES. Without its own
+   (disabled) option the select would show the first country while the
+   shopper's is elsewhere, and picking that first country would change
+   nothing. */
+function UnlistedCountryOption({ code, name }: { code: string; name: string }) {
+  return COUNTRIES.some((c) => c.code === code) ? null : (
+    <option value={code} disabled>
+      {name}
+    </option>
+  );
+}
+
 function GlobePicker({ light }: { light: boolean }) {
-  /* Ship to: the only way to change country after the first-visit popup is
-     dismissed (QA re-check, 27 Sept 2026). Changing it re-files the Shopify
-     cart in that market and resets the currency to match. */
+  /* Ship to (QA re-check, 27 Sept 2026). Changing it re-files the Shopify
+     cart in that market and resets the currency to match. Laptops only
+     (hidden below lg); phones and tablets have it in the menu (v236). */
   const { country: shipTo, setCountry } = useShippingCountry();
   const currency = usePreferences((s) => s.currency);
   const setCurrency = usePreferences((s) => s.setCurrency);
@@ -379,6 +398,7 @@ function GlobePicker({ light }: { light: boolean }) {
             aria-label="Ship to"
             className="mb-5 h-9 w-full rounded-control border border-[#EBEBEB] bg-white px-2 text-[12px] text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none"
           >
+            <UnlistedCountryOption code={shipTo.code} name={shipTo.name} />
             {COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>{c.name}</option>
             ))}
@@ -735,6 +755,10 @@ export function Header({ transparent = false }: { transparent?: boolean }) {
 }
 
 function MobileRegionRows() {
+  /* v236: Ship to in the menu. The globe menu is laptops only, and since v235
+     removed the first-visit popup a phone had no way to correct a wrongly
+     detected country (wrong prices, delivery dates and free-delivery offer). */
+  const { country: shipTo, setCountry } = useShippingCountry();
   const currency = usePreferences((s) => s.currency);
   const setCurrency = usePreferences((s) => s.setCurrency);
   const language = usePreferences((s) => s.language);
@@ -749,6 +773,30 @@ function MobileRegionRows() {
 
   return (
     <div className="mt-8 border-t border-[#EBEBEB] pt-6" data-no-translate>
+      {/* Ship to — same single row as Currency, native picker underneath */}
+      <label className="relative flex h-10 w-fit cursor-pointer items-center gap-2 text-[13px] text-[#0a0a0a]">
+        <span className="text-[#888888]">Ship to:</span>
+        <span aria-hidden="true">{flagOf(shipTo.code)}</span>
+        <span className="tracking-[0.04em]">{shipTo.name}</span>
+        <ChevronDown className="h-3.5 w-3.5 text-[#0a0a0a]" strokeWidth={1.5} />
+        <select
+          aria-label="Ship to"
+          value={shipTo.code}
+          onChange={(e) => {
+            const c = COUNTRIES.find((x) => x.code === e.target.value);
+            if (c) setCountry(c);
+          }}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        >
+          <UnlistedCountryOption code={shipTo.code} name={shipTo.name} />
+          {COUNTRIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {flagOf(c.code)} {c.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
       {/* Currency — SKIMS-style single row, native picker underneath */}
       <label className="relative flex h-10 w-fit cursor-pointer items-center gap-2 text-[13px] text-[#0a0a0a]">
         <span className="text-[#888888]">Currency:</span>
