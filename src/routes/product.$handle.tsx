@@ -77,8 +77,6 @@ import {
   freeShippingThreshold,
   freeShippingThresholdFmt,
   useShippingCountry,
-  PROCESSING_LABEL,
-  transitLabel,
 } from "@/lib/shipping";
 import { addedToBagText, inFreeDeliveryCountry, isUnderwear } from "@/lib/freeDelivery";
 import { deliveryLines } from "@/lib/deliveryEstimate";
@@ -2046,9 +2044,12 @@ function ProductPage() {
                     <p>
                       {freeFromTwo
                         ? `Free delivery to ${shipDest} on 2+ items (excludes underwear), or on orders over ${shipThreshold}.`
-                        : `Free shipping to ${shipDest} on orders over ${shipThreshold}.`}{" "}
-                      Orders are dispatched within {PROCESSING_LABEL} business days, then
-                      shipping takes {transitLabel(shipCountry)} business days, tracked.
+                        : `Free shipping to ${shipDest} on orders over ${shipThreshold}.`}
+                      {/* v236: the same dates as under Add to Bag, not the
+                          "1 – 3 + 3 – 6 business days" sum - the rule in words
+                          stays on the shipping page and in the FAQ (v235). */}
+                      {arrival && ` ${arrival.arrives}.`}
+                      {arrival?.christmas && ` ${arrival.christmas}.`}
                     </p>
                     <p>
                       {isFinalSale(node.handle)

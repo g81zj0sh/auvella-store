@@ -5,6 +5,8 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { lookupOrder, type LookupResult, type TrackedOrder } from "@/lib/orderTracking.functions";
 import { COUNTRIES, DEFAULT_DAYS, transitLabel, PROCESSING_LABEL, useShippingCountry } from "@/lib/shipping";
+import { orderDelivery } from "@/lib/deliveryEstimate";
+import { useUkDay } from "@/lib/ukDay";
 
 /* ------------------------------------------------------------------ */
 /* Copy — every line here is meant to be true.                         */
@@ -172,7 +174,7 @@ function TrackingPage() {
         <aside className="mt-14 rounded-card border border-[#0a0a0a] px-6 py-7 md:px-8">
           <p className="text-[10px] uppercase tracking-[0.28em] text-[#8a8a8a]">The honest version</p>
           <p className="mt-3 text-[15px] leading-[1.75] text-[#0a0a0a]">
-            Orders are dispatched within {PROCESSING_LABEL} business days, then shipping to {shipTo.name} takes a
+            Orders are dispatched within {PROCESSING_LABEL} business days, then shipping to {shipTo.the ? "the " : ""}{shipTo.name} takes a
             steady <strong className="font-medium">{transitLabel(shipTo).replace(" – ", " to ")} business days</strong>. Tracking appears on this page as soon as the
             courier issues it &mdash; usually a day or two after dispatch.
           </p>
@@ -187,8 +189,14 @@ function TrackingPage() {
 /* ------------------------------------------------------------------ */
 
 function OrderResult({ order }: { order: TrackedOrder }) {
+  /* v236: the delivery dates for this order - the same rule as the product
+     page and the bag ("arrives Thu 19 – Thu 26 Nov"), counted from the day it
+     was placed - instead of "Day 3 of a 4 to 9 business days window". Late
+     means today is past the last of those days. */
+  const today = useUkDay();
+  const est = orderDelivery(order.countryCode, order.createdAt, today);
   const win = windowFor(order.countryCode);
-  const overWindow = order.businessDaysSinceOrder > win.maxDays;
+  const overWindow = est ? est.late : order.businessDaysSinceOrder > win.maxDays;
   const placed = new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
   return (
@@ -228,7 +236,9 @@ function OrderResult({ order }: { order: TrackedOrder }) {
               {overWindow ? (
                 <>
                   <p className="text-[#0a0a0a]">
-                    It's been {order.businessDaysSinceOrder} business days, which is past our usual window.
+                    {est
+                      ? `We expected this by ${est.lastDay}, so it's running late.`
+                      : `It's been ${order.businessDaysSinceOrder} business days, which is past our usual window.`}
                   </p>
                   <p className="mt-2">
                     That's on us to chase, not you. Email us and we'll find out where it is:{" "}
@@ -238,6 +248,7 @@ function OrderResult({ order }: { order: TrackedOrder }) {
               ) : order.stage === 3 ? (
                 <>
                   <p className="text-[#0a0a0a]">Your tracking number is live.</p>
+                  {est && <p className="mt-2">Estimated delivery: {est.label}.</p>}
                   <p className="mt-2">
                     The courier hasn't scanned the parcel yet, so tracking will look empty for a few days. That's
                     normal and doesn't mean anything is wrong — it starts updating once the parcel is collected.
@@ -248,12 +259,13 @@ function OrderResult({ order }: { order: TrackedOrder }) {
                   <p className="text-[#0a0a0a]">
                     {order.stage === 4 ? "On its way to you." : "Your order is moving on schedule."}
                   </p>
-                  <p className="mt-2">
-                    {order.businessDaysSinceOrder === 0
-                      ? `Placed today. Standard delivery is ${win.label}.`
-                      : `Day ${order.businessDaysSinceOrder} of a ${win.label} window.`}
-                    {order.stage < 3 && " We'll add tracking here as soon as it's booked."}
-                  </p>
+                  {(est || order.stage < 3) && (
+                    <p className="mt-2">
+                      {est && `Estimated delivery: ${est.label}.`}
+                      {est && order.stage < 3 && " "}
+                      {order.stage < 3 && "We'll add tracking here as soon as it's booked."}
+                    </p>
+                  )}
                 </>
               )}
             </div>
