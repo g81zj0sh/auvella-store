@@ -6,6 +6,7 @@ import { freeShippingThresholdFmt, useShippingCountry } from "@/lib/shipping";
 import { inFreeDeliveryCountry } from "@/lib/freeDelivery";
 import { DUO_DEAL } from "@/lib/duoDeal";
 import { BF_ENDS, BF_TIERS, useBlackFriday } from "@/lib/blackFriday";
+import { DEC_HERO_LINES, DEC_HERO_NOTE, useDecemberOffer } from "@/lib/decemberOffer";
 import { usePreferences } from "@/lib/preferences";
 import { EditorialImage } from "@/components/site/EditorialImage";
 import { editorialSrc } from "@/lib/editorialImages";
@@ -354,6 +355,7 @@ function Index() {
   const { country } = useShippingCountry();
   const freeFromTwo = inFreeDeliveryCountry(country.code);
   const blackFriday = useBlackFriday();
+  const december = useDecemberOffer();
 
   /* v228/v229 (owner): the hero takes three turns - the bedroom film, the
      Daily Rotation still, then the staircase walk - like a slideshow: the
@@ -750,7 +752,9 @@ function Index() {
               the wash bag comes with 3+ of one style), no deadline.
               v231: while Black Friday runs (lib/blackFriday, by the clock)
               they carry its rates and its real end; the wash bag line goes,
-              as it needs 3+ of ONE style and Black Friday mixes any. */}
+              as it needs 3+ of ONE style and Black Friday mixes any.
+              v238 (ads chat, 24 Nov 2026): in December, second bodysuit half
+              price and its real end (lib/decemberOffer), same clock. */}
           <div
             inert={turn !== 1}
             className={`col-start-1 row-start-1 self-end transition-opacity duration-500 ${turn === 1 ? "opacity-100 delay-300" : "opacity-0"}`}
@@ -769,6 +773,12 @@ function Index() {
                   {BF_TIERS[1].percent}% off two bodysuits.
                   <br />
                   {BF_TIERS[2].percent}% off three or more.
+                </>
+              ) : december ? (
+                <>
+                  {DEC_HERO_LINES[0]}
+                  <br />
+                  {DEC_HERO_LINES[1]}
                 </>
               ) : (
                 <>
@@ -790,7 +800,9 @@ function Index() {
             <p className="mt-4 text-xs text-cream/60 leading-relaxed">
               {blackFriday
                 ? `${BF_TIERS[0].percent}% off one. Mix any bodysuits. Ends ${BF_ENDS}.`
-                : "Mix sizes and colours of one style. Selected styles."}
+                : december
+                  ? DEC_HERO_NOTE
+                  : "Mix sizes and colours of one style. Selected styles."}
               {freeFromTwo && (
                 <>
                   <br />

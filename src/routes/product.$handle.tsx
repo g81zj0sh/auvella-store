@@ -23,7 +23,7 @@ import { bundleVariant, type BundlePick } from "@/lib/bundlePicks";
 import { colourSwatchStyle } from "@/lib/swatch";
 import { TrustBadges } from "@/components/site/TrustBadges";
 import { RatingBadge } from "@/components/site/RatingBadge";
-import { isFinalSale } from "@/lib/returnsPolicy";
+import { HYGIENE_DETAIL, HYGIENE_RETURNS_LINE, HYGIENE_TITLE, isFinalSale, isHygieneItem } from "@/lib/returnsPolicy";
 import { ProductStory } from "@/components/site/ProductStory";
 import { descriptionParts, fitNote, fabricLine } from "@/lib/productStory";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, useCallback } from "react";
@@ -82,6 +82,8 @@ import { addedToBagText, inFreeDeliveryCountry, isUnderwear } from "@/lib/freeDe
 import { deliveryLines } from "@/lib/deliveryEstimate";
 import { useUkDay } from "@/lib/ukDay";
 import { BF_ENDS, BF_HANDLES, BF_TIERS, bfTotal, inBlackFriday, useBlackFriday } from "@/lib/blackFriday";
+import { DEC_PDP_LINE, isBodysuit, useDecemberOffer } from "@/lib/decemberOffer";
+import { AddOnRow, isAddOn } from "@/components/site/AddOns";
 import { canonicalColour } from "@/lib/colourAliases";
 
 /*
@@ -340,6 +342,8 @@ function ProductPage() {
   const addItem = useCartStore((s) => s.addItem);
   // v231: Black Friday on the bodysuits while it runs (lib/blackFriday).
   const blackFridayLive = useBlackFriday();
+  // v238: December's second-bodysuit-half-price offer, by the same clock.
+  const decemberLive = useDecemberOffer();
   // v235: today's UK date, for the delivery dates under Add to Bag.
   const ukDay = useUkDay();
   const adding = useCartStore((s) => s.isLoading);
@@ -847,8 +851,12 @@ function ProductPage() {
   // beats everything.
   const productChart = chartForHandle(handle);
   const guideHidden = isGuideHidden(handle);
+  /* v238 (brief): the add-ons' cup sizes and tape widths don't use the
+     clothing guide - no Size Guide link, no fit line ("Choose by band size",
+     "True to size") on their pages. */
+  const addOnPage = isAddOn(handle);
   const showSizeGuide =
-    !guideHidden && (productChart != null || sizeGuide.guideType !== "none");
+    !addOnPage && !guideHidden && (productChart != null || sizeGuide.guideType !== "none");
 
   /** True if this size can be bought in the chosen colour (any colour while a
       mixed bundle picks colours per pair). Since 14 Oct 2026 nothing sells
@@ -881,8 +889,12 @@ function ProductPage() {
      (20 / 30 / 40%, lib/blackFriday) - also on the two bodysuits outside the
      Buy 2 deal. The free gifts stay with the Buy 2 products (lib/perks). */
   const blackFriday = blackFridayLive && inBlackFriday(node.handle);
+  /* v238: in December a bodysuit's Multi-buy cards come down - the second
+     bodysuit half price replaces them (lib/decemberOffer); other products
+     keep theirs. */
+  const december = decemberLive && isBodysuit(node.handle);
   const duoPerks = inDuoDeal(node.handle);
-  const multiBuy = blackFriday || duoPerks;
+  const multiBuy = blackFriday || (duoPerks && !december);
   const tiers = blackFriday ? BF_TIERS : MULTI_BUY_TIERS;
   const tier = tiers.find((t) => t.quantity === (multiBuy ? pack : 1)) ?? tiers[0];
   /** What checkout charges for these units at a tier's rate: Shopify's own
@@ -1536,7 +1548,9 @@ function ProductPage() {
               <p>
                 {isFinalSale(node.handle)
                   ? "Final sale for hygiene — faulty or wrong items replaced or refunded"
-                  : "Easy, tracked 30-day returns"}
+                  : isHygieneItem(node.handle, node.title)
+                    ? HYGIENE_RETURNS_LINE
+                    : "Easy, tracked 30-day returns"}
               </p>
             </div>
 
@@ -1670,7 +1684,7 @@ function ProductPage() {
                     );
                   })}
                 </div>
-                {sizeFitLabel && (
+                {sizeFitLabel && !addOnPage && (
                   <p className="mt-2.5 text-[10px] uppercase tracking-[0.12em] text-[#888888]">
                     {sizeFitLabel}
                   </p>
@@ -1893,6 +1907,10 @@ function ProductPage() {
                 has pairs to pick (Step One does the same); a tap scrolls to
                 the builder. */}
             <div className={`${AD_LINES.has(node.handle) ? "mt-4" : "mt-7"} max-lg:order-1`}>
+            {/* v238: December, on bodysuit pages (lib/decemberOffer). */}
+            {december && (
+              <p className="mb-3 text-[12px] font-medium leading-relaxed text-[#0a0a0a]">{DEC_PDP_LINE}</p>
+            )}
             <button
               ref={atcRef}
               onClick={handleAdd}
@@ -1930,6 +1948,14 @@ function ProductPage() {
               </div>
             )}
             </div>
+
+            {/* v238: "Complete the look" - the two add-ons, on every bodysuit
+                page, under Add to Bag (components/site/AddOns). */}
+            {isBodysuit(node.handle) && (
+              <div className="mt-6 max-lg:order-1">
+                <AddOnRow heading="Complete the look" place="page" />
+              </div>
+            )}
 
             <div className="max-lg:order-1">
               <TrustBadges handle={node.handle} title={node.title} productType={node.productType ?? ""} />
@@ -2054,7 +2080,9 @@ function ProductPage() {
                     <p>
                       {isFinalSale(node.handle)
                         ? "For hygiene reasons this is final sale: it can't be returned or exchanged unless it's faulty or not what you ordered."
-                        : "Easy, tracked 30-day returns — items must be unworn with tags attached."}
+                        : isHygieneItem(node.handle, node.title)
+                          ? `${HYGIENE_TITLE}: ${HYGIENE_DETAIL.charAt(0).toLowerCase()}${HYGIENE_DETAIL.slice(1)}`
+                          : "Easy, tracked 30-day returns — items must be unworn with tags attached."}
                     </p>
                   </div>
                 )}
@@ -2072,7 +2100,8 @@ function ProductPage() {
         colour={activeColour}
         imageUrls={images.map((i) => i.node.url)}
         country={shipCountry}
-        sized={!/accessor|mask|adhesive/i.test(`${node.productType ?? ""} ${node.title}`)}
+        sized={!addOnPage && !/accessor|mask|adhesive/i.test(`${node.productType ?? ""} ${node.title}`)}
+        sizeGuide={!addOnPage}
         reviews={judgeme?.reviews ?? []}
         productType={node.productType ?? ""}
       />
