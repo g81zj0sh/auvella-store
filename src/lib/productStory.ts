@@ -64,7 +64,7 @@ const BRAND: WhyPoint[] = [
 export function whyPoints(
   descriptionHtml: string | null | undefined,
   title = "",
-  opts: { finalSale?: boolean } = {},
+  opts: { finalSale?: boolean; hygiene?: boolean } = {},
 ): WhyPoint[] {
   // Only the product's own facts: its title and its Details bullets. The
   // prose and fit notes mention OTHER products ("wear it with a strapless
@@ -76,9 +76,12 @@ export function whyPoints(
     if (s.test.test(text)) picked.push(s.point);
   }
   // Two specific + two brand points; fewer specific means more brand.
+  // v238: hygiene items (lib/returnsPolicy) return only unused.
   const brand = opts.finalSale
     ? BRAND.map((p) => (p === RETURNS_POINT ? "Tracked delivery" : p))
-    : BRAND;
+    : opts.hygiene
+      ? BRAND.map((p) => (p === RETURNS_POINT ? `${RETURNS_POINT} if unused` : p))
+      : BRAND;
   return [...picked, ...brand].slice(0, 4);
 }
 
@@ -214,7 +217,7 @@ export type TableRow = { label: string; others: "yes" | "not-always" };
 export function comparisonRows(
   descriptionHtml: string | null | undefined,
   title = "",
-  opts: { sized?: boolean; finalSale?: boolean } = {},
+  opts: { sized?: boolean; finalSale?: boolean; hygiene?: boolean } = {},
 ): TableRow[] {
   const rows: TableRow[] = specificPoints(descriptionHtml, title, 3).map((label) => ({ label, others: "not-always" as const }));
   if (fabrics(descriptionHtml).some((f) => f.tag === "Stretch")) rows.push({ label: "Stretch that springs back", others: "yes" });
@@ -222,7 +225,11 @@ export function comparisonRows(
   if (opts.sized !== false) rows.push({ label: "Sizes mapped to real measurements", others: "not-always" });
   rows.push({ label: "The price you see is the price you pay", others: "not-always" });
   rows.push({
-    label: opts.finalSale ? "Tracked delivery" : "Tracked delivery, 30-day returns",
+    label: opts.finalSale
+      ? "Tracked delivery"
+      : opts.hygiene
+        ? "Tracked delivery, 30-day returns if unused"
+        : "Tracked delivery, 30-day returns",
     others: "not-always",
   });
   return rows.slice(0, 6);

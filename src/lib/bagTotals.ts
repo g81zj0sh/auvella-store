@@ -1,8 +1,9 @@
 import type { CartItem } from "@/stores/cartStore";
 import { cartLineKey, type CartTotals } from "@/lib/shopify";
 import { BUNDLE_DEAL, bundleUnitOffGBP, inBundleDeal } from "@/lib/bundleDeal";
-import { DUO_DEAL, duoPercentFor, duoUnitOff, inDuoDeal } from "@/lib/duoDeal";
+import { DUO_DEAL, duoPercentFor, duoUnitOff, inDuoDeal, unitOffAt } from "@/lib/duoDeal";
 import { bfPercentFor, inBlackFriday } from "@/lib/blackFriday";
+import { decSaving as decemberSaving, isBodysuit } from "@/lib/decemberOffer";
 
 /*
  * The bag's arithmetic, shared by the bag drawer and the product page's
@@ -27,8 +28,12 @@ import { bfPercentFor, inBlackFriday } from "@/lib/blackFriday";
  *
  * v231 `blackFriday` (the bag drawer passes it while Black Friday runs,
  * lib/blackFriday): the bodysuits take its rate - 20 / 30 / 40% by the number
- * of bodysuits across the bag, Shopify's rounding per line - instead of the
- * Buy 2 one, which it beats at every quantity.
+ * of bodysuits across the bag, Shopify's rounding (v238: down, per item) -
+ * instead of the Buy 2 one, which it beats at every quantity.
+ *
+ * v238 `december` (lib/decemberOffer): one bodysuit in every two half price.
+ * It combines with no other product discount, so Shopify applies either it
+ * or the others (Buy 2, 3-for-£30) - whichever saves more - and so does this.
  */
 export function bagTotals(
   items: CartItem[],
@@ -36,19 +41,18 @@ export function bagTotals(
   fallbackCurrency = "GBP",
   codes: string[] = [],
   blackFriday = false,
+  december = false,
 ) {
   const baseCurrency = items[0]?.price.currencyCode ?? fallbackCurrency;
   const totalPrice = items.reduce((s, i) => s + parseFloat(i.price.amount) * i.quantity, 0);
   const bfLines = blackFriday ? items.filter((i) => inBlackFriday(i.product.node.handle)) : [];
   const bfUnits = bfLines.reduce((s, i) => s + i.quantity, 0);
   const bfPercent = bfPercentFor(bfUnits);
+  /* v238: per item, rounded down to the penny, then times the quantity - what
+     Shopify does (real carts, 23 Nov 2026: one Long Sleeve -£6.99, not -£7.00). */
   const bfSaving =
-    Math.round(
-      bfLines.reduce((s, i) => {
-        const pennies = Math.round(parseFloat(i.price.amount) * 100) * i.quantity;
-        return s + Math.round((pennies * bfPercent) / 100);
-      }, 0),
-    ) / 100;
+    Math.round(bfLines.reduce((s, i) => s + unitOffAt(parseFloat(i.price.amount), bfPercent) * i.quantity, 0) * 100) /
+    100;
   /* "Buy 2, save 10% / Buy 3+, save 15%": mirrors the Simple Discounts
      quantity breaks so the bag shows the figure checkout will. Counted PER
      PRODUCT: units of one product across its sizes, not across the bag. */
@@ -70,10 +74,11 @@ export function bagTotals(
     if (pct > 0) duoSaving += duoUnitOff(parseFloat(i.price.amount), pct) * i.quantity;
   }
   let duoOneShort = 0;
-  const duoPercents: number[] = [];
-  for (const qty of perProduct.values()) {
+  let duoPercents: number[] = [];
+  for (const [h, qty] of perProduct) {
     if (qty >= DUO_DEAL.minQuantity) duoPercents.push(duoPercentFor(qty));
-    else duoOneShort += 1;
+    // v238: in December a lone bodysuit's nudge is the half-price one.
+    else if (!(december && isBodysuit(h))) duoOneShort += 1;
   }
   duoSaving = Math.round(duoSaving * 100) / 100;
   /* "3 for £30": Shopify's rule is £2.99 off EVERY eligible item once 3+ eligible
@@ -83,10 +88,25 @@ export function bagTotals(
     .filter((i) => inBundleDeal(i.product.node.handle))
     .reduce((s, i) => s + i.quantity, 0);
   const bundlePerUnitOff = bundleUnitOffGBP(bundleUnits);
-  const bundleSaving =
+  let bundleSaving =
     bundleUnits >= BUNDLE_DEAL.minQuantity
       ? Math.round(bundleUnits * bundlePerUnitOff * 100) / 100
       : 0;
+  /* v238: December's half price on the bodysuits, or the others - never both. */
+  const decLines = december ? items.filter((i) => isBodysuit(i.product.node.handle)) : [];
+  const decUnits = decLines.reduce((s, i) => s + i.quantity, 0);
+  const decOff = decemberSaving(
+    decLines.flatMap((i) => Array.from({ length: i.quantity }, () => parseFloat(i.price.amount))),
+  );
+  const decWins = decOff > 0 && decOff > duoSaving + bundleSaving;
+  const decSaving = decWins ? decOff : 0;
+  if (decWins) {
+    duoSaving = 0;
+    duoPercents = [];
+    bundleSaving = 0;
+    // A second of another product wouldn't get its 10% alongside it either.
+    duoOneShort = 0;
+  }
   /* Shopify's own numbers win whenever they describe this exact bag; the
      local mirrors above cover the moments before they arrive. */
   const appliedCodes = codes.map((c) => c.toUpperCase()).sort();
@@ -98,7 +118,7 @@ export function bagTotals(
     (totals.codes ?? []).join("|") === appliedCodes.join("|")
       ? totals
       : null;
-  const payable = shopifyTotals ? shopifyTotals.total : totalPrice - duoSaving - bundleSaving - bfSaving;
+  const payable = shopifyTotals ? shopifyTotals.total : totalPrice - duoSaving - bundleSaving - bfSaving - decSaving;
   const pending = !shopifyTotals && items.length > 0 && appliedCodes.length > 0;
   return {
     baseCurrency,
@@ -112,6 +132,10 @@ export function bagTotals(
     bfUnits,
     bfPercent,
     bfSaving,
+    /* v238: December - bodysuits in the bag, the half-price saving (0 when
+       the other discounts save more, as Shopify decides). */
+    decUnits,
+    decSaving,
     shopifyTotals,
     payable,
     pending,

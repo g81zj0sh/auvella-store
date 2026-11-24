@@ -35,6 +35,8 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { BF_CODE_NOTE, bfBagLine, bfLabel, isBlackFridayTitle, useBlackFriday } from "@/lib/blackFriday";
+import { DEC_LABEL, decBagLine, isBodysuit, isDecemberTitle, useDecemberOffer } from "@/lib/decemberOffer";
+import { AddOnRow, isAddOn } from "@/components/site/AddOns";
 import { CartEditSheet } from "@/components/site/CartEditSheet";
 import { ensurePerks } from "@/components/site/PerkSync";
 import {
@@ -170,10 +172,12 @@ export function CartDrawer() {
   const totals = useCartStore((s) => s.totals);
   // v231: Black Friday on the bodysuits while it runs (lib/blackFriday).
   const blackFriday = useBlackFriday();
+  // v238: December's second bodysuit half price (lib/decemberOffer).
+  const december = useDecemberOffer();
   const {
     baseCurrency, duoSaving, duoOneShort, duoPercents, bundleSaving, bfUnits, bfPercent, bfSaving,
-    shopifyTotals, payable, pending,
-  } = bagTotals(items, totals, displayCurrency, discountCodes, blackFriday);
+    decUnits, decSaving, shopifyTotals, payable, pending,
+  } = bagTotals(items, totals, displayCurrency, discountCodes, blackFriday, december);
   /* Bundle: how many eligible underwear lines are in the bag. */
   const bundleQty = items.filter((i) => inBundleDeal(i.product.node.handle)).reduce((s, i) => s + i.quantity, 0);
   const savingLines: Array<{ label: string; amount: number }> = shopifyTotals
@@ -192,6 +196,7 @@ export function CartDrawer() {
         ...(bundleSaving > 0 ? [{ label: bundleLabel(baseCurrency, bundleQty), amount: bundleSaving }] : []),
         ...(duoSaving > 0 ? [{ label: duoLabel(duoPercents), amount: duoSaving }] : []),
         ...(bfSaving > 0 ? [{ label: bfLabel(bfPercent), amount: bfSaving }] : []),
+        ...(decSaving > 0 ? [{ label: DEC_LABEL, amount: decSaving }] : []),
       ];
   /* v231: Black Friday's tier progress (brief: "Add 1 more bodysuit for 30%
      off both", ...), from the bodysuits in the bag. Quiet while a shopper's
@@ -199,6 +204,17 @@ export function CartDrawer() {
      priced this exact bag without a Black Friday line. */
   const bfConfirmed = !shopifyTotals || shopifyTotals.discounts.some((d) => isBlackFridayTitle(d.label));
   const bfLine = blackFriday && discountCodes.length === 0 && bfConfirmed ? bfBagLine(bfUnits) : null;
+  /* v238: December (brief): one bodysuit - "Add another bodysuit and it's
+     half price."; two or more - "Second bodysuit half price applied.", only
+     while Shopify applies it (before its totals arrive: while the mirror
+     does). Quiet while a shopper's code is on, as Black Friday was. */
+  const decApplied = shopifyTotals
+    ? shopifyTotals.discounts.some((d) => isDecemberTitle(d.label))
+    : decSaving > 0;
+  const decLine =
+    december && discountCodes.length === 0 && (decUnits === 1 || (decUnits >= 2 && decApplied))
+      ? decBagLine(decUnits)
+      : null;
 
   const { country } = useShippingCountry();
   /* Judged on what checkout charges (after discounts), with the same rule as
@@ -228,6 +244,16 @@ export function CartDrawer() {
   // AUVELLA10 combine with nothing): no "add 1 more" promise, and the £60
   // line once Shopify has refused the free-delivery code.
   const codeBlocksDelivery = discountCodes.length > 0 && !deliveryCodeApplies;
+
+  /* v238 (brief): the two add-ons as quick adds while the bag holds a
+     bodysuit and no add-on (components/site/AddOns). With one bodysuit and
+     nothing else, the add is what makes delivery free (add-ons count towards
+     the 2+), and the heading says so - only where that's true. */
+  const showAddOns =
+    items.some((i) => isBodysuit(i.product.node.handle)) && !items.some((i) => isAddOn(i.product.node.handle));
+  const addOneFreesDelivery =
+    totalItems === 1 && counted === 1 && inFreeDelivery && !deliveryFree && !codeBlocksDelivery;
+  const addOnHeading = addOneFreesDelivery ? "Add one and your delivery's free" : "Complete the look";
 
   useEffect(() => {
     if (open) syncCart();
@@ -578,6 +604,12 @@ export function CartDrawer() {
                   })}
                 </ul>
 
+                {showAddOns && (
+                  <div className="border-t border-border px-6 py-5">
+                    <AddOnRow heading={addOnHeading} place="bag" onNavigate={() => setOpen(false)} />
+                  </div>
+                )}
+
                 {plan.hasProducts && (
                   <ShippingInsurance
                     on={protectionPending ?? !!protectionLine}
@@ -633,6 +665,7 @@ export function CartDrawer() {
                   </div>
                 ))}
                 {bfLine && <p className="mb-2 text-[12px] font-medium text-ink">{bfLine}</p>}
+                {decLine && <p className="mb-2 text-[12px] font-medium text-ink">{decLine}</p>}
                 {duoSaving === 0 && duoOneShort > 0 ? (
                   <p className="mb-2 text-[12px] text-cocoa">Add a second of the same product to save {DUO_DEAL.percent}% on both.</p>
                 ) : null}

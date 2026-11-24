@@ -9,6 +9,7 @@ import { FavouritesButton } from "@/components/site/FavouritesButton";
 import { freeShippingThresholdFmt, useShippingCountry, COUNTRIES } from "@/lib/shipping";
 import { inFreeDeliveryCountry } from "@/lib/freeDelivery";
 import { BF_BAR_MESSAGES, useBlackFriday } from "@/lib/blackFriday";
+import { DEC_BAR_MESSAGE, useDecemberOffer } from "@/lib/decemberOffer";
 import { SearchDrawer } from "@/components/site/SearchDrawer";
 import auvellaWordmarkImg from "@/assets/auvella-wordmark.png";
 import { editorialSrc, editorialSrcSet } from "@/lib/editorialImages";
@@ -465,8 +466,11 @@ function AnnouncementBar() {
   // "arrives" dates sit under Add to Bag and in the bag (lib/deliveryEstimate).
   // v231: Black Friday leads while it runs (lib/blackFriday), by the clock.
   const blackFriday = useBlackFriday();
+  // v238: then December's second bodysuit half price (lib/decemberOffer).
+  const december = useDecemberOffer();
   const messages = [
     ...(blackFriday ? BF_BAR_MESSAGES : []),
+    ...(december ? [DEC_BAR_MESSAGE] : []),
     ...(inFreeDeliveryCountry(country.code)
       ? ["Free delivery on 2+ items (excl. underwear)"]
       : [`Free Shipping On Orders Over ${freeShippingThresholdFmt(displayCurrency)}`]),

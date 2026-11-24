@@ -19,9 +19,10 @@ import type { MultiBuyTier } from "@/lib/duoDeal";
  * The free gifts (lib/perks) work as they always do.
  *
  * The site shows the Black Friday wording only between those times. The
- * clock below switches it - never a hand - and the normal wording comes back
- * by itself at 00:00 on Tue 1 Dec; nothing to do in Shopify then either. If
- * the Shopify discounts change, change this file in the same release.
+ * clock below switches it - never a hand. v238: at 00:00 on Tue 1 Dec it moves
+ * on to the December offer (lib/decemberOffer, until DEC_END), then the
+ * normal wording; nothing to do in Shopify either. If the Shopify discounts
+ * change, change this file in the same release.
  *
  * UK rules (CMA, DMCC Act): the saving is shown against today's price, never
  * the compare-at; the end is the real one and is never extended; no countdown
@@ -62,12 +63,16 @@ export function bfPercentFor(bodysuits: number): number {
   return bodysuits === 1 ? 20 : 0;
 }
 
-/** What checkout charges for these unit prices at a rate: Shopify takes the
- *  percentage off the line and rounds to the penny. The brief's own figures:
- *  Long Sleeve £34.99 is £27.99 for one, £48.99 for two, £62.98 for three. */
+/** What checkout charges for these unit prices at a rate. v238: Shopify takes
+ *  the percentage off EACH ITEM and rounds that saving DOWN to the penny, like
+ *  the Multi-buy app (lib/duoDeal unitOffAt) - checked with real carts on
+ *  23 Nov 2026: a £34.99 Long Sleeve is £28.00 for one, £49.00 for two,
+ *  £63.00 for three; a £21.99 Cami £17.60. v231 rounded the line's saving to
+ *  the nearest penny and showed £27.99, £48.99, £62.98 and £17.59 - up to 2p
+ *  under what checkout charged. */
 export function bfTotal(units: number[], percent: number): number {
-  const pennies = Math.round(units.reduce((s, u) => s + u, 0) * 100);
-  return (pennies - Math.round((pennies * percent) / 100)) / 100;
+  const off = (u: number) => Math.floor(u * (percent / 100) * 100 + 1e-6) / 100;
+  return Math.round(units.reduce((s, u) => s + u - off(u), 0) * 100) / 100;
 }
 
 /** The three discounts' titles as Shopify puts them on cart lines (lower case). */
@@ -115,13 +120,19 @@ export const BF_CODE_NOTE = "Your Black Friday price is already better than this
 /* The switch                                                          */
 /* ------------------------------------------------------------------ */
 
-export type SalePhase = "before" | "on" | "after";
+/** v238: the December offer follows straight on (lib/decemberOffer). Its
+ *  Shopify discount ends Thu 31 Dec 23:59:59 UK (GMT, so UTC); this is the
+ *  first moment after it. */
+export const DEC_END = Date.parse("2027-01-01T00:00:00Z");
+
+/** "on" is Black Friday; "december" the second-bodysuit-half-price offer. */
+export type SalePhase = "before" | "on" | "december" | "after";
 
 export function salePhaseAt(now: number): SalePhase {
-  return now < BF_START ? "before" : now < BF_END ? "on" : "after";
+  return now < BF_START ? "before" : now < BF_END ? "on" : now < DEC_END ? "december" : "after";
 }
 
-const ORDER: Record<SalePhase, number> = { before: 0, on: 1, after: 2 };
+const ORDER: Record<SalePhase, number> = { before: 0, on: 1, december: 2, after: 3 };
 
 /* The server renders with its own clock and writes the phase on <html>
    (data-sale, __root), and the edge cache keeps one copy per phase
@@ -140,7 +151,7 @@ function renderedPhase(): SalePhase {
   if (typeof document === "undefined") return salePhaseAt(Date.now());
   if (rendered === null) {
     const v = document.documentElement.getAttribute(ATTRIBUTE);
-    rendered = v === "before" || v === "on" || v === "after" ? v : salePhaseAt(Date.now());
+    rendered = v === "before" || v === "on" || v === "december" || v === "after" ? v : salePhaseAt(Date.now());
   }
   return rendered;
 }
@@ -159,7 +170,7 @@ function currentPhase(): SalePhase {
 function schedule() {
   clearTimeout(timer);
   const p = currentPhase();
-  const at = p === "before" ? BF_START : p === "on" ? BF_END : null;
+  const at = p === "before" ? BF_START : p === "on" ? BF_END : p === "december" ? DEC_END : null;
   if (at === null) return;
   // Long waits are capped (setTimeout's limit); a recheck simply schedules again.
   timer = setTimeout(recheck, Math.min(Math.max(0, at - Date.now()) + 50, 2 ** 31 - 1));
@@ -197,7 +208,7 @@ function subscribe(listener: () => void) {
   };
 }
 
-/** "before", "on" or "after" Black Friday, hydration-safe. */
+/** "before", "on" (Black Friday), "december" or "after", hydration-safe. */
 export function useSalePhase(): SalePhase {
   return useSyncExternalStore(subscribe, currentPhase, renderedPhase);
 }
