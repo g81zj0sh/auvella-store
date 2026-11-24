@@ -1,12 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { BadgeCheck, ShieldCheck, Shirt, Truck, type LucideIcon } from "lucide-react";
-import { isFinalSale } from "@/lib/returnsPolicy";
+import { BadgeCheck, PackageCheck, ShieldCheck, Shirt, Truck, type LucideIcon } from "lucide-react";
+import { HYGIENE_DETAIL, HYGIENE_TITLE, isFinalSale, isHygieneItem } from "@/lib/returnsPolicy";
 
 /*
  * "Auvella Guarantee" badges under the Add to Bag button (v158, copy v159).
  *
  * - Try-On Guarantee = the 30-day returns/exchanges (unworn, tags on); final-
  *   sale items (underwear, eye mask) show their final-sale line instead.
+ *   v238 (owner, 24 Nov 2026): hygiene items (the stick-on bra, tape, nipple
+ *   covers; lib/returnsPolicy) show "Hygiene item" - unused only.
  * - v235 (owner, 13 Nov 2026): the "4–9 Day Delivery" badge is gone - the
  *   delivery dates sit under Add to Bag and in the bag - so the row has two.
  * - No-Roll Waistband Promise on items with a waistband (see hasWaistband),
@@ -48,6 +50,13 @@ export function TrustBadges({
           icon: ShieldCheck,
           title: "Final sale for hygiene",
           detail: "Faulty or wrong items replaced or refunded at no cost",
+          slug: "returns",
+        }
+      : isHygieneItem(handle, title)
+      ? {
+          icon: PackageCheck,
+          title: HYGIENE_TITLE,
+          detail: HYGIENE_DETAIL,
           slug: "returns",
         }
       : {

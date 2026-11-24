@@ -8,8 +8,9 @@ import { STORY_IMAGES } from "@/lib/storyImages";
 import { COUNTRIES, PROCESSING_LABEL, transitLabel, type Country } from "@/lib/shipping";
 import { inDuoDeal, DUO_DEAL } from "@/lib/duoDeal";
 import { BF_ENDS, BF_TIERS, inBlackFriday, useBlackFriday } from "@/lib/blackFriday";
+import { DEC_FAQ, isBodysuit, useDecemberOffer } from "@/lib/decemberOffer";
 import { inBundleDeal } from "@/lib/bundleDeal";
-import { isFinalSale } from "@/lib/returnsPolicy";
+import { isFinalSale, isHygieneItem } from "@/lib/returnsPolicy";
 import type { Review } from "@/components/site/Reviews";
 
 /*
@@ -65,11 +66,14 @@ type Props = {
   imageUrls: string[];
   country: Country;
   sized?: boolean;
+  /** v238: false where the page has no Size Guide (the add-ons), so the FAQ
+      doesn't point to one. */
+  sizeGuide?: boolean;
   reviews?: Review[];
   productType?: string;
 };
 
-export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls, country, sized = true, reviews = [], productType = "" }: Props) {
+export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls, country, sized = true, sizeGuide = true, reviews = [], productType = "" }: Props) {
   const html = descriptionHtml ?? "";
   const entry = colour ? GALLERY_INDEX[handle]?.[colour] : undefined;
   const model = entry?.m?.length ? entry.m : imageUrls.slice(0, 3);
@@ -86,11 +90,15 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
   const sizes = sizesLine(html);
   const fabricText = fabricLine(html);
   const finalSale = isFinalSale(handle);
+  // v238 (owner): hygiene items return only unused (lib/returnsPolicy).
+  const hygiene = isHygieneItem(handle, title);
   // v231: the multi-buy answer follows Black Friday while it runs (lib/blackFriday).
   const blackFriday = useBlackFriday() && inBlackFriday(handle);
-  const rows = comparisonRows(html, title, { sized, finalSale });
+  // v238: December's second bodysuit half price (lib/decemberOffer).
+  const december = useDecemberOffer() && isBodysuit(handle);
+  const rows = comparisonRows(html, title, { sized, finalSale, hygiene });
   const transit = transitLabel(country);
-  const featureA = [...points, ...whyPoints(html, title, { finalSale }).slice(points.length)]
+  const featureA = [...points, ...whyPoints(html, title, { finalSale, hygiene }).slice(points.length)]
     .slice(0, 2)
     .map((p) => p.split(" — ")[0]);
   const built = constructionBullets(html, 3);
@@ -138,8 +146,8 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
   const faqs: Array<{ q: string; a: string }> = [
     ...(fit ? [{ q: fit.heading === "How to use" ? "How do I use it?" : "How does it fit?", a: fit.text }] : []),
     ...(fabricText ? [{ q: "What's it made of?", a: fabricText.charAt(0).toUpperCase() + fabricText.slice(1) + "." }] : []),
-    ...(sizes ? [{ q: "What sizes does it come in?", a: sizes.replace(/\s*\(.*\)$/, "") + ". Tap Size Guide next to the sizes for measurements." }] : []),
-    ...(sized ? [{ q: "How do I find my size?", a: "Tap Size Guide next to the sizes at the top of this page: each size is mapped to real measurements. If you're between two, the fit note says which way to go." }] : []),
+    ...(sizes ? [{ q: "What sizes does it come in?", a: sizes.replace(/\s*\(.*\)$/, "") + (sizeGuide ? ". Tap Size Guide next to the sizes for measurements." : ".") }] : []),
+    ...(sized && sizeGuide ? [{ q: "How do I find my size?", a: "Tap Size Guide next to the sizes at the top of this page: each size is mapped to real measurements. If you're between two, the fit note says which way to go." }] : []),
     // v235 (owner's brief): the rule stays in words; the dates are on the page and in the bag.
     { q: "How long does delivery take?", a: `Orders are dispatched within ${PROCESSING_LABEL} business days, then shipping to ${country.the ? "the " : ""}${country.name} takes ${transit} business days, tracked: ${country.days} working days from ordering. You'll see your estimated delivery dates on the product page and in your bag.` },
     // v236: Ship to is in the phone menu too (it was only behind the globe icon, laptops only).
@@ -148,10 +156,14 @@ export function ProductStory({ handle, title, descriptionHtml, colour, imageUrls
       q: "Can I return it?",
       a: finalSale
         ? "For hygiene reasons this is final sale — it can't be returned unless it's faulty or not what you ordered, in which case we'll replace or refund it at no cost to you."
-        : "Yes — within 30 days of delivery. Email us to start a return. Return postage is paid by you unless the item is faulty.",
+        : hygiene
+          ? "Yes, within 30 days of delivery if it's unused and in its original packaging. It's a hygiene item, so once worn it can't be returned unless it's faulty. Email us to start a return. Return postage is paid by you unless the item is faulty."
+          : "Yes — within 30 days of delivery. Email us to start a return. Return postage is paid by you unless the item is faulty.",
     },
     ...(blackFriday
       ? [{ q: "Is there a multi-buy?", a: `Black Friday, until ${BF_ENDS}: ${BF_TIERS[0].percent}% off one bodysuit, ${BF_TIERS[1].percent}% off two and ${BF_TIERS[2].percent}% off three or more. Any bodysuits count together, in any sizes or colours. The saving is applied automatically in your bag.` }]
+      : december
+      ? [{ q: "Is there a multi-buy?", a: DEC_FAQ }]
       : inDuoDeal(handle)
       ? [{ q: "Is there a multi-buy?", a: `Buy two of this product and save ${DUO_DEAL.percent}%, or three or more and save ${DUO_DEAL.stockUpPercent}% — any sizes or colours. The saving is applied automatically in your bag.` }]
       : inBundleDeal(handle)

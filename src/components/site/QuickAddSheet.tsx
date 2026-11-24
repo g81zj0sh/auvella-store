@@ -14,6 +14,7 @@ import { colourSwatchStyle } from "@/lib/swatch";
 import { SizeGuide } from "@/components/site/SizeGuide";
 import { resolveGuide } from "@/lib/sizeGuides";
 import { chartForHandle, isGuideHidden } from "@/lib/productSizeCharts";
+import { isAddOn } from "@/lib/addOns";
 import { installCatalogTables } from "@/lib/catalogTables";
 import { FULL_CATALOG_TABLES } from "@/lib/catalogTablesFull";
 
@@ -179,8 +180,9 @@ function QuickAddBody({
 
   const guide = resolveGuide(node.title);
   const productChart = chartForHandle(node.handle);
+  // v238: the add-ons' cup sizes and widths have no clothing guide (as their pages).
   const showGuide =
-    !isGuideHidden(node.handle) && (productChart != null || guide.guideType !== "none");
+    !isAddOn(node.handle) && !isGuideHidden(node.handle) && (productChart != null || guide.guideType !== "none");
 
   const onPickColor = (c: string) => setSelColor(c);
 
