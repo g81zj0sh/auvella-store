@@ -1,18 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchProductsByHandles } from "@/lib/shopify";
-import { HIDDEN_HANDLES, PROTECTION, WASH_BAG } from "@/lib/perks";
+import { HIDDEN_HANDLES, PROTECTION } from "@/lib/perks";
 import { useDisplayPrice, usePreferences } from "@/lib/preferences";
 
 /*
  * The perks' prices in the shopper's market, formatted (lib/perks), or null
  * when there's no true figure to show:
- * - protection / washBag: what each free gift is worth, struck beside
- *   "FREE" - the gift variant's compare-at in Shopify (£3.49 / £10). Markets
- *   with their own fixed prices (EUR, SEK...) return no compare-at for the
- *   gifts, so there it's the market's real price for the same item (the paid
- *   protection, the £10 Large bag). Shopify is the on/off switch: clear the
- *   compare-at and the paid sibling's price is all that remains, and if
- *   neither exists nothing is struck at all.
+ * - protection: what the free Shipping Protection is worth, struck beside
+ *   "FREE" - v239 (owner, 26 Nov 2026): the real price the bag's opt-in
+ *   charges for it (£3.49), never a compare-at.
+ * - washBag: always null - v239 (owner): the wash bag is never sold on its
+ *   own, so it has no real price to strike; it shows just "FREE".
  * - paidProtection: the price the opt-in toggle charges.
  * Before Shopify answers, the GBP figures stand in - but only for a shopper
  * seeing GBP; anywhere else nothing shows until the market's figure arrives,
@@ -38,15 +36,10 @@ export function usePerkValues(enabled = true) {
     !loaded && currency === "GBP" ? display(gbp, "GBP").replace(/\.00$/, "") : null;
 
   const paid = variant(PROTECTION.handle, PROTECTION.paidVariantId)?.price;
+  const protection = fmt(paid) ?? placeholder(PROTECTION.valueGBP);
   return {
-    protection:
-      fmt(variant(PROTECTION.handle, PROTECTION.freeVariantId)?.compareAtPrice) ??
-      fmt(paid) ??
-      placeholder(PROTECTION.valueGBP),
-    washBag:
-      fmt(variant(WASH_BAG.handle, WASH_BAG.giftVariantId)?.compareAtPrice) ??
-      fmt(variant(WASH_BAG.handle, WASH_BAG.largeVariantId)?.price) ??
-      placeholder(WASH_BAG.valueGBP),
-    paidProtection: fmt(paid) ?? placeholder(PROTECTION.valueGBP),
+    protection,
+    washBag: null as string | null,
+    paidProtection: protection,
   };
 }
