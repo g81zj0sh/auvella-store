@@ -112,8 +112,8 @@ function EditBody({ item, onDone }: { item: CartItem; onDone: () => void }) {
   };
 
   const thumb = cartLineImage(item.product, selected?.id ?? item.variantId, selected?.selectedOptions ?? item.selectedOptions, 300);
+  // v239 (ads chat): a bag line shows today's price only, never the compare-at.
   const price = selected?.price ?? item.price;
-  const compare = selected?.compareAtPrice ?? null;
 
   return (
     <div className="flex h-full flex-col">
@@ -133,11 +133,6 @@ function EditBody({ item, onDone }: { item: CartItem; onDone: () => void }) {
             <p className="mt-1 font-serif text-[17px] leading-snug text-ink">{node.title}</p>
             <p className="mt-1.5 text-[14px] text-ink">
               {display(price.amount, price.currencyCode)}
-              {compare && parseFloat(compare.amount) > parseFloat(price.amount) && (
-                <span className="ml-2 text-[13px] text-cocoa line-through">
-                  {display(compare.amount, compare.currencyCode)}
-                </span>
-              )}
             </p>
           </div>
         </div>

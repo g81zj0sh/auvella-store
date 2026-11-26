@@ -15,6 +15,7 @@ import { SizeGuide } from "@/components/site/SizeGuide";
 import { resolveGuide } from "@/lib/sizeGuides";
 import { chartForHandle, isGuideHidden } from "@/lib/productSizeCharts";
 import { isAddOn } from "@/lib/addOns";
+import { LIVE_PRICE_LABEL, TODAY_PRICE_LABEL, useOneItemPrice } from "@/lib/livePrice";
 import { installCatalogTables } from "@/lib/catalogTables";
 import { FULL_CATALOG_TABLES } from "@/lib/catalogTablesFull";
 
@@ -87,6 +88,7 @@ function QuickAddBody({
   const addItem = useCartStore((s) => s.addItem);
   const isSyncing = useCartStore((s) => s.isSyncing);
   const displayPrice = useDisplayPrice();
+  const livePrice = useOneItemPrice();
 
   const allImages = useMemo(() => node.images.edges.map((e) => e.node), [node]);
   const [imgIdx, setImgIdx] = useState(0);
@@ -169,14 +171,15 @@ function QuickAddBody({
   const canAdd =
     !!priceVariant && priceVariant.availableForSale && !needsSize && !adding && !isSyncing;
 
-  const price = priceVariant
+  /* v239 (ads chat): never the compare-at. While Black Friday runs a
+     bodysuit shows its price for one, today's price struck, as on its page
+     (lib/livePrice); the button says the price for one. */
+  const today = priceVariant
     ? displayPrice(priceVariant.price.amount, priceVariant.price.currencyCode)
     : "";
-  const compare =
-    priceVariant?.compareAtPrice &&
-    parseFloat(priceVariant.compareAtPrice.amount) > parseFloat(priceVariant.price.amount)
-      ? displayPrice(priceVariant.compareAtPrice.amount, priceVariant.compareAtPrice.currencyCode)
-      : null;
+  const saleAmount = priceVariant ? livePrice(node.handle, parseFloat(priceVariant.price.amount)) : null;
+  const price =
+    priceVariant && saleAmount !== null ? displayPrice(saleAmount, priceVariant.price.currencyCode) : today;
 
   const guide = resolveGuide(node.title);
   const productChart = chartForHandle(node.handle);
@@ -244,9 +247,19 @@ function QuickAddBody({
             <p className="text-[10px] uppercase tracking-[0.2em] text-[#888888]">{category}</p>
           )}
           <h2 className="mt-1 font-serif text-lg leading-snug text-[#0a0a0a]">{node.title}</h2>
-          <p className="mt-1.5 text-[14px] text-[#0a0a0a]">
-            {compare && <span className="mr-2 text-[#999999] line-through">{compare}</span>}
-            {price}
+          <p className="relative mt-1.5 text-[14px] text-[#0a0a0a]">
+            {saleAmount !== null ? (
+              <>
+                <span className="sr-only">{LIVE_PRICE_LABEL}</span>
+                {price}
+                <span className="ml-2 text-[#999999] line-through">
+                  <span className="sr-only">{TODAY_PRICE_LABEL}</span>
+                  {today}
+                </span>
+              </>
+            ) : (
+              price
+            )}
           </p>
         </div>
         <button

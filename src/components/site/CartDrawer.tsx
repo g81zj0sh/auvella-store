@@ -37,6 +37,7 @@ import {
 import { BF_CODE_NOTE, bfBagLine, bfLabel, isBlackFridayTitle, useBlackFriday } from "@/lib/blackFriday";
 import { DEC_LABEL, decBagLine, isBodysuit, isDecemberTitle, useDecemberOffer } from "@/lib/decemberOffer";
 import { AddOnRow, isAddOn } from "@/components/site/AddOns";
+import { LIVE_PRICE_LABEL, TODAY_PRICE_LABEL, useOneItemPrice } from "@/lib/livePrice";
 import { CartEditSheet } from "@/components/site/CartEditSheet";
 import { ensurePerks } from "@/components/site/PerkSync";
 import {
@@ -478,16 +479,9 @@ export function CartDrawer() {
                         />
                       );
                     const node = item.product.node;
-                    const variant = node.variants.edges.find((v) => v.node.id === item.variantId)?.node;
-                    // v196: the "was" price Shopify gives this line in the cart's
-                    // market, so it follows a Ship-to switch like the price does.
-                    // The product snapshot (priced where it was added) is only a
-                    // fallback until the totals are in.
-                    const marketCompare = totals?.lineCompareAt;
-                    const compare = marketCompare && item.variantId in marketCompare
-                      ? marketCompare[item.variantId]
-                      : variant?.compareAtPrice ?? null;
-                    const onSale = !!compare && parseFloat(compare.amount) > parseFloat(item.price.amount);
+                    // v239 (ads chat): the line shows today's price only - no
+                    // compare-at "was" price; the discount lines below carry
+                    // any saving (Black Friday, December, multi-buys).
                     const size = item.selectedOptions.find((o) => /size/i.test(o.name))?.value;
                     const colour = item.selectedOptions.find((o) => /colou?r/i.test(o.name))?.value;
                     // Any other option the shopper picked (Body Adhesive "Type").
@@ -538,11 +532,6 @@ export function CartDrawer() {
 
                           <p className="mt-1.5 text-[14px] text-ink">
                             {display(item.price.amount, item.price.currencyCode)}
-                            {onSale && (
-                              <span className="ml-2 text-[13px] text-cocoa line-through">
-                                {display(compare!.amount, compare!.currencyCode)}
-                              </span>
-                            )}
                           </p>
 
                           {bundleShort > 0 && (
@@ -738,7 +727,7 @@ function PerkLine({
   item: CartItem;
   kind: PerkKind;
   free: boolean;
-  /** What the free gift is worth, formatted (£3.49 / £10). */
+  /** What the free gift is worth, formatted (£3.49), or null (the wash bag, v239). */
   worth: string | null;
   display: (amount: string | number, currency: string) => string;
   disabled: boolean;
@@ -950,6 +939,8 @@ function ProductGrid({
   onPick: (p: ShopifyProduct) => void;
   display: (amount: string | number, currency: string) => string;
 }) {
+  // v239: a live one-item discount (Black Friday) shows here too (lib/livePrice).
+  const livePrice = useOneItemPrice();
   return (
     <div className="pt-8">
       <p className="px-6 text-[11px] uppercase tracking-[0.18em] text-cocoa">{title}</p>
@@ -961,6 +952,7 @@ function ProductGrid({
           const img = n.images.edges[0]?.node;
           const v = n.variants.edges.find((x) => x.node.availableForSale)?.node ?? n.variants.edges[0]?.node;
           const price = v?.price ?? n.priceRange.minVariantPrice;
+          const salePrice = livePrice(n.handle, parseFloat(price.amount));
           return (
             /* Column flex + mt-auto pins every button to the card's foot, so a
                two-line title doesn't push one lower than its neighbour (v160). */
@@ -970,7 +962,20 @@ function ProductGrid({
               </button>
               {n.productType && <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-cocoa">{n.productType}</p>}
               <p className="mt-0.5 font-serif text-[14px] leading-snug text-ink line-clamp-2">{n.title}</p>
-              <p className="mt-1 text-[13px] text-ink">{display(price.amount, price.currencyCode)}</p>
+              <p className="relative mt-1 text-[13px] text-ink">
+                {salePrice !== null ? (
+                  <>
+                    <span className="sr-only">{LIVE_PRICE_LABEL}</span>
+                    {display(salePrice, price.currencyCode)}
+                    <span className="ml-1.5 text-cocoa line-through">
+                      <span className="sr-only">{TODAY_PRICE_LABEL}</span>
+                      {display(price.amount, price.currencyCode)}
+                    </span>
+                  </>
+                ) : (
+                  display(price.amount, price.currencyCode)
+                )}
+              </p>
               <div className="mt-auto pt-3">
                 <button type="button" onClick={() => onPick(p)} className="h-10 w-full rounded-control border border-ink text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:bg-ink hover:text-cream">
                   Add to bag

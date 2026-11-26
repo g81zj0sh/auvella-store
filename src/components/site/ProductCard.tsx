@@ -16,7 +16,8 @@ import { buildColorImageMap, colorOptionName } from "@/lib/colorImages";
 import { findGhostForColor } from "@/lib/imageBackdrop";
 import { indexedEntry, indexedGhost, indexedHex, indexedRestImage, indexedSwatch } from "@/lib/galleryIndex";
 import { shopifyImg, shopifySrcSet } from "@/lib/shopify";
-import { inBundleDeal, SALE_STICKER_HANDLES, useBundleLabel } from "@/lib/bundleDeal";
+import { inBundleDeal, useBundleLabel } from "@/lib/bundleDeal";
+import { LIVE_PRICE_LABEL, TODAY_PRICE_LABEL, useOneItemPrice } from "@/lib/livePrice";
 
 // v205: the full catalogue tables (lib/catalogTables), in before this renders.
 installCatalogTables(FULL_CATALOG_TABLES);
@@ -25,8 +26,10 @@ installCatalogTables(FULL_CATALOG_TABLES);
  * Product card — SKIMS spec:
  * no border, no shadow, no card background; 3:4 image; hover scale 1.04;
  * QUICK ADD bar slides up (black 70%, white 10px caps) — opens the
- * QuickAddSheet; name 12px caps; price 13px with sale
- * strike-through; colour swatches as 10px circles.
+ * QuickAddSheet; name 12px caps; price 13px; colour swatches as 10px circles.
+ * v239 (ads chat): today's price only, never the compare-at; while Black
+ * Friday runs a bodysuit shows its price for one with today's struck
+ * (lib/livePrice). The "Sale" sticker went with the compare-at it needed.
  *
  * Phones (v175, measured off skims.com at 440 px wide): the heart sits in a
  * rail with a bag-plus quick add (40 x 72 px, 32 px buttons, 16 px icons,
@@ -97,12 +100,10 @@ export function ProductCard({ product, badge, bleed = false, note }: Props) {
     node.variants.edges.find((v) => v.node.availableForSale)?.node ??
     node.variants.edges[0]?.node;
   const price = firstAvailable?.price ?? node.priceRange.minVariantPrice;
-  const compareAt = firstAvailable?.compareAtPrice;
-  const onSale =
-    !!compareAt && parseFloat(compareAt.amount) > parseFloat(price.amount);
 
   const isLoading = useCartStore((s) => s.isLoading);
   const display = useDisplayPrice();
+  const livePrice = useOneItemPrice();
 
   /* The offer has to be legible from the grid, not only the PDP — a shopper
      who never taps in never learns it exists. */
@@ -198,10 +199,8 @@ export function ProductCard({ product, badge, bleed = false, note }: Props) {
       )?.node
     : undefined;
   const shownPrice = colorVariant?.price ?? price;
-  const shownCompare = colorVariant ? colorVariant.compareAtPrice : compareAt;
-  const shownOnSale =
-    !!shownCompare && parseFloat(shownCompare.amount) > parseFloat(shownPrice.amount);
-  const saleSticker = shownOnSale && SALE_STICKER_HANDLES.includes(node.handle);
+  // v239: a live one-item discount (Black Friday), else today's price alone.
+  const salePrice = livePrice(node.handle, parseFloat(shownPrice.amount));
 
   const onSwatch = (e: React.MouseEvent, c: string) => {
     e.preventDefault();
@@ -287,21 +286,13 @@ export function ProductCard({ product, badge, bleed = false, note }: Props) {
             <BagPlusIcon className="h-4 w-4" />
           </button>
         </div>
-        {/* Left-top labels: the carousel's badge, then a small "Sale" sticker
-            on the owner's picks (SALE_STICKER_HANDLES, lib/bundleDeal.ts) - only while this tile
-            shows a reduced price, so it never sits beside a full price. */}
-        {(badge || saleSticker) && (
+        {/* Left-top label: the carousel's badge. v239: the "Sale" sticker
+            is gone - it showed only beside a compare-at price. */}
+        {badge && (
           <span className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
-            {badge && (
-              <span className="rounded-pill bg-white px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-[#0a0a0a]">
-                {badge}
-              </span>
-            )}
-            {saleSticker && (
-              <span className="rounded-pill bg-[#0a0a0a] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
-                Sale
-              </span>
-            )}
+            <span className="rounded-pill bg-white px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-[#0a0a0a]">
+              {badge}
+            </span>
           </span>
         )}
 
@@ -328,15 +319,25 @@ export function ProductCard({ product, badge, bleed = false, note }: Props) {
           {node.title}
         </h3>
         {note && <p className="mt-0.5 text-[12px] leading-snug text-[#555555]">{note}</p>}
-        <div className="mt-1 flex items-baseline gap-2 text-[13px]">
-          {shownOnSale && shownCompare && (
-            <span className="text-[#888888] line-through">
-              {display(shownCompare.amount, shownCompare.currencyCode)}
+        {/* relative: keeps the screen-reader labels inside a scrolling
+            carousel (unpositioned, they widen the whole phone page). */}
+        <div className="relative mt-1 flex items-baseline gap-2 text-[13px]">
+          {salePrice !== null ? (
+            <>
+              <span className="text-[#0a0a0a]">
+                <span className="sr-only">{LIVE_PRICE_LABEL}</span>
+                {display(salePrice, shownPrice.currencyCode)}
+              </span>
+              <span className="text-[#888888] line-through">
+                <span className="sr-only">{TODAY_PRICE_LABEL}</span>
+                {display(shownPrice.amount, shownPrice.currencyCode)}
+              </span>
+            </>
+          ) : (
+            <span className="text-[#0a0a0a]">
+              {display(shownPrice.amount, shownPrice.currencyCode)}
             </span>
           )}
-          <span className="text-[#0a0a0a]">
-            {display(shownPrice.amount, shownPrice.currencyCode)}
-          </span>
           {bundleDeal && (
             <span className="rounded-pill border border-[#0a0a0a] px-1.5 py-[1px] text-[10px] uppercase leading-none tracking-[0.08em] text-[#0a0a0a]">
               {bundleLabel}

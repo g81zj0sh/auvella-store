@@ -24,6 +24,7 @@ import { colourSwatchStyle } from "@/lib/swatch";
 import { TrustBadges } from "@/components/site/TrustBadges";
 import { RatingBadge } from "@/components/site/RatingBadge";
 import { HYGIENE_DETAIL, HYGIENE_RETURNS_LINE, HYGIENE_TITLE, isFinalSale, isHygieneItem } from "@/lib/returnsPolicy";
+import { LIVE_PRICE_LABEL, TODAY_PRICE_LABEL, useOneItemPrice } from "@/lib/livePrice";
 import { ProductStory } from "@/components/site/ProductStory";
 import { descriptionParts, fitNote, fabricLine } from "@/lib/productStory";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, useCallback } from "react";
@@ -835,8 +836,9 @@ function ProductPage() {
   const unitPrice = parseFloat(priceVariant?.price.amount ?? "0");
   const currency = priceVariant?.price.currencyCode ?? "GBP";
   const cur = (n: number) => display(n, currency);
-  const compareAt = priceVariant?.compareAtPrice;
-  const onSale = !!compareAt && parseFloat(compareAt.amount) > unitPrice;
+  /* v239 (ads chat, 26 Nov 2026): never the compare-at price - today's price,
+     or while Black Friday runs a bodysuit's price for one with today's struck
+     (bfOne below; lib/livePrice uses the same sum everywhere else). */
   const bundleDeal = inBundleDeal(node.handle);
   /* Rating badge: only when the reviews themselves loaded (the section it
      links to needs them too). */
@@ -1280,14 +1282,7 @@ function ProductPage() {
             </>
           ) : (
           <p className="mt-1.5 text-[22px] font-semibold leading-tight text-[#0a0a0a]">
-            {onSale && compareAt && <span className="sr-only">Now </span>}
             {cur(unitPrice)}
-            {onSale && compareAt && (
-              <span className="ml-2 text-[14px] font-normal text-[#6b6b6b] line-through">
-                <span className="sr-only">Was </span>
-                {cur(parseFloat(compareAt.amount))}
-              </span>
-            )}
           </p>
           )}
           {bundleDeal && (
@@ -1519,14 +1514,7 @@ function ProductPage() {
               </>
             ) : (
             <p className="mt-2 text-[26px] font-semibold leading-tight text-[#0a0a0a]">
-              {onSale && compareAt && <span className="sr-only">Now </span>}
               {cur(unitPrice)}
-              {onSale && compareAt && (
-                <span className="ml-2.5 text-[15px] font-normal text-[#6b6b6b] line-through">
-                  <span className="sr-only">Was </span>
-                  {cur(parseFloat(compareAt.amount))}
-                </span>
-              )}
             </p>
             )}
 
@@ -2592,6 +2580,8 @@ function VisualSearchResults({
   onNavigate: () => void;
 }) {
   const display = useDisplayPrice();
+  // v239: a live one-item discount (Black Friday) shows here too (lib/livePrice).
+  const livePrice = useOneItemPrice();
   const { data: categoryMatches = [] } = useQuery({
     queryKey: ["visual-search", query, excludeHandle],
     queryFn: () => fetchProducts(12, query || undefined),
@@ -2633,6 +2623,7 @@ function VisualSearchResults({
       {items.map((p) => {
         const img = p.node.images.edges[0]?.node;
         const price = p.node.priceRange.minVariantPrice;
+        const salePrice = livePrice(p.node.handle, parseFloat(price.amount));
         return (
           <Link
             key={p.node.id}
@@ -2654,8 +2645,19 @@ function VisualSearchResults({
             <p className="mt-2 line-clamp-2 text-[11px] font-medium uppercase tracking-[0.06em] text-[#0a0a0a]">
               {p.node.title}
             </p>
-            <p className="mt-0.5 text-[11px] text-[#555555]">
-              {display(price.amount, price.currencyCode)}
+            <p className="relative mt-0.5 text-[11px] text-[#555555]">
+              {salePrice !== null ? (
+                <>
+                  <span className="sr-only">{LIVE_PRICE_LABEL}</span>
+                  <span className="font-medium text-[#0a0a0a]">{display(salePrice, price.currencyCode)}</span>
+                  <span className="ml-1.5 text-[#888888] line-through">
+                    <span className="sr-only">{TODAY_PRICE_LABEL}</span>
+                    {display(price.amount, price.currencyCode)}
+                  </span>
+                </>
+              ) : (
+                display(price.amount, price.currencyCode)
+              )}
             </p>
           </Link>
         );

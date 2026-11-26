@@ -37,8 +37,9 @@ import {
  * reference: photo, rating, "This glue was made for your …", price with the
  * saving, three ticks, the add button and a way out to checkout.
  *
- * - Price and "Save N%" come from the glue's own price and compare-at price,
- *   so they always match the product page and the bag.
+ * - Price comes from the glue's own price, so it always matches the product
+ *   page and the bag. v239: "Save N%" only while the real deal runs - never
+ *   from a compare-at price.
  * - The stars only show once the real Judge.me average is 4.0 or more, and
  *   then show that real figure (owner's choice, 11 Oct 2026).
  * - Shoppers pick the type; Standard is preselected.
@@ -170,7 +171,6 @@ function GlueOfferBody({ noun, onClose }: { noun: string; onClose: () => void })
 
   const image = variant?.image?.url ?? glue?.node.images.edges[0]?.node.url;
   const price = variant ? parseFloat(variant.price.amount) : 0;
-  const compare = variant?.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : 0;
   const offerOff = deal
     ? deal.percentOff
       ? // Shopify rounds a percentage saving DOWN to the penny (50% of
@@ -182,8 +182,6 @@ function GlueOfferBody({ noun, onClose }: { noun: string; onClose: () => void })
   const offerValid = !!deal && offerOff > 0 && offerOff < price;
   const offerLive = running && offerValid;
   const offerPrice = Math.round((price - offerOff) * 100) / 100;
-  const savePct =
-    compare > price && price > 0 ? Math.floor(((compare - price) / compare) * 100) : 0;
   const average = reviews?.average ?? 0;
   // Same rounding as the product page's RatingBadge, so both show one figure.
   const rating = (Math.round(average * 10) / 10).toFixed(1);
@@ -311,16 +309,9 @@ function GlueOfferBody({ noun, onClose }: { noun: string; onClose: () => void })
                 </span>
               </>
             ) : (
-              <>
-                {savePct > 0 && (
-                  <s className="text-[15px] text-[#6b6b6b]">
-                    <span className="sr-only">was </span>
-                    {display(compare, cur)}
-                  </s>
-                )}
-                <span className="text-[22px] font-bold text-[#0a0a0a]">{display(price, cur)}</span>
-                {savePct > 0 && <span className={pill}>Save {savePct}%</span>}
-              </>
+              // v239 (ads chat): no compare-at "was" price or "Save N%" from it -
+              // a saving shows only while the real popup deal runs (above).
+              <span className="text-[22px] font-bold text-[#0a0a0a]">{display(price, cur)}</span>
             )}
           </p>
         )}
