@@ -5,6 +5,7 @@ import { Search, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { fetchProducts, shopifyImg, type ShopifyProduct } from "@/lib/shopify";
 import { useDisplayPrice } from "@/lib/preferences";
+import { LIVE_PRICE_LABEL, TODAY_PRICE_LABEL, useOneItemPrice } from "@/lib/livePrice";
 
 /* Popular intents — one tap starts a converting search */
 const SUGGESTIONS = ["Bodysuit", "Shapewear", "Bra", "Lounge Set", "Pyjamas", "Thong"];
@@ -28,6 +29,8 @@ function ResultCard({
   const display = useDisplayPrice();
   const img = p.node.images.edges[0]?.node;
   const price = p.node.priceRange.minVariantPrice;
+  // v239: a live one-item discount (Black Friday) shows here too (lib/livePrice).
+  const salePrice = useOneItemPrice()(p.node.handle, parseFloat(price.amount));
   return (
     <Link
       to="/product/$handle"
@@ -48,8 +51,19 @@ function ResultCard({
       <p className="mt-2 line-clamp-2 text-[11px] uppercase tracking-[0.08em] text-[#0a0a0a]">
         {p.node.title}
       </p>
-      <p className="mt-0.5 text-[12px] text-[#555555]">
-        {display(price.amount, price.currencyCode)}
+      <p className="relative mt-0.5 text-[12px] text-[#555555]">
+        {salePrice !== null ? (
+          <>
+            <span className="sr-only">{LIVE_PRICE_LABEL}</span>
+            <span className="text-[#0a0a0a]">{display(salePrice, price.currencyCode)}</span>
+            <span className="ml-1.5 text-[#888888] line-through">
+              <span className="sr-only">{TODAY_PRICE_LABEL}</span>
+              {display(price.amount, price.currencyCode)}
+            </span>
+          </>
+        ) : (
+          display(price.amount, price.currencyCode)
+        )}
       </p>
     </Link>
   );
