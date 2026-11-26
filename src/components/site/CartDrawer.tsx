@@ -727,7 +727,7 @@ function PerkLine({
   item: CartItem;
   kind: PerkKind;
   free: boolean;
-  /** What the free gift is worth, formatted (£3.49 / £10). */
+  /** What the free gift is worth, formatted (£3.49), or null (the wash bag, v239). */
   worth: string | null;
   display: (amount: string | number, currency: string) => string;
   disabled: boolean;
