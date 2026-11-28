@@ -10,6 +10,7 @@ export type D1Statement = {
   bind(...values: unknown[]): D1Statement;
   run(): Promise<unknown>;
   first<T>(): Promise<T | null>;
+  all<T>(): Promise<{ results?: T[] }>;
 };
 export type D1Database = { prepare(sql: string): D1Statement };
 export type WorkerBindings = { VIEWS_DB?: D1Database; SHOPIFY_CLIENT_SECRET?: string };

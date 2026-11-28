@@ -2108,14 +2108,20 @@ function ProductPage() {
         blackFriday={blackFridayLive}
       />
 
-      {/* ============ REVIEWS ============ */}
-      <Reviews
-        reviews={judgeme?.reviews ?? []}
-        average={reviewAvg}
-        count={reviewCount}
-        loading={reviewsLoading}
-        productGid={node.id}
-      />
+      {/* ============ REVIEWS ============
+          v240 (ads chat, 28 Nov 2026): only once the product has a published
+          review - no heading, "No reviews yet" or "Write a review" before
+          then (buyers get Judge.me's review email after delivery). From the
+          first review it shows exactly as before. */}
+      {reviewCount > 0 && (judgeme?.reviews.length ?? 0) > 0 && (
+        <Reviews
+          reviews={judgeme?.reviews ?? []}
+          average={reviewAvg}
+          count={reviewCount}
+          loading={reviewsLoading}
+          productGid={node.id}
+        />
+      )}
 
       <Footer />
       {/* Room for the sticky bar, so it never covers the end of the footer. */}

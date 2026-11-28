@@ -29,10 +29,38 @@ import {
  * render and for the browser's /api/reviews/<handle> requests alike, so the
  * page and any later refresh always show the same reviews. It reads exactly
  * the fields the browser-side DOMParser version did.
+ *
+ * v240 (ads chat, 28 Nov 2026): the site shows only what Judge.me publishes
+ * NOW. The 993 imported reviews were hidden in Judge.me on 28 Nov, but the
+ * old cache kept serving them: a copy was only refreshed after someone viewed
+ * the page, and that viewer still got the old copy. Now:
+ *  - a fresh cache (table review_cache_v2; the old review_cache is dropped),
+ *    so nothing from before this release is ever shown;
+ *  - a copy under 2 minutes old is served as it is; 2-10 minutes old, it is
+ *    served while a refresh runs; older than 10 minutes it is NOT served
+ *    until Judge.me has been asked again (up to the page's wait) - and a copy
+ *    over an hour old is never served, even when Judge.me can't be reached;
+ *  - each server copy looks in D1 again after a minute, so a refresh made
+ *    anywhere reaches every edge location;
+ *  - any product view also refreshes, in the background, every other
+ *    product's copy older than 2 minutes (one sweep at a time, site-wide);
+ *  - a refresh that never finishes (cut-off background work) can't block the
+ *    next one: after 20 seconds it no longer counts.
+ * So a review hidden or published in Judge.me shows on the site within a few
+ * minutes. The browser asks again when a page opens (lib/judgeme), so an
+ * edge-cached page catches up too.
  */
 
 const API = "https://judge.me/api/v1";
-const FRESH_MS = 10 * 60 * 1000;
+const TABLE = "review_cache_v2";
+const FRESH_MS = 2 * 60 * 1000;
+const MAX_STALE_MS = 10 * 60 * 1000;
+const HARD_MAX_MS = 60 * 60 * 1000;
+const MEMO_CHECK_MS = 60 * 1000;
+const JOB_TIMEOUT_MS = 20 * 1000;
+const SWEEP_EVERY_MS = 2 * 60 * 1000;
+const SWEEP_MAX = 60;
+const SWEEP_BATCH = 6;
 const PER_PAGE = 30;
 const MAX_PAGES = 10;
 const PATH = /^\/api\/reviews\/([a-z0-9][a-z0-9-]{0,150})$/;
@@ -41,24 +69,32 @@ const PATH = /^\/api\/reviews\/([a-z0-9][a-z0-9-]{0,150})$/;
 type StoredReview = Omit<Review, "date"> & { iso?: string };
 type Stored = { reviews: StoredReview[]; average: number; count: number };
 
-const memo = new Map<string, { stored: Stored; at: number }>();
-const inflight = new Map<string, Promise<void>>();
+/** at = when Judge.me was asked; checked = when D1 was last looked at. */
+const memo = new Map<string, { stored: Stored; at: number; checked: number }>();
+const inflight = new Map<string, { job: Promise<void>; started: number }>();
 let tableReady: Promise<unknown> | null = null;
+let lastSweep = 0;
 
 function ensureTable(db: D1Database): Promise<unknown> {
-  tableReady ??= db
-    .prepare(
-      `CREATE TABLE IF NOT EXISTS review_cache (
-         handle TEXT PRIMARY KEY,
-         data TEXT NOT NULL,
-         fetched_at INTEGER NOT NULL
-       ) WITHOUT ROWID`,
-    )
-    .run()
-    .catch((error: unknown) => {
-      tableReady = null;
-      throw error;
-    });
+  tableReady ??= (async () => {
+    await db
+      .prepare(
+        `CREATE TABLE IF NOT EXISTS ${TABLE} (
+           handle TEXT PRIMARY KEY,
+           data TEXT NOT NULL,
+           fetched_at INTEGER NOT NULL
+         ) WITHOUT ROWID`,
+      )
+      .run();
+    await db
+      .prepare("CREATE TABLE IF NOT EXISTS review_meta (key TEXT PRIMARY KEY, at INTEGER NOT NULL) WITHOUT ROWID")
+      .run();
+    // v240: the old cache still held the imported reviews hidden in Judge.me.
+    await db.prepare("DROP TABLE IF EXISTS review_cache").run();
+  })().catch((error: unknown) => {
+    tableReady = null;
+    throw error;
+  });
   return tableReady;
 }
 
@@ -294,22 +330,26 @@ async function fetchFromJudgeme(handle: string): Promise<Stored> {
 
 function refresh(handle: string, b: WorkerBindings): Promise<void> {
   const running = inflight.get(handle);
-  if (running) return running;
+  // A refresh still under way is shared; one that never finished isn't.
+  if (running && Date.now() - running.started < JOB_TIMEOUT_MS) return running.job;
+  const started = Date.now();
   const job = (async () => {
     const stored = await fetchFromJudgeme(handle);
     const at = Date.now();
-    memo.set(handle, { stored, at });
+    memo.set(handle, { stored, at, checked: at });
     if (b.VIEWS_DB) {
       await ensureTable(b.VIEWS_DB);
       await b.VIEWS_DB
-        .prepare("INSERT OR REPLACE INTO review_cache (handle, data, fetched_at) VALUES (?, ?, ?)")
+        .prepare(`INSERT OR REPLACE INTO ${TABLE} (handle, data, fetched_at) VALUES (?, ?, ?)`)
         .bind(handle, JSON.stringify(stored), at)
         .run();
     }
   })()
     .catch((error: unknown) => console.error("review refresh failed", handle, error))
-    .finally(() => inflight.delete(handle));
-  inflight.set(handle, job);
+    .finally(() => {
+      if (inflight.get(handle)?.started === started) inflight.delete(handle);
+    });
+  inflight.set(handle, { job, started });
   return job;
 }
 
@@ -318,10 +358,40 @@ function refreshLater(handle: string, b: WorkerBindings, waitUntil?: WaitUntil) 
   if (waitUntil) waitUntil(job);
 }
 
+/* Every other product's copy older than FRESH_MS, refreshed in the
+   background - at most one sweep every 2 minutes, site-wide (a row in
+   review_meta is claimed first), so all products stay current while anyone
+   views any product. */
+async function sweep(db: D1Database, b: WorkerBindings, now: number): Promise<void> {
+  await ensureTable(db);
+  await db.prepare("INSERT OR IGNORE INTO review_meta (key, at) VALUES ('sweep', 0)").run();
+  const claim = (await db
+    .prepare("UPDATE review_meta SET at = ? WHERE key = 'sweep' AND at < ?")
+    .bind(now, now - SWEEP_EVERY_MS)
+    .run()) as { meta?: { changes?: number } } | null;
+  if (!claim?.meta?.changes) return;
+  const rows = await db
+    .prepare(`SELECT handle FROM ${TABLE} WHERE fetched_at < ? ORDER BY fetched_at LIMIT ${SWEEP_MAX}`)
+    .bind(now - FRESH_MS)
+    .all<{ handle: string }>();
+  const handles = (rows.results ?? []).map((r) => r.handle);
+  for (let i = 0; i < handles.length; i += SWEEP_BATCH) {
+    await Promise.allSettled(handles.slice(i, i + SWEEP_BATCH).map((h) => refresh(h, b)));
+  }
+}
+
+function sweepLater(b: WorkerBindings, waitUntil?: WaitUntil) {
+  const now = Date.now();
+  if (!b.VIEWS_DB || !waitUntil || now - lastSweep < SWEEP_EVERY_MS) return;
+  lastSweep = now;
+  waitUntil(sweep(b.VIEWS_DB, b, now).catch((error: unknown) => console.error("review sweep failed", error)));
+}
+
 /**
- * Makes sure this isolate holds the product's reviews before the page renders:
- * from memory, else D1, else (first ever view) Judge.me for at most `blockMs`.
- * Anything older than 10 minutes is refreshed in the background.
+ * Makes sure this isolate holds the product's current reviews before the page
+ * renders (v240 rules above): from memory, D1 looked at again after a minute,
+ * and Judge.me itself whenever the copy is 10+ minutes old or there is none -
+ * waiting at most `blockMs` for it.
  */
 export async function primeReviews(
   handle: string,
@@ -330,36 +400,42 @@ export async function primeReviews(
   blockMs = 2500,
 ): Promise<void> {
   const now = Date.now();
-  const held = memo.get(handle);
-  if (held) {
-    if (now - held.at >= FRESH_MS) refreshLater(handle, b, waitUntil);
-    return;
-  }
-  if (b.VIEWS_DB) {
+  let held = memo.get(handle);
+  if (b.VIEWS_DB && (!held || now - held.checked >= MEMO_CHECK_MS)) {
     try {
       await ensureTable(b.VIEWS_DB);
       const row = await b.VIEWS_DB
-        .prepare("SELECT data, fetched_at FROM review_cache WHERE handle = ?")
+        .prepare(`SELECT data, fetched_at FROM ${TABLE} WHERE handle = ?`)
         .bind(handle)
         .first<{ data: string; fetched_at: number }>();
-      if (row) {
-        memo.set(handle, { stored: JSON.parse(row.data) as Stored, at: row.fetched_at });
-        if (now - row.fetched_at >= FRESH_MS) refreshLater(handle, b, waitUntil);
-        return;
+      if (row && (!held || row.fetched_at > held.at)) {
+        held = { stored: JSON.parse(row.data) as Stored, at: row.fetched_at, checked: now };
+        memo.set(handle, held);
+      } else if (held) {
+        held.checked = now;
       }
     } catch (error) {
       console.error("review cache read failed", handle, error);
     }
+  }
+  sweepLater(b, waitUntil);
+  const age = held ? now - held.at : Infinity;
+  if (age < FRESH_MS) return;
+  if (age < MAX_STALE_MS) {
+    refreshLater(handle, b, waitUntil);
+    return;
   }
   const job = refresh(handle, b);
   if (waitUntil) waitUntil(job);
   await Promise.race([job, new Promise((resolve) => setTimeout(resolve, blockMs))]);
 }
 
-/** The product's reviews this isolate already holds, as the page shows them; null if none. */
+/** The product's reviews this isolate holds, as the page shows them; null if
+ *  none - or if the copy is over an hour old (Judge.me unreachable that long:
+ *  better no reviews than ones that may have been hidden since). */
 export function peekReviews(handle: string): JudgemeData | null {
   const held = memo.get(handle);
-  if (!held) return null;
+  if (!held || Date.now() - held.at >= HARD_MAX_MS) return null;
   const { reviews, average, count } = held.stored;
   return {
     reviews: reviews.map(({ iso, ...r }) => ({ ...r, date: iso ? formatDate(iso) : undefined })),
