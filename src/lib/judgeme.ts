@@ -57,6 +57,9 @@ export function useJudgemeReviews(handle: string | undefined, initial?: JudgemeD
     staleTime: 5 * 60 * 1000,
     retry: 1,
     initialData: initial ?? undefined,
+    /* v240: the page's own copy shows first, then the browser asks once more -
+       an edge-cached page (up to 5 minutes old) catches up with Judge.me. */
+    initialDataUpdatedAt: initial ? 0 : undefined,
   });
 }
 
